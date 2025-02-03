@@ -1,0 +1,1003 @@
+        <!DOCTYPE html>
+		<html>
+		<head>
+		<meta charset="utf-8">
+		<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+		<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+		</head>
+		<body>
+		<pre>// readers who have ever recorded in specific lang
+MATCH (r:Reader)--(s:Section)--(b:Book)
+WITH r,
+    CASE 
+        WHEN b.language = 'Multilingual' THEN s.language
+        ELSE b.language
+    END AS lang,
+    COUNT(*) AS langCount
+ORDER BY r.id, langCount DESC
+WITH r, COLLECT({lang: lang, langCount: langCount}) AS langs
+WHERE ANY(langObj IN langs WHERE langObj.lang = 'Russian')
+UNWIND langs AS langObj
+RETURN 'https://librivox.org/reader/'+r.id AS url, r.name AS reader, langObj.lang AS lang, langObj.langCount AS langCount</pre>
+		 <label for="fSearch">Search</label>
+		<input type="text" id="fSearch" name="fSearch" >
+		<label>2025-01-29</label>
+		<div id="example-table" ></div>
+
+		<script>
+		var data = [
+  {
+    "url": "https://librivox.org/reader/295",
+    "reader": "Yakovlev Valery",
+    "lang": "Russian",
+    "langCount": 57
+  },
+  {
+    "url": "https://librivox.org/reader/1063",
+    "reader": "Roberto Antonio Muñoz",
+    "lang": "Spanish",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/1063",
+    "reader": "Roberto Antonio Muñoz",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/1154",
+    "reader": "Larysa Jaworski",
+    "lang": "English",
+    "langCount": 34
+  },
+  {
+    "url": "https://librivox.org/reader/1154",
+    "reader": "Larysa Jaworski",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/1543",
+    "reader": "argrig",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/1593",
+    "reader": "Kristine Bekere",
+    "lang": "English",
+    "langCount": 796
+  },
+  {
+    "url": "https://librivox.org/reader/1593",
+    "reader": "Kristine Bekere",
+    "lang": "Latvian",
+    "langCount": 13
+  },
+  {
+    "url": "https://librivox.org/reader/1593",
+    "reader": "Kristine Bekere",
+    "lang": "German",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/1593",
+    "reader": "Kristine Bekere",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/1844",
+    "reader": "noonday",
+    "lang": "English",
+    "langCount": 9
+  },
+  {
+    "url": "https://librivox.org/reader/1844",
+    "reader": "noonday",
+    "lang": "German",
+    "langCount": 8
+  },
+  {
+    "url": "https://librivox.org/reader/1844",
+    "reader": "noonday",
+    "lang": "French",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/1844",
+    "reader": "noonday",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/2671",
+    "reader": "Foreign Girl",
+    "lang": "English",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/2671",
+    "reader": "Foreign Girl",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/2825",
+    "reader": "Ernst Pattynama",
+    "lang": "English",
+    "langCount": 256
+  },
+  {
+    "url": "https://librivox.org/reader/2825",
+    "reader": "Ernst Pattynama",
+    "lang": "Dutch",
+    "langCount": 20
+  },
+  {
+    "url": "https://librivox.org/reader/2825",
+    "reader": "Ernst Pattynama",
+    "lang": "German",
+    "langCount": 8
+  },
+  {
+    "url": "https://librivox.org/reader/2825",
+    "reader": "Ernst Pattynama",
+    "lang": "French",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/2825",
+    "reader": "Ernst Pattynama",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/2826",
+    "reader": "Chamberlain",
+    "lang": "Russian",
+    "langCount": 13
+  },
+  {
+    "url": "https://librivox.org/reader/2826",
+    "reader": "Chamberlain",
+    "lang": "Belarusian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/2982",
+    "reader": "Sirene Darktail",
+    "lang": "English",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/2982",
+    "reader": "Sirene Darktail",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/3056",
+    "reader": "albus865",
+    "lang": "Russian",
+    "langCount": 27
+  },
+  {
+    "url": "https://librivox.org/reader/3097",
+    "reader": "nitram",
+    "lang": "English",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/3097",
+    "reader": "nitram",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/3177",
+    "reader": "Giovanni Batista",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/3227",
+    "reader": "Betina",
+    "lang": "English",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/3227",
+    "reader": "Betina",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/4091",
+    "reader": "RussLib",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/4372",
+    "reader": "Cardray",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/4471",
+    "reader": "Create",
+    "lang": "Russian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/4471",
+    "reader": "Create",
+    "lang": "English",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/5381",
+    "reader": "Elena Geiser",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/5397",
+    "reader": "violin",
+    "lang": "Russian",
+    "langCount": 20
+  },
+  {
+    "url": "https://librivox.org/reader/5548",
+    "reader": "ni",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/5777",
+    "reader": "DanaK",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/6661",
+    "reader": "Irina Grinberg",
+    "lang": "Russian",
+    "langCount": 10
+  },
+  {
+    "url": "https://librivox.org/reader/7234",
+    "reader": "Vladimir Anyanov",
+    "lang": "Russian",
+    "langCount": 9
+  },
+  {
+    "url": "https://librivox.org/reader/7397",
+    "reader": "radar",
+    "lang": "Ukrainian",
+    "langCount": 109
+  },
+  {
+    "url": "https://librivox.org/reader/7397",
+    "reader": "radar",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/7397",
+    "reader": "radar",
+    "lang": "English",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/8086",
+    "reader": "Mark Chulsky",
+    "lang": "Russian",
+    "langCount": 657
+  },
+  {
+    "url": "https://librivox.org/reader/8086",
+    "reader": "Mark Chulsky",
+    "lang": "English",
+    "langCount": 147
+  },
+  {
+    "url": "https://librivox.org/reader/8086",
+    "reader": "Mark Chulsky",
+    "lang": "Ukrainian",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/8128",
+    "reader": "Praeivis",
+    "lang": "French",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/8128",
+    "reader": "Praeivis",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/8169",
+    "reader": "tovarisch",
+    "lang": "English",
+    "langCount": 883
+  },
+  {
+    "url": "https://librivox.org/reader/8169",
+    "reader": "tovarisch",
+    "lang": "Russian",
+    "langCount": 279
+  },
+  {
+    "url": "https://librivox.org/reader/8169",
+    "reader": "tovarisch",
+    "lang": "German",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/8447",
+    "reader": "Anastasiia Solokha",
+    "lang": "Russian",
+    "langCount": 89
+  },
+  {
+    "url": "https://librivox.org/reader/8447",
+    "reader": "Anastasiia Solokha",
+    "lang": "English",
+    "langCount": 83
+  },
+  {
+    "url": "https://librivox.org/reader/8447",
+    "reader": "Anastasiia Solokha",
+    "lang": "Ukrainian",
+    "langCount": 83
+  },
+  {
+    "url": "https://librivox.org/reader/8447",
+    "reader": "Anastasiia Solokha",
+    "lang": "German",
+    "langCount": 7
+  },
+  {
+    "url": "https://librivox.org/reader/9014",
+    "reader": "Xenium5",
+    "lang": "Russian",
+    "langCount": 32
+  },
+  {
+    "url": "https://librivox.org/reader/9046",
+    "reader": "Luiza Karimova",
+    "lang": "Russian",
+    "langCount": 10
+  },
+  {
+    "url": "https://librivox.org/reader/9086",
+    "reader": "Marina Tsung",
+    "lang": "English",
+    "langCount": 17
+  },
+  {
+    "url": "https://librivox.org/reader/9086",
+    "reader": "Marina Tsung",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/9132",
+    "reader": "Friedrich",
+    "lang": "German",
+    "langCount": 677
+  },
+  {
+    "url": "https://librivox.org/reader/9132",
+    "reader": "Friedrich",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/9682",
+    "reader": "yefim",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/9697",
+    "reader": "Jane Cazanova",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/9714",
+    "reader": "Rita",
+    "lang": "Russian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "English",
+    "langCount": 267
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "German",
+    "langCount": 54
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "Luxembourgish",
+    "langCount": 25
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "French",
+    "langCount": 12
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "Italian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/10087",
+    "reader": "cathar maiden",
+    "lang": "Latin",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/10148",
+    "reader": "Eva K.",
+    "lang": "German",
+    "langCount": 465
+  },
+  {
+    "url": "https://librivox.org/reader/10148",
+    "reader": "Eva K.",
+    "lang": "English",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/10148",
+    "reader": "Eva K.",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "English",
+    "langCount": 4065
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "German",
+    "langCount": 618
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "French",
+    "langCount": 183
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "Luxembourgish",
+    "langCount": 62
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "Italian",
+    "langCount": 32
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/10179",
+    "reader": "Sonia",
+    "lang": "Latin",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/10273",
+    "reader": "foxything",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/10331",
+    "reader": "zadoroznyeva",
+    "lang": "Russian",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/10637",
+    "reader": "Vilya Levitskiy",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/10762",
+    "reader": "Maya S",
+    "lang": "Russian",
+    "langCount": 9
+  },
+  {
+    "url": "https://librivox.org/reader/10763",
+    "reader": "Lian Pang",
+    "lang": "English",
+    "langCount": 189
+  },
+  {
+    "url": "https://librivox.org/reader/10763",
+    "reader": "Lian Pang",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/10893",
+    "reader": "MarinaF",
+    "lang": "Russian",
+    "langCount": 8
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "English",
+    "langCount": 139
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "French",
+    "langCount": 46
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "German",
+    "langCount": 8
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "Spanish",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "Multilingual",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/11772",
+    "reader": "Linda Olsen Fitak",
+    "lang": "Italian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/11905",
+    "reader": "Wolfgang Bas",
+    "lang": "English",
+    "langCount": 22
+  },
+  {
+    "url": "https://librivox.org/reader/11905",
+    "reader": "Wolfgang Bas",
+    "lang": "Ukrainian",
+    "langCount": 12
+  },
+  {
+    "url": "https://librivox.org/reader/11905",
+    "reader": "Wolfgang Bas",
+    "lang": "Russian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/12851",
+    "reader": "Lika",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/13368",
+    "reader": "Tania Kay",
+    "lang": "Russian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/13368",
+    "reader": "Tania Kay",
+    "lang": "English",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "English",
+    "langCount": 420
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "Italian",
+    "langCount": 38
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "Russian",
+    "langCount": 35
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "French",
+    "langCount": 25
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "German",
+    "langCount": 22
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "Ukrainian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/13587",
+    "reader": "Kazbek",
+    "lang": "Portuguese",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14297",
+    "reader": "Scarbo",
+    "lang": "English",
+    "langCount": 106
+  },
+  {
+    "url": "https://librivox.org/reader/14297",
+    "reader": "Scarbo",
+    "lang": "Russian",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/14417",
+    "reader": "Dominique Ducamus",
+    "lang": "French",
+    "langCount": 16
+  },
+  {
+    "url": "https://librivox.org/reader/14417",
+    "reader": "Dominique Ducamus",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14453",
+    "reader": "Hanna Ponomarenko",
+    "lang": "Russian",
+    "langCount": 63
+  },
+  {
+    "url": "https://librivox.org/reader/14453",
+    "reader": "Hanna Ponomarenko",
+    "lang": "Ukrainian",
+    "langCount": 27
+  },
+  {
+    "url": "https://librivox.org/reader/14453",
+    "reader": "Hanna Ponomarenko",
+    "lang": "English",
+    "langCount": 17
+  },
+  {
+    "url": "https://librivox.org/reader/14457",
+    "reader": "Лена Сухая",
+    "lang": "Russian",
+    "langCount": 65
+  },
+  {
+    "url": "https://librivox.org/reader/14457",
+    "reader": "Лена Сухая",
+    "lang": "Ukrainian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/14502",
+    "reader": "Elizaveta Belova",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14503",
+    "reader": "Vladimir Vakhter",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14504",
+    "reader": "Galina Seregina",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14505",
+    "reader": "Anna Mytcul",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14507",
+    "reader": "Annaschatting",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14530",
+    "reader": "Alex Strekalov",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14642",
+    "reader": "jabrail",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14707",
+    "reader": "smis",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/14829",
+    "reader": "Акбота",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/15309",
+    "reader": "Victor Seremet",
+    "lang": "Russian",
+    "langCount": 19
+  },
+  {
+    "url": "https://librivox.org/reader/15309",
+    "reader": "Victor Seremet",
+    "lang": "English",
+    "langCount": 15
+  },
+  {
+    "url": "https://librivox.org/reader/15309",
+    "reader": "Victor Seremet",
+    "lang": "Romanian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/15430",
+    "reader": "T.Honcharyk",
+    "lang": "Ukrainian",
+    "langCount": 29
+  },
+  {
+    "url": "https://librivox.org/reader/15430",
+    "reader": "T.Honcharyk",
+    "lang": "English",
+    "langCount": 6
+  },
+  {
+    "url": "https://librivox.org/reader/15430",
+    "reader": "T.Honcharyk",
+    "lang": "Russian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/15603",
+    "reader": "Ryna",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/15603",
+    "reader": "Ryna",
+    "lang": "Ukrainian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/16408",
+    "reader": "MissOksana",
+    "lang": "Russian",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/16766",
+    "reader": "sacapsie",
+    "lang": "Russian",
+    "langCount": 9
+  },
+  {
+    "url": "https://librivox.org/reader/17116",
+    "reader": "Евгения Сивохина",
+    "lang": "Russian",
+    "langCount": 4
+  },
+  {
+    "url": "https://librivox.org/reader/17145",
+    "reader": "Helga35",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/17933",
+    "reader": "Alexander Myltsev",
+    "lang": "Russian",
+    "langCount": 5
+  },
+  {
+    "url": "https://librivox.org/reader/17964",
+    "reader": "Anna Sosnovskaya",
+    "lang": "Russian",
+    "langCount": 2
+  },
+  {
+    "url": "https://librivox.org/reader/19535",
+    "reader": "Olga10K",
+    "lang": "Russian",
+    "langCount": 47
+  },
+  {
+    "url": "https://librivox.org/reader/19535",
+    "reader": "Olga10K",
+    "lang": "English",
+    "langCount": 1
+  },
+  {
+    "url": "https://librivox.org/reader/19576",
+    "reader": "anaudio",
+    "lang": "Russian",
+    "langCount": 6
+  },
+  {
+    "url": "https://librivox.org/reader/19587",
+    "reader": "Hardoff",
+    "lang": "English",
+    "langCount": 3
+  },
+  {
+    "url": "https://librivox.org/reader/19587",
+    "reader": "Hardoff",
+    "lang": "Russian",
+    "langCount": 2
+  }
+];
+
+		function matchAny(data, filterParams) {
+			  //data - the data for the row being filtered
+			  //filterParams - params object passed to the filter
+			  //RegExp - modifier "i" - case insensitve
+
+			var match = false;
+			const regex = RegExp(filterParams.value, 'i');
+
+			for (var key in data) {
+				if (regex.test(data[key]) == true) {
+					match = true;
+				}
+			}
+			return match;
+		}
+		const input = document.getElementById("fSearch");
+		input.addEventListener("keyup", function() {
+			table.setFilter(matchAny, { value: input.value });
+			if (input.value == " ") {
+				table.clearFilter()
+			}
+		});
+		
+		function urlFormatter(cell, formatterParams, onRendered){
+			return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+		}
+		function qidFormatter(cell, formatterParams, onRendered){
+			if (cell.getValue()) {
+				return "<a href='https://www.wikidata.org/wiki/" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+			} else {return null}
+		}
+		function urlQidFormatter(cell, formatterParams, onRendered){
+			if (cell.getValue() != null) {
+				return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue().substring(31) + "</a>";
+			} else {return null}
+		}
+		var rowPopupFormatter = function(e, row, onRendered){
+			var data = row.getData(),
+			container = document.createElement("pre"),
+			contents = JSON.stringify(data, null, '\t');
+			container.innerHTML = contents;
+			return container;
+		}
+		
+		data = replaceDotsInKeys(data);
+		var table = new Tabulator("#example-table", {
+		 height:"90vh",
+		 layout:"fitColumns",
+		 data: data,
+		 //rowClickPopup:rowPopupFormatter,
+		 autoColumns: "full",
+		 dataTree: false,
+		 });
+		 
+		 table.on("tableBuilt", function() {
+			let columns = table.getColumnDefinitions();
+			for (let i = 0; i < columns.length; i++) {
+				let columnName = columns[i].field;
+				if (columnName === "web") {
+					columns[i].formatter = urlFormatter;
+					continue;
+				}
+				if (columnName === "qid") {
+					columns[i].formatter = qidFormatter;
+					continue;
+				}
+				const randomIndex = Math.floor(Math.random() * data.length);
+				let sampleVal = data[randomIndex][columnName];
+				if (sampleVal == null) { continue; }
+				if (/^Q\d+$/.test(sampleVal)) {
+					columns[i].formatter = qidFormatter;
+				} else if (/^http.+?Q\d+$/.test(sampleVal)) {
+					columns[i].formatter = urlQidFormatter;
+				} else if (typeof sampleVal === "string" && (sampleVal.startsWith("http://") || sampleVal.startsWith("https://"))) {
+					columns[i].formatter = urlFormatter;
+				}
+			}
+			table.setColumns(columns);
+		});
+		
+		function replaceDotsInKeys(dataArray) {
+			return dataArray.map(obj => {
+				// Create a new object to hold modified keys
+				const newObj = {};
+				for (const key in obj) {
+					if (obj.hasOwnProperty(key)) {
+						// Replace '.' with '•' in the key and assign the value
+						const newKey = key.replace(/\./g, '•');
+						newObj[newKey] = obj[key];
+					}
+				}
+				return newObj; // Return the new object with modified keys
+			});
+		}
+		</script>
+		</body>
+		</html>
