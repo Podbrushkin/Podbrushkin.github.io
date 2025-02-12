@@ -1,0 +1,523 @@
+        <!DOCTYPE html>
+		<html>
+		<head>
+		<meta charset="utf-8">
+		<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+		<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+		</head>
+		<body>
+		<pre>// stats per lang
+MATCH (b:Book)
+RETURN b.language as lang, 
+	COUNT(b) AS books, 
+	SUM(b.views) AS views, 
+	toInteger(AVG(b.totaltimesecs)) AS avgDurationSec,
+	SUM(b.totaltimesecs) AS totalDurationSec,
+	SUM(b.totaltimesecs)/60/60 AS totalDurationHours
+ORDER BY books DESC, totalDurationSec DESC</pre>
+		 <label for="fSearch">Search</label>
+		<input type="text" id="fSearch" name="fSearch" >
+		<label>2025-02-10</label>
+		<div id="example-table" ></div>
+
+		<script>
+		var data = [
+  {
+    "lang": "English",
+    "books": 18104,
+    "views": 1616711848,
+    "avgDurationSec": 21081,
+    "totalDurationSec": 381659939,
+    "totalDurationHours": 106016
+  },
+  {
+    "lang": "German",
+    "books": 814,
+    "views": 54123794,
+    "avgDurationSec": 20406,
+    "totalDurationSec": 16610493,
+    "totalDurationHours": 4614
+  },
+  {
+    "lang": "Spanish",
+    "books": 501,
+    "views": 98958517,
+    "avgDurationSec": 20141,
+    "totalDurationSec": 10090905,
+    "totalDurationHours": 2803
+  },
+  {
+    "lang": "French",
+    "books": 312,
+    "views": 34927182,
+    "avgDurationSec": 26726,
+    "totalDurationSec": 8338657,
+    "totalDurationHours": 2316
+  },
+  {
+    "lang": "Dutch",
+    "books": 212,
+    "views": 6717818,
+    "avgDurationSec": 39425,
+    "totalDurationSec": 8358172,
+    "totalDurationHours": 2321
+  },
+  {
+    "lang": "Multilingual",
+    "books": 177,
+    "views": 21221693,
+    "avgDurationSec": 14229,
+    "totalDurationSec": 2518575,
+    "totalDurationHours": 699
+  },
+  {
+    "lang": "Portuguese",
+    "books": 110,
+    "views": 9710790,
+    "avgDurationSec": 15903,
+    "totalDurationSec": 1749356,
+    "totalDurationHours": 485
+  },
+  {
+    "lang": "Italian",
+    "books": 87,
+    "views": 17241370,
+    "avgDurationSec": 15932,
+    "totalDurationSec": 1386131,
+    "totalDurationHours": 385
+  },
+  {
+    "lang": "Russian",
+    "books": 82,
+    "views": 6445675,
+    "avgDurationSec": 15069,
+    "totalDurationSec": 1235698,
+    "totalDurationHours": 343
+  },
+  {
+    "lang": "Ancient Greek",
+    "books": 46,
+    "views": 2464523,
+    "avgDurationSec": 7248,
+    "totalDurationSec": 333422,
+    "totalDurationHours": 92
+  },
+  {
+    "lang": "Japanese",
+    "books": 38,
+    "views": 1207532,
+    "avgDurationSec": 9253,
+    "totalDurationSec": 351618,
+    "totalDurationHours": 97
+  },
+  {
+    "lang": "Polish",
+    "books": 32,
+    "views": 7295236,
+    "avgDurationSec": 19579,
+    "totalDurationSec": 626551,
+    "totalDurationHours": 174
+  },
+  {
+    "lang": "Greek",
+    "books": 31,
+    "views": 890813,
+    "avgDurationSec": 10736,
+    "totalDurationSec": 332837,
+    "totalDurationHours": 92
+  },
+  {
+    "lang": "Chinese",
+    "books": 28,
+    "views": 2024568,
+    "avgDurationSec": 10413,
+    "totalDurationSec": 291581,
+    "totalDurationHours": 80
+  },
+  {
+    "lang": "Hebrew",
+    "books": 25,
+    "views": 1008615,
+    "avgDurationSec": 18585,
+    "totalDurationSec": 464646,
+    "totalDurationHours": 129
+  },
+  {
+    "lang": "Latin",
+    "books": 21,
+    "views": 1209773,
+    "avgDurationSec": 25088,
+    "totalDurationSec": 526852,
+    "totalDurationHours": 146
+  },
+  {
+    "lang": "Finnish",
+    "books": 17,
+    "views": 509226,
+    "avgDurationSec": 14328,
+    "totalDurationSec": 243585,
+    "totalDurationHours": 67
+  },
+  {
+    "lang": "Swedish",
+    "books": 14,
+    "views": 1178059,
+    "avgDurationSec": 14229,
+    "totalDurationSec": 199216,
+    "totalDurationHours": 55
+  },
+  {
+    "lang": "Catalan",
+    "books": 12,
+    "views": 222071,
+    "avgDurationSec": 15209,
+    "totalDurationSec": 182510,
+    "totalDurationHours": 50
+  },
+  {
+    "lang": "Danish",
+    "books": 11,
+    "views": 794389,
+    "avgDurationSec": 14327,
+    "totalDurationSec": 157605,
+    "totalDurationHours": 43
+  },
+  {
+    "lang": "Esperanto",
+    "books": 10,
+    "views": 323605,
+    "avgDurationSec": 12604,
+    "totalDurationSec": 126040,
+    "totalDurationHours": 35
+  },
+  {
+    "lang": "Church Slavonic",
+    "books": 8,
+    "views": 115043,
+    "avgDurationSec": 61389,
+    "totalDurationSec": 491118,
+    "totalDurationHours": 136
+  },
+  {
+    "lang": "Ukrainian",
+    "books": 7,
+    "views": 49780,
+    "avgDurationSec": 7656,
+    "totalDurationSec": 53596,
+    "totalDurationHours": 14
+  },
+  {
+    "lang": "Tagalog",
+    "books": 5,
+    "views": 86283,
+    "avgDurationSec": 1976,
+    "totalDurationSec": 9884,
+    "totalDurationHours": 2
+  },
+  {
+    "lang": "Middle English",
+    "books": 4,
+    "views": 184359,
+    "avgDurationSec": 29004,
+    "totalDurationSec": 116019,
+    "totalDurationHours": 32
+  },
+  {
+    "lang": "Arabic",
+    "books": 4,
+    "views": 158499,
+    "avgDurationSec": 20134,
+    "totalDurationSec": 80538,
+    "totalDurationHours": 22
+  },
+  {
+    "lang": "Bulgarian",
+    "books": 4,
+    "views": 61055,
+    "avgDurationSec": 10366,
+    "totalDurationSec": 41465,
+    "totalDurationHours": 11
+  },
+  {
+    "lang": "Romanian",
+    "books": 3,
+    "views": 107944,
+    "avgDurationSec": 33290,
+    "totalDurationSec": 99872,
+    "totalDurationHours": 27
+  },
+  {
+    "lang": "Korean",
+    "books": 3,
+    "views": 64795,
+    "avgDurationSec": 5250,
+    "totalDurationSec": 15750,
+    "totalDurationHours": 4
+  },
+  {
+    "lang": "Hungarian",
+    "books": 2,
+    "views": 141740,
+    "avgDurationSec": 33804,
+    "totalDurationSec": 67609,
+    "totalDurationHours": 18
+  },
+  {
+    "lang": "Tamil",
+    "books": 2,
+    "views": 152378,
+    "avgDurationSec": 20976,
+    "totalDurationSec": 41952,
+    "totalDurationHours": 11
+  },
+  {
+    "lang": "Cantonese Chinese",
+    "books": 1,
+    "views": 62771,
+    "avgDurationSec": 127364,
+    "totalDurationSec": 127364,
+    "totalDurationHours": 35
+  },
+  {
+    "lang": "Indonesian",
+    "books": 1,
+    "views": 38281,
+    "avgDurationSec": 34656,
+    "totalDurationSec": 34656,
+    "totalDurationHours": 9
+  },
+  {
+    "lang": "Irish",
+    "books": 1,
+    "views": 56974,
+    "avgDurationSec": 34114,
+    "totalDurationSec": 34114,
+    "totalDurationHours": 9
+  },
+  {
+    "lang": "Norwegian",
+    "books": 1,
+    "views": 13062,
+    "avgDurationSec": 31672,
+    "totalDurationSec": 31672,
+    "totalDurationHours": 8
+  },
+  {
+    "lang": "Macedonian",
+    "books": 1,
+    "views": 54554,
+    "avgDurationSec": 18915,
+    "totalDurationSec": 18915,
+    "totalDurationHours": 5
+  },
+  {
+    "lang": "Persian/Farsi",
+    "books": 1,
+    "views": 15307,
+    "avgDurationSec": 18532,
+    "totalDurationSec": 18532,
+    "totalDurationHours": 5
+  },
+  {
+    "lang": "Croatian",
+    "books": 1,
+    "views": 32800,
+    "avgDurationSec": 13976,
+    "totalDurationSec": 13976,
+    "totalDurationHours": 3
+  },
+  {
+    "lang": "Latvian",
+    "books": 1,
+    "views": 52673,
+    "avgDurationSec": 12341,
+    "totalDurationSec": 12341,
+    "totalDurationHours": 3
+  },
+  {
+    "lang": "Luxembourgish",
+    "books": 1,
+    "views": 36029,
+    "avgDurationSec": 11118,
+    "totalDurationSec": 11118,
+    "totalDurationHours": 3
+  },
+  {
+    "lang": "Czech",
+    "books": 1,
+    "views": 19372,
+    "avgDurationSec": 8319,
+    "totalDurationSec": 8319,
+    "totalDurationHours": 2
+  },
+  {
+    "lang": "Maori",
+    "books": 1,
+    "views": 33623,
+    "avgDurationSec": 4638,
+    "totalDurationSec": 4638,
+    "totalDurationHours": 1
+  },
+  {
+    "lang": "Dholuo/Luo",
+    "books": 1,
+    "views": 15765,
+    "avgDurationSec": 3685,
+    "totalDurationSec": 3685,
+    "totalDurationHours": 1
+  },
+  {
+    "lang": "Javanese",
+    "books": 1,
+    "views": 9313,
+    "avgDurationSec": 3569,
+    "totalDurationSec": 3569,
+    "totalDurationHours": 0
+  },
+  {
+    "lang": "Urdu",
+    "books": 1,
+    "views": 162695,
+    "avgDurationSec": 3433,
+    "totalDurationSec": 3433,
+    "totalDurationHours": 0
+  },
+  {
+    "lang": "Telugu",
+    "books": 1,
+    "views": 121961,
+    "avgDurationSec": 3303,
+    "totalDurationSec": 3303,
+    "totalDurationHours": 0
+  },
+  {
+    "lang": "Bisaya/Cebuano",
+    "books": 1,
+    "views": 4097,
+    "avgDurationSec": 886,
+    "totalDurationSec": 886,
+    "totalDurationHours": 0
+  },
+  {
+    "lang": "Old English",
+    "books": 1,
+    "views": 155917,
+    "avgDurationSec": 99,
+    "totalDurationSec": 99,
+    "totalDurationHours": 0
+  },
+  {
+    "lang": "Hindi",
+    "books": 1,
+    "views": 0,
+    "avgDurationSec": 0,
+    "totalDurationSec": 0,
+    "totalDurationHours": 0
+  },
+  {
+    "lang": "Sanskrit",
+    "books": 1,
+    "views": 0,
+    "avgDurationSec": 0,
+    "totalDurationSec": 0,
+    "totalDurationHours": 0
+  }
+];
+
+		function matchAny(data, filterParams) {
+			  //data - the data for the row being filtered
+			  //filterParams - params object passed to the filter
+			  //RegExp - modifier "i" - case insensitve
+
+			var match = false;
+			const regex = RegExp(filterParams.value, 'i');
+
+			for (var key in data) {
+				if (regex.test(data[key]) == true) {
+					match = true;
+				}
+			}
+			return match;
+		}
+		const input = document.getElementById("fSearch");
+		input.addEventListener("keyup", function() {
+			table.setFilter(matchAny, { value: input.value });
+			if (input.value == " ") {
+				table.clearFilter()
+			}
+		});
+		
+		function urlFormatter(cell, formatterParams, onRendered){
+			return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+		}
+		function qidFormatter(cell, formatterParams, onRendered){
+			if (cell.getValue()) {
+				return "<a href='https://www.wikidata.org/wiki/" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+			} else {return null}
+		}
+		function urlQidFormatter(cell, formatterParams, onRendered){
+			if (cell.getValue() != null) {
+				return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue().substring(31) + "</a>";
+			} else {return null}
+		}
+		var rowPopupFormatter = function(e, row, onRendered){
+			var data = row.getData(),
+			container = document.createElement("pre"),
+			contents = JSON.stringify(data, null, '\t');
+			container.innerHTML = contents;
+			return container;
+		}
+		
+		data = replaceDotsInKeys(data);
+		var table = new Tabulator("#example-table", {
+		 height:"90vh",
+		 layout:"fitColumns",
+		 data: data,
+		 //rowClickPopup:rowPopupFormatter,
+		 autoColumns: "full",
+		 dataTree: false,
+		 });
+		 
+		 table.on("tableBuilt", function() {
+			let columns = table.getColumnDefinitions();
+			for (let i = 0; i < columns.length; i++) {
+				let columnName = columns[i].field;
+				if (columnName === "web") {
+					columns[i].formatter = urlFormatter;
+					continue;
+				}
+				if (columnName === "qid") {
+					columns[i].formatter = qidFormatter;
+					continue;
+				}
+				const randomIndex = Math.floor(Math.random() * data.length);
+				let sampleVal = data[randomIndex][columnName];
+				if (sampleVal == null) { continue; }
+				if (/^Q\d+$/.test(sampleVal)) {
+					columns[i].formatter = qidFormatter;
+				} else if (/^http.+?Q\d+$/.test(sampleVal)) {
+					columns[i].formatter = urlQidFormatter;
+				} else if (typeof sampleVal === "string" && (sampleVal.startsWith("http://") || sampleVal.startsWith("https://"))) {
+					columns[i].formatter = urlFormatter;
+				}
+			}
+			table.setColumns(columns);
+		});
+		
+		function replaceDotsInKeys(dataArray) {
+			return dataArray.map(obj => {
+				// Create a new object to hold modified keys
+				const newObj = {};
+				for (const key in obj) {
+					if (obj.hasOwnProperty(key)) {
+						// Replace '.' with '•' in the key and assign the value
+						const newKey = key.replace(/\./g, '•');
+						newObj[newKey] = obj[key];
+					}
+				}
+				return newObj; // Return the new object with modified keys
+			});
+		}
+		</script>
+		</body>
+		</html>
