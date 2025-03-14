@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+</head>
+<body>
+<pre># WCQS: With whom Nicholas II is depicted
+SELECT ?obj ?objLabel ?objDesc (COUNT(DISTINCT ?file) AS ?depictedBothCount) ?depictedBoth ?depicted ?categ ?inCategWoDepicts WHERE { 
+  VALUES ?target {wd:Q40787}
+  ?file wdt:P180 ?target .
+  ?file wdt:P180 ?obj .
+  
+  #timeout (COUNT(DISTINCT ?fileWithObj) AS ?depictedItself)
+  #?fileWithObj wdt:P180 ?obj .
+  
+  BIND(REPLACE(STR(?target), &quot;.*/&quot;, &quot;&quot;) AS ?targetQid)
+  # BIND(REPLACE(STR(?obj), &quot;.*/&quot;, &quot;&quot;) AS ?qid)
+  # Construct the URL
+  BIND(URI(CONCAT(&quot;https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3D&quot;,?targetQid,&quot;+haswbstatement%3AP180%3D&quot;, ?qid, &quot;&amp;title=Special:MediaSearch&amp;type=image&quot;)) AS ?depictedBoth)
+  BIND(URI(CONCAT(&quot;https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3D&quot;,?qid, &quot;&amp;title=Special:MediaSearch&amp;type=image&quot;)) AS ?depicted)
+  SERVICE &lt;https://query.wikidata.org/sparql&gt; {
+    ?obj wdt:P31 wd:Q5 .
+    OPTIONAL {
+      ?obj rdfs:label ?objLabel .
+      FILTER (lang(?objLabel) = &#39;ru&#39;) 
+    }
+    OPTIONAL {
+    ?obj schema:description ?objDesc .
+    FILTER ((LANG(?objDesc)) = &quot;ru&quot;)
+  }
+  OPTIONAL { 
+    ?obj wdt:P373 ?categTitle . 
+    BIND(uri(CONCAT(&quot;https://commons.wikimedia.org/wiki/Category:&quot;,?categTitle)) AS ?categ)
+    BIND(REPLACE(STR(?obj), &quot;.*/&quot;, &quot;&quot;) AS ?qid)
+    BIND(ENCODE_FOR_URI(CONCAT(&quot;deepcategory:\&quot;&quot;,?categTitle,&quot;\&quot; -haswbstatement:P180=&quot;,?qid)) AS ?query)
+    BIND(uri(CONCAT(&quot;https://commons.wikimedia.org/w/index.php?search=&quot;,?query,&quot;&amp;title=Special:MediaSearch&amp;type=image&quot;)) AS ?inCategWoDepicts) 
+  }
+  }
+}
+GROUP BY ?obj ?objLabel ?objDesc ?depicted ?depictedBoth ?categ ?inCategWoDepicts 
+ORDER BY DESC (?depictedBothCount)</pre>
+<label for="tsvInput">Paste TSV:</label><br>
+<textarea id="tsvInput" rows="4" cols="50"></textarea><br>
+<button onclick="updateTableFromTSV()">Update Table</button><br><br>
+<label for="sparqlInput">Paste SPARQL Query:</label><br>
+<textarea id="sparqlInput" rows="4" cols="50"></textarea><br>
+<button onclick="executeSPARQL()">Execute SPARQL</button><br><br>
+<label for="fSearch">Search</label>
+<input type="text" id="fSearch" name="fSearch">
+<label>2025-03-14</label>
+<div id="selected-url" style="margin-top: 20px;"></div>
+<button id="deselect-all">Deselect All</button>
+<div id="example-table"></div>
+
+<script>
+var data = 
+//JSON_ARRAY_START[
+  {
+    "obj": "http://www.wikidata.org/entity/Q40787",
+    "objLabel": "Николай II",
+    "objDesc": "последний император Российской империи (1894—1917)",
+    "depictedBothCount": "505",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ40787&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Nicholas II of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Nicholas%20II%20of%20Russia%22%20-haswbstatement%3AP180%3DQ40787&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q113584",
+    "objLabel": "Ольга Николаевна",
+    "objDesc": "старшая дочь последнего Российского императора Николая Второго",
+    "depictedBothCount": "102",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ113584&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ113584&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Olga Nikolaevna of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Olga%20Nikolaevna%20of%20Russia%22%20-haswbstatement%3AP180%3DQ113584&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q152094",
+    "objLabel": "Александра Фёдоровна",
+    "objDesc": "российская императрица, супруга Николая II",
+    "depictedBothCount": "96",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ152094&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ152094&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Alexandra Fyodorovna (Alix of Hesse)",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Alexandra%20Fyodorovna%20%28Alix%20of%20Hesse%29%22%20-haswbstatement%3AP180%3DQ152094&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q158148",
+    "objLabel": "Татьяна Николаевна",
+    "objDesc": "Великая княжна, вторая дочь императора Николая II",
+    "depictedBothCount": "95",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ158148&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ158148&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Tatiana Nikolaevna of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Tatiana%20Nikolaevna%20of%20Russia%22%20-haswbstatement%3AP180%3DQ158148&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q154045",
+    "objLabel": "Алексей Николаевич",
+    "objDesc": "Наследник Цесаревич и Великий Князь, пятый ребёнок и единственный сын Николая II и Александры Фёдоровны.",
+    "depictedBothCount": "90",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ154045&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ154045&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Alexei Nikolaievich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Alexei%20Nikolaievich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ154045&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q151130",
+    "objLabel": "Анастасия Николаевна",
+    "objDesc": "великая княжна, дочь императора Николая II",
+    "depictedBothCount": "88",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ151130&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ151130&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Anastasia Nikolaevna of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Anastasia%20Nikolaevna%20of%20Russia%22%20-haswbstatement%3AP180%3DQ151130&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q155422",
+    "objLabel": "Мария Николаевна",
+    "objDesc": "дочь последнего Российского императора Николая Второго",
+    "depictedBothCount": "75",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ155422&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ155422&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Maria Nikolaevna of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Maria%20Nikolaevna%20of%20Russia%22%20-haswbstatement%3AP180%3DQ155422&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q153601",
+    "objLabel": "Мария Фёдоровна",
+    "objDesc": "императрица Всероссийская, супруга императора Александра III",
+    "depictedBothCount": "17",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ153601&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ153601&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Maria Fyodorovna (Dagmar of Denmark)",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Maria%20Fyodorovna%20%28Dagmar%20of%20Denmark%29%22%20-haswbstatement%3AP180%3DQ153601&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q2677",
+    "objLabel": "Вильгельм II",
+    "objDesc": "последний германский император и король Пруссии",
+    "depictedBothCount": "12",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ2677&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ2677&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Wilhelm II of Germany",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Wilhelm%20II%20of%20Germany%22%20-haswbstatement%3AP180%3DQ2677&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q163176",
+    "objLabel": "Ольга Александровна",
+    "objDesc": "Последняя Великая княгиня, младшая дочь императора Александра III",
+    "depictedBothCount": "12",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ163176&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ163176&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Olga Alexandrovna of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Olga%20Alexandrovna%20of%20Russia%22%20-haswbstatement%3AP180%3DQ163176&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q120180",
+    "objLabel": "Александр III",
+    "objDesc": "император Всероссийский (1881—1894)",
+    "depictedBothCount": "8",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ120180&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ120180&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Alexander III of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Alexander%20III%20of%20Russia%22%20-haswbstatement%3AP180%3DQ120180&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q165113",
+    "objLabel": "Ксения Александровна",
+    "objDesc": "великая княгиня, дочь императора Александра III, сестра российского императора Николая II",
+    "depictedBothCount": "8",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ165113&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ165113&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Xenia Alexandrovna of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Xenia%20Alexandrovna%20of%20Russia%22%20-haswbstatement%3AP180%3DQ165113&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q154444",
+    "objLabel": "Михаил Александрович",
+    "objDesc": "четвёртый сын Александра III, младший брат Николая II; российский военачальник, генерал-лейтенант; де-юре последний Император Всероссийский",
+    "depictedBothCount": "6",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ154444&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ154444&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Michael Alexandrovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Michael%20Alexandrovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ154444&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q4403548",
+    "objLabel": "Саблин, Николай Павлович",
+    "objDesc": "",
+    "depictedBothCount": "6",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ4403548&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ4403548&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Nikolai Pavlovich Sablin",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Nikolai%20Pavlovich%20Sablin%22%20-haswbstatement%3AP180%3DQ4403548&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q57507",
+    "objLabel": "Эрнст Людвиг Гессенский",
+    "objDesc": "великий герцог Гессенский и Рейнский",
+    "depictedBothCount": "6",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ57507&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ57507&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Ernest Louis, Grand Duke of Hesse",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Ernest%20Louis%2C%20Grand%20Duke%20of%20Hesse%22%20-haswbstatement%3AP180%3DQ57507&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q9439",
+    "objLabel": "Виктория",
+    "objDesc": "королева Великобритании (1837–1901)",
+    "depictedBothCount": "5",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ9439&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ9439&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Victoria of the United Kingdom",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Victoria%20of%20the%20United%20Kingdom%22%20-haswbstatement%3AP180%3DQ9439&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q233990",
+    "objLabel": "Ирена Гессенская",
+    "objDesc": "супруга Генриха Прусского, сестра императрицы Александры Фёдоровны",
+    "depictedBothCount": "5",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ233990&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ233990&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Princess Irene of Hesse and by Rhine",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Princess%20Irene%20of%20Hesse%20and%20by%20Rhine%22%20-haswbstatement%3AP180%3DQ233990&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q266125",
+    "objLabel": "Анна Александровна Вырубова",
+    "objDesc": "фрейлина последней русской императрицы",
+    "depictedBothCount": "5",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ266125&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ266125&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Anna Alexandrovna Vyrubova",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Anna%20Alexandrovna%20Vyrubova%22%20-haswbstatement%3AP180%3DQ266125&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q170293",
+    "objLabel": "Георгий Александрович",
+    "objDesc": "третий сын Александра III и Марии Фёдоровны, младший брат Николая II",
+    "depictedBothCount": "4",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ170293&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ170293&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:George Alexandrovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22George%20Alexandrovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ170293&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q248900",
+    "objLabel": "Сергей Александрович",
+    "objDesc": "пятый сын Александра II; Московский генерал-губернатор",
+    "depictedBothCount": "4",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ248900&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ248900&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Sergei Alexandrovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Sergei%20Alexandrovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ248900&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q164500",
+    "objLabel": "Виктория Фёдоровна",
+    "objDesc": "великая княгиня, супруга великого князя Кирилла Владимировича",
+    "depictedBothCount": "4",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ164500&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ164500&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Princess Victoria Melita of Edinburgh and Saxe-Coburg and Gotha",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Princess%20Victoria%20Melita%20of%20Edinburgh%20and%20Saxe-Coburg%20and%20Gotha%22%20-haswbstatement%3AP180%3DQ164500&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q269412",
+    "objLabel": "Георг V",
+    "objDesc": "король Соединённого Королевства Великобритании и Ирландии",
+    "depictedBothCount": "3",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ269412&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ269412&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:George V of the United Kingdom",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22George%20V%20of%20the%20United%20Kingdom%22%20-haswbstatement%3AP180%3DQ269412&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q57658",
+    "objLabel": "Виктория Гессен-Дармштадтская",
+    "objDesc": "Принцесса Гессен-Дармштадтская, маркиза Милфорд-Хэйвен",
+    "depictedBothCount": "3",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ57658&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ57658&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Victoria Mountbatten, Marchioness of Milford Haven",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Victoria%20Mountbatten%2C%20Marchioness%20of%20Milford%20Haven%22%20-haswbstatement%3AP180%3DQ57658&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q15065817",
+    "objLabel": "Деревенько, Андрей Еремеевич",
+    "objDesc": "",
+    "depictedBothCount": "3",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ15065817&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ15065817&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Andrei Eremeevich Derevenko",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Andrei%20Eremeevich%20Derevenko%22%20-haswbstatement%3AP180%3DQ15065817&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q234230",
+    "objLabel": "Ирина Александровна Романова",
+    "objDesc": "княжна императорской крови",
+    "depictedBothCount": "2",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ234230&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ234230&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Irina Alexandrovna Romanova",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Irina%20Alexandrovna%20Romanova%22%20-haswbstatement%3AP180%3DQ234230&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q169502",
+    "objLabel": "Эмиль Лубе",
+    "objDesc": "французский политик, президент Франции (1899-1906)",
+    "depictedBothCount": "2",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ169502&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ169502&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Émile Loubet",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22%C3%89mile%20Loubet%22%20-haswbstatement%3AP180%3DQ169502&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q20875",
+    "objLabel": "Эдуард VII",
+    "objDesc": "король Соединённого Королевства Великобритании и Ирландии, 2-й император Индии",
+    "depictedBothCount": "2",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ20875&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ20875&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Edward VII of the United Kingdom",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Edward%20VII%20of%20the%20United%20Kingdom%22%20-haswbstatement%3AP180%3DQ20875&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q52924",
+    "objLabel": "Оскар II",
+    "objDesc": "король Швеции (1872—1907) и Норвегии (1872—1905)",
+    "depictedBothCount": "2",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ52924&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ52924&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Oscar II of Sweden",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Oscar%20II%20of%20Sweden%22%20-haswbstatement%3AP180%3DQ52924&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q372954",
+    "objLabel": "Дмитрий Павлович",
+    "objDesc": "",
+    "depictedBothCount": "2",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ372954&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ372954&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Dmitriy Pavlovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Dmitriy%20Pavlovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ372954&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q60737",
+    "objLabel": "Георг Донатус, наследный принц Гессенский",
+    "objDesc": "",
+    "depictedBothCount": "2",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ60737&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ60737&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Georg Donatus, Hereditary Grand Duke of Hesse",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Georg%20Donatus%2C%20Hereditary%20Grand%20Duke%20of%20Hesse%22%20-haswbstatement%3AP180%3DQ60737&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q120793672",
+    "objLabel": "",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ120793672&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ120793672&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Pavel Voronov",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Pavel%20Voronov%22%20-haswbstatement%3AP180%3DQ120793672&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q211827",
+    "objLabel": "Пётр I Карагеоргиевич",
+    "objDesc": "первый сербский король из династии Карагеоргиевичей",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ211827&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ211827&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Peter I of Serbia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Peter%20I%20of%20Serbia%22%20-haswbstatement%3AP180%3DQ211827&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q315726",
+    "objLabel": "Алексей Александрович",
+    "objDesc": "Великий князь",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ315726&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ315726&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Alexey Alexandrovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Alexey%20Alexandrovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ315726&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q372964",
+    "objLabel": "Павел Александрович",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ372964&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ372964&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Paul Alexandrovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Paul%20Alexandrovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ372964&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q35041",
+    "objLabel": "Уильям Мак-Кинли",
+    "objDesc": "американский политик, президент США (1897—1901)",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ35041&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ35041&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:William McKinley",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22William%20McKinley%22%20-haswbstatement%3AP180%3DQ35041&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q158861",
+    "objLabel": "Чулалонгкорн",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ158861&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ158861&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Chulalongkorn",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Chulalongkorn%22%20-haswbstatement%3AP180%3DQ158861&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q4384009",
+    "objLabel": "Пустовойтенко, Михаил Саввич",
+    "objDesc": "генерал-лейтенант",
+    "depictedBothCount": "1",
+    "depictedBoth": "",
+    "depicted": "",
+    "categ": "",
+    "inCategWoDepicts": ""
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q354108",
+    "objLabel": "Михаил Васильевич Алексеев",
+    "objDesc": "русский военачальник периода Первой мировой войны",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ354108&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ354108&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Mikhail Vasilyevich Alexeyev",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Mikhail%20Vasilyevich%20Alexeyev%22%20-haswbstatement%3AP180%3DQ354108&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q899088",
+    "objLabel": "Юсупова, Зинаида Николаевна",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ899088&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ899088&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Zinaida Nikolaevna Yusupova",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Zinaida%20Nikolaevna%20Yusupova%22%20-haswbstatement%3AP180%3DQ899088&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q4114323",
+    "objLabel": "Владимир Николаевич Воейков",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ4114323&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ4114323&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Vladimir Nikolayevich Voeykov",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Vladimir%20Nikolayevich%20Voeykov%22%20-haswbstatement%3AP180%3DQ4114323&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q44717",
+    "objLabel": "Серафим Саровский",
+    "objDesc": "иеромонах Саровского монастыря",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ44717&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ44717&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Seraphim of Sarov",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Seraphim%20of%20Sarov%22%20-haswbstatement%3AP180%3DQ44717&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q335129",
+    "objLabel": "Джордж Маунтбеттен",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ335129&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ335129&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:George Mountbatten, 2nd Marquess of Milford Haven",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22George%20Mountbatten%2C%202nd%20Marquess%20of%20Milford%20Haven%22%20-haswbstatement%3AP180%3DQ335129&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q192245",
+    "objLabel": "Энтони, Сьюзен",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ192245&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ192245&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Susan B. Anthony",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Susan%20B.%20Anthony%22%20-haswbstatement%3AP180%3DQ192245&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q235069",
+    "objLabel": "Бэйкер Эдди, Мэри",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ235069&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ235069&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Mary Baker Eddy",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Mary%20Baker%20Eddy%22%20-haswbstatement%3AP180%3DQ235069&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q335013",
+    "objLabel": "Дэвид Битти",
+    "objDesc": "британский флотоводец, адмирал флота, Первый лорд Адмиралтейства",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ335013&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ335013&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:David Beatty",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22David%20Beatty%22%20-haswbstatement%3AP180%3DQ335013&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q465335",
+    "objLabel": "Элизабет Кэди Стэнтон",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ465335&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ465335&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Elizabeth Cady Stanton",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Elizabeth%20Cady%20Stanton%22%20-haswbstatement%3AP180%3DQ465335&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q2418031",
+    "objLabel": "Мэри Уокер",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ2418031&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ2418031&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Mary Edwards Walker",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Mary%20Edwards%20Walker%22%20-haswbstatement%3AP180%3DQ2418031&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q2583364",
+    "objLabel": "Кэрри Нейшн",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ2583364&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ2583364&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Carrie Nation",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Carrie%20Nation%22%20-haswbstatement%3AP180%3DQ2583364&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q2895165",
+    "objLabel": "",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ2895165&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ2895165&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Belva Ann Lockwood",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Belva%20Ann%20Lockwood%22%20-haswbstatement%3AP180%3DQ2895165&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q277611",
+    "objLabel": "Романов, Никита Александрович",
+    "objDesc": "Князь императорской крови",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ277611&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ277611&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Nikita Alexandrovich Romanov",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Nikita%20Alexandrovich%20Romanov%22%20-haswbstatement%3AP180%3DQ277611&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q1984826",
+    "objLabel": "Анастасия Васильевна Гендрикова",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ1984826&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ1984826&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Anastasia Hendrikova",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Anastasia%20Hendrikova%22%20-haswbstatement%3AP180%3DQ1984826&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q3266235",
+    "objLabel": "Кербер, Людвиг Бернгардович",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ3266235&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ3266235&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Ludwig August Bernhard Körber",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Ludwig%20August%20Bernhard%20K%C3%B6rber%22%20-haswbstatement%3AP180%3DQ3266235&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q204864",
+    "objLabel": "Елена Виктория Шлезвиг-Гольштейнская",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ204864&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ204864&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Princess Helena Victoria of Schleswig-Holstein",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Princess%20Helena%20Victoria%20of%20Schleswig-Holstein%22%20-haswbstatement%3AP180%3DQ204864&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q57468",
+    "objLabel": "Людвиг Александр Баттенберг",
+    "objDesc": "британский военно-морской и государственный деятель",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ57468&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ57468&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Prince Louis of Battenberg, 1st Marquess of Milford Haven",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Prince%20Louis%20of%20Battenberg%2C%201st%20Marquess%20of%20Milford%20Haven%22%20-haswbstatement%3AP180%3DQ57468&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q4403537",
+    "objLabel": "Саблин, Николай Васильевич",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "",
+    "depicted": "",
+    "categ": "",
+    "inCategWoDepicts": ""
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q160869",
+    "objLabel": "Николай Николаевич Младший",
+    "objDesc": "Великий князь; генерал РИА",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ160869&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ160869&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Nicholas Nikolaievich of Russia the Younger",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Nicholas%20Nikolaievich%20of%20Russia%20the%20Younger%22%20-haswbstatement%3AP180%3DQ160869&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q2442959",
+    "objLabel": "Юрий Никифорович Данилов",
+    "objDesc": "русский генерал от инфантерии российской императорской армии",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ2442959&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ2442959&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Yuri Nikiforovich Danilov",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Yuri%20Nikiforovich%20Danilov%22%20-haswbstatement%3AP180%3DQ2442959&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q2453106",
+    "objLabel": "Николай Николаевич Янушкевич",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ2453106&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ2453106&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Nikolai Yanushkevich",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Nikolai%20Yanushkevich%22%20-haswbstatement%3AP180%3DQ2453106&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q115132",
+    "objLabel": "Мария Антуанетта Мекленбургская",
+    "objDesc": "немецкая принцесса",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ115132&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ115132&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Marie Antoinette of Mecklenburg-Schwerin",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Marie%20Antoinette%20of%20Mecklenburg-Schwerin%22%20-haswbstatement%3AP180%3DQ115132&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q160948",
+    "objLabel": "Кирилл Владимирович",
+    "objDesc": "Император Всероссийский в изгнании, двоюродный брат Николая II",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ160948&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ160948&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Cyril Vladimirovich of Russia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Cyril%20Vladimirovich%20of%20Russia%22%20-haswbstatement%3AP180%3DQ160948&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q51056",
+    "objLabel": "Франц Иосиф I",
+    "objDesc": "император Австрии (1848—1916)",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ51056&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ51056&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Franz Joseph I of Austria",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Franz%20Joseph%20I%20of%20Austria%22%20-haswbstatement%3AP180%3DQ51056&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q66639",
+    "objLabel": "Феодора Саксен-Мейнингенская",
+    "objDesc": "великая герцогиня Саксонская",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ66639&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ66639&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Feodora of Saxe-Meiningen, Grand Duchess of Saxe-Weimar-Eisenach",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Feodora%20of%20Saxe-Meiningen%2C%20Grand%20Duchess%20of%20Saxe-Weimar-Eisenach%22%20-haswbstatement%3AP180%3DQ66639&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q158140",
+    "objLabel": "Беатриса, принцесса Великобритании",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ158140&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ158140&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Princess Beatrice of the United Kingdom",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Princess%20Beatrice%20of%20the%20United%20Kingdom%22%20-haswbstatement%3AP180%3DQ158140&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q172911",
+    "objLabel": "Илья Ефимович Репин",
+    "objDesc": "русский живописец, писатель и педагог",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ172911&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ172911&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Ilya Yefimovich Repin",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Ilya%20Yefimovich%20Repin%22%20-haswbstatement%3AP180%3DQ172911&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q231463",
+    "objLabel": "Мария Павловна",
+    "objDesc": "великая княгиня, супруга великого князя Владимира Александровича",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ231463&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ231463&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Maria Pavlovna (Marie of Mecklenburg-Schwerin)",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Maria%20Pavlovna%20%28Marie%20of%20Mecklenburg-Schwerin%29%22%20-haswbstatement%3AP180%3DQ231463&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q467021",
+    "objLabel": "Мозаффар эд-Дин-шах",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ467021&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ467021&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Mozaffar al-Din Shah Qajar",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Mozaffar%20al-Din%20Shah%20Qajar%22%20-haswbstatement%3AP180%3DQ467021&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q957636",
+    "objLabel": "Мирза Али Асгар Хан Амин аль-Султан",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ957636&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ957636&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Amin al-Sultan",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Amin%20al-Sultan%22%20-haswbstatement%3AP180%3DQ957636&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q3316197",
+    "objLabel": "Мирза Риза-хан Арфа од-Довла",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ3316197&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ3316197&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Mirza Reza Khan Arfa od-Dowleh",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Mirza%20Reza%20Khan%20Arfa%20od-Dowleh%22%20-haswbstatement%3AP180%3DQ3316197&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q12840170",
+    "objLabel": "",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ12840170&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ12840170&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Ali Khan Maragha'i",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Ali%20Khan%20Maragha%27i%22%20-haswbstatement%3AP180%3DQ12840170&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q76927",
+    "objLabel": "Мария Текская",
+    "objDesc": "Королева Великобритании",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ76927&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ76927&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Queen Mary of the United Kingdom",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Queen%20Mary%20of%20the%20United%20Kingdom%22%20-haswbstatement%3AP180%3DQ76927&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q161247",
+    "objLabel": "Августа Виктория",
+    "objDesc": "императрица Германии",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ161247&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ161247&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Augusta Viktoria of Schleswig-Holstein",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Augusta%20Viktoria%20of%20Schleswig-Holstein%22%20-haswbstatement%3AP180%3DQ161247&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q233203",
+    "objLabel": "Луиза Прусская",
+    "objDesc": "великая герцогиня Баденская",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ233203&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ233203&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Princess Louise of Prussia",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Princess%20Louise%20of%20Prussia%22%20-haswbstatement%3AP180%3DQ233203&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q235812",
+    "objLabel": "Цецилия Мекленбург-Шверинская",
+    "objDesc": "последняя кронпринцесса Германской империи",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ235812&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ235812&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Cecilie of Mecklenburg-Schwerin, German Crown Princess",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Cecilie%20of%20Mecklenburg-Schwerin%2C%20German%20Crown%20Princess%22%20-haswbstatement%3AP180%3DQ235812&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q310533",
+    "objLabel": "Вальдемар, принц Дании",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ310533&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ310533&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Prince Valdemar of Denmark",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Prince%20Valdemar%20of%20Denmark%22%20-haswbstatement%3AP180%3DQ310533&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q437001",
+    "objLabel": "Эрнст Август II Ганноверский",
+    "objDesc": "кронпринц Ганноверский",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ437001&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ437001&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Ernst August, Crown Prince of Hannover",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Ernst%20August%2C%20Crown%20Prince%20of%20Hannover%22%20-haswbstatement%3AP180%3DQ437001&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q529045",
+    "objLabel": "Николай Румынский",
+    "objDesc": "румынский принц",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ529045&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ529045&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Prince Nicolae of Romania",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Prince%20Nicolae%20of%20Romania%22%20-haswbstatement%3AP180%3DQ529045&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q94929702",
+    "objLabel": "Александр Сергеевич Бакулевский",
+    "objDesc": "советский и российский график, народный художник России",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ94929702&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ94929702&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Aleksandr Bakulevskiy",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Aleksandr%20Bakulevskiy%22%20-haswbstatement%3AP180%3DQ94929702&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q57621",
+    "objLabel": "Вильгельм Прусский",
+    "objDesc": "кронпринц Германии",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ57621&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ57621&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Wilhelm, German Crown Prince",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Wilhelm%2C%20German%20Crown%20Prince%22%20-haswbstatement%3AP180%3DQ57621&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q57672",
+    "objLabel": "Эрнст Август Брауншвейгский",
+    "objDesc": "герцог Брауншвейгский и Люнебургский, последний правитель из Ганноверского дома",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ57672&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ57672&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Ernst August, Duke of Brunswick",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Ernst%20August%2C%20Duke%20of%20Brunswick%22%20-haswbstatement%3AP180%3DQ57672&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q62550",
+    "objLabel": "София Шарлотта Ольденбургская",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ62550&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ62550&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Duchess Sophie Charlotte of Oldenburg",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Duchess%20Sophie%20Charlotte%20of%20Oldenburg%22%20-haswbstatement%3AP180%3DQ62550&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q62549",
+    "objLabel": "Элеонора Сольмс-Гогенсольмс-Лихская",
+    "objDesc": "Великая герцогиня Гессенская",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ62549&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ62549&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Princess Eleonore of Solms-Hohensolms-Lich",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Princess%20Eleonore%20of%20Solms-Hohensolms-Lich%22%20-haswbstatement%3AP180%3DQ62549&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q57666",
+    "objLabel": "Мария Эдинбургская",
+    "objDesc": "королева Румынии",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ57666&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ57666&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Queen Marie of Romania",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Queen%20Marie%20of%20Romania%22%20-haswbstatement%3AP180%3DQ57666&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q62477",
+    "objLabel": "Альфред, принц Саксен-Кобург-Готский",
+    "objDesc": "внук королевы Виктории",
+    "depictedBothCount": "1",
+    "depictedBoth": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ40787+haswbstatement%3AP180%3DQ62477&title=Special:MediaSearch&type=image",
+    "depicted": "https://commons.wikimedia.org/w/index.php?search=haswbstatement%3AP180%3DQ62477&title=Special:MediaSearch&type=image",
+    "categ": "https://commons.wikimedia.org/wiki/Category:Alfred, Hereditary Prince of Saxe-Coburg and Gotha",
+    "inCategWoDepicts": "https://commons.wikimedia.org/w/index.php?search=deepcategory%3A%22Alfred%2C%20Hereditary%20Prince%20of%20Saxe-Coburg%20and%20Gotha%22%20-haswbstatement%3AP180%3DQ62477&title=Special:MediaSearch&type=image"
+  },
+  {
+    "obj": "http://www.wikidata.org/entity/Q16403974",
+    "objLabel": "Владимир Сапожнин",
+    "objDesc": "",
+    "depictedBothCount": "1",
+    "depictedBoth": "",
+    "depicted": "",
+    "categ": "",
+    "inCategWoDepicts": ""
+  }
+]
+//JSON_ARRAY_END
+;
+
+function matchAny(data, filterParams) {
+    var match = false;
+    const regex = RegExp(filterParams.value, 'i');
+
+    for (var key in data) {
+        if (regex.test(data[key]) == true) {
+            match = true;
+        }
+    }
+    return match;
+}
+
+const input = document.getElementById("fSearch");
+input.addEventListener("keyup", function() {
+    table.setFilter(matchAny, { value: input.value });
+    if (input.value == " ") {
+        table.clearFilter()
+    }
+});
+
+document.getElementById("deselect-all").addEventListener("click", function(){
+    table.deselectRow();
+});
+
+function urlFormatter(cell, formatterParams, onRendered){
+    return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+}
+
+var table = new Tabulator("#example-table", {
+    height:"90vh",
+    layout:"fitColumns",
+    data: data,
+    autoColumns: true, // Automatically generate columns based on data
+    selectableRows:true,
+});
+
+function applyColumnFormatters() {
+    let columns = table.getColumnDefinitions();
+    let dataTmp = table.getData();
+    console.log('dataTmp.length=' + dataTmp.length);
+    for (let i = 0; i < columns.length; i++) {
+        let columnName = columns[i].field;
+        if (columnName === "url") {
+            columns[i].formatter = urlFormatter;
+            continue;
+        }
+        const randomIndex = Math.floor(Math.random() * dataTmp.length);
+        let sampleVal = dataTmp[randomIndex][columnName];
+		if (sampleVal === null) {
+			sampleVal = dataTmp[0][columnName];
+		}
+        console.log(columnName + ':' + sampleVal);
+        if (typeof sampleVal === "string" && sampleVal.startsWith("http")) {
+            columns[i].formatter = urlFormatter;
+        }
+    }
+    table.setColumns(columns);
+}
+
+table.on("tableBuilt", applyColumnFormatters);
+
+function updateSelectedUrl() {
+    const selectedRows = table.getSelectedData();
+    const selectedIds = selectedRows.map(row => row.obj.replaceAll(/.*\//g,''));
+    const query = selectedIds.map(id => `haswbstatement%3AP180%3D${id}`).join('+');
+    const url = `https://commons.wikimedia.org/w/index.php?search=${query}&title=Special:MediaSearch&type=image`;
+    document.getElementById("selected-url").innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+}
+
+table.on("rowSelectionChanged", function(data, rows) {
+    updateSelectedUrl();
+});
+
+function updateTableFromTSV() {
+    const tsvInput = document.getElementById("tsvInput").value.trim();
+    if (tsvInput) {
+        const rows = tsvInput.split('\n');
+        const headers = rows[0].split('\t'); // First row is headers
+        const newData = rows.slice(1).map(row => {
+            const values = row.split('\t');
+            const rowData = {};
+            headers.forEach((header, index) => {
+                rowData[header] = values[index] || ''; // Map each header to its corresponding value
+            });
+            return rowData;
+        });
+
+        // Dynamically set columns based on headers
+        const columns = headers.map(header => ({
+            title: header,
+            field: header,
+        }));
+
+        table.setColumns(columns); // Update table columns
+        table.setData(newData); // Update table data
+    } else {
+        table.setData(data); // Fallback to original data if TSV is empty
+    }
+    applyColumnFormatters();
+}
+
+async function executeSPARQL() {
+    const sparqlInput = document.getElementById("sparqlInput").value.trim();
+    if (!sparqlInput) {
+        alert("Please enter a SPARQL query.");
+        return;
+    }
+
+    const endpoint = "https://query.wikidata.org/sparql";
+    const url = `${endpoint}?query=${encodeURIComponent(sparqlInput)}&format=json`;
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                Accept: "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`SPARQL query failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        const bindings = result.results.bindings;
+
+        if (bindings.length === 0) {
+            alert("No results found.");
+            return;
+        }
+
+        // Extract headers from the first binding
+        const headers = Object.keys(bindings[0]);
+        const newData = bindings.map(binding => {
+            const rowData = {};
+            headers.forEach(header => {
+                rowData[header] = binding[header].value;
+            });
+            return rowData;
+        });
+
+        // Dynamically set columns based on headers
+        const columns = headers.map(header => ({
+            title: header,
+            field: header,
+        }));
+
+        table.setColumns(columns); // Update table columns
+        table.setData(newData); // Update table data
+        applyColumnFormatters();
+    } catch (error) {
+        console.error("Error executing SPARQL query:", error);
+        alert("An error occurred while executing the SPARQL query.");
+    }
+}
+</script>
+</body>
+</html>
