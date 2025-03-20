@@ -1,0 +1,36 @@
+<head>
+  <style> body { margin: 0; } </style>
+  <script src="//unpkg.com/3d-force-graph"></script>
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <script>
+    // Example data with nodes and edges
+    const data = {
+      nodes: [
+        { id: 1, type: 'type1', url: 'https://example.com/node1' },
+        { id: 2, type: 'type2', url: 'https://example.com/node2' },
+        { id: 3, type: 'type1', url: 'https://example.com/node3' },
+        // Add more nodes as needed
+      ],
+      edges: [
+        { source: 1, target: 2, type: 'typeA' },
+        { source: 2, target: 3, type: 'typeB' },
+        // Add more edges as needed
+      ]
+    };
+
+    const Graph = new ForceGraph3D(document.getElementById('3d-graph'))
+      .nodeAutoColorBy('type') // Auto-color nodes by their 'type' property
+      .linkAutoColorBy(d => data.edges.find(edge => edge.source === d.source && edge.target === d.target).type) // Auto-color links by their 'type' property
+      .linkOpacity(0.5)
+      .onNodeClick(node => {
+        if (node.url) {
+          window.open(node.url, '_blank'); // Open URL in a new tab if it exists
+        }
+      })
+      .graphData(data);
+  </script>
+</body>
