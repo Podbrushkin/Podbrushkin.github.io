@@ -1,0 +1,3301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <style>
+html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+	/* Make the graph container take up the full viewport */
+    #3d-graph {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Style the details/summary section */
+    details {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
+      border-top: 1px solid #ccc;
+      z-index: 10; /* Ensure it appears above the graph */
+      max-height: 50vh; /* Limit the height when expanded */
+      overflow-y: auto; /* Add scrollbar if content overflows */
+    }
+
+    summary {
+      //padding: 10px;
+      cursor: pointer;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    pre {
+      margin: 0;
+    //  padding: 10px;
+      white-space: pre-wrap; /* Preserve formatting but wrap text */
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@latest/dist/3d-force-graph.min.js"></script>
+</head>
+
+<body>
+	<div id="3d-graph"></div>
+	<details>
+	<summary>Details</summary>
+	<pre>$sparql =@&#39;
+#defaultView:Graph
+# All Nicholas I descendants
+PREFIX gas: &lt;http://www.bigdata.com/rdf/gas#&gt;
+
+SELECT ?item ?itemLabel (SAMPLE(YEAR(?birthDate)) AS ?birthYear) (SAMPLE(YEAR(?deathDate)) AS ?deathYear) ?links ?parentId
+WHERE {
+  SERVICE gas:service {
+    gas:program gas:gasClass &quot;com.bigdata.rdf.graph.analytics.SSSP&quot; ;
+                gas:in wd:Q130734 ;
+                gas:traversalDirection &quot;Forward&quot; ;
+                gas:out ?item ;
+                gas:out1 ?depth ;
+                gas:out2 ?parentId ;  # Capture the parent ID
+                gas:maxIterations 4 ;
+                gas:linkType wdt:P40 .
+  }
+  OPTIONAL { ?item wdt:P569 ?birthDate. }
+  OPTIONAL { ?item wdt:P570 ?deathDate. }
+  OPTIONAL { ?item wikibase:sitelinks ?links. }
+  #OPTIONAL { ?item wdt:P40 ?linkTo }
+  #OPTIONAL { ?item wdt:P18 ?pic }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language &quot;ru,en&quot; }
+}
+GROUP BY ?item ?itemLabel ?links ?parentId
+&#39;@
+$ppl = Invoke-Sparql $sparql
+$ppl | % {
+  Add-Member -inp $_ -NotePropertyName label -NotePropertyValue &quot;$($_.itemLabel) ($($_.birthYear)-$($_.deathYear))&quot;
+}
+$nodes = $ppl | select @{n=&#39;id&#39;;e=&#39;item&#39;},label,@{n=&#39;value&#39;;e=&#39;links&#39;},@{n=&#39;url&#39;;e=&#39;item&#39;}
+$edges = $ppl | ? parentId | select @{n=&#39;source&#39;;e=&#39;parentId&#39;},@{n=&#39;target&#39;;e=&#39;item&#39;}
+Format-HtmlGraph3D -nodes $nodes -edges $edges -OutVariable html | Invoke-Item</pre>
+	</details>
+  
+
+  <script>
+  const nodes = 
+  //NODES_START
+[
+  {
+    "id": "http://www.wikidata.org/entity/Q27606",
+    "label": "Дмитрий Константинович (1860-1919)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q27606"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q57930",
+    "label": "Фридрих Франц IV Мекленбург-Шверинский (1882-1945)",
+    "value": "27",
+    "url": "http://www.wikidata.org/entity/Q57930"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q62477",
+    "label": "Альфред, принц Саксен-Кобург-Готский (1874-1899)",
+    "value": "23",
+    "url": "http://www.wikidata.org/entity/Q62477"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q62602",
+    "label": "Бертольд Баденский (1906-1963)",
+    "value": "22",
+    "url": "http://www.wikidata.org/entity/Q62602"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70203",
+    "label": "Христиан Людвиг Мекленбургский (1912-1996)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q70203"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70760",
+    "label": "Губерт Прусский (1909-1950)",
+    "value": "16",
+    "url": "http://www.wikidata.org/entity/Q70760"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q76908",
+    "label": "Максимилиан Баденский (1867-1929)",
+    "value": "48",
+    "url": "http://www.wikidata.org/entity/Q76908"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q80976",
+    "label": "Филипп Маунтбеттен, герцог Эдинбургский (1921-2021)",
+    "value": "125",
+    "url": "http://www.wikidata.org/entity/Q80976"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130734",
+    "label": "Николай I (1796-1855)",
+    "value": "103",
+    "url": "http://www.wikidata.org/entity/Q130734"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q151130",
+    "label": "Анастасия Николаевна (1901-1918)",
+    "value": "64",
+    "url": "http://www.wikidata.org/entity/Q151130"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q152099",
+    "label": "Константин I (1868-1923)",
+    "value": "57",
+    "url": "http://www.wikidata.org/entity/Q152099"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q155178",
+    "label": "Ольга Константиновна (1851-1926)",
+    "value": "44",
+    "url": "http://www.wikidata.org/entity/Q155178"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q160869",
+    "label": "Николай Николаевич Младший (1856-1929)",
+    "value": "40",
+    "url": "http://www.wikidata.org/entity/Q160869"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q163863",
+    "label": "Николай Николаевич Старший (1831-1891)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q163863"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q164500",
+    "label": "Виктория Фёдоровна (1876-1936)",
+    "value": "33",
+    "url": "http://www.wikidata.org/entity/Q164500"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q232483",
+    "label": "Елена Владимировна (1882-1957)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q232483"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q234052",
+    "label": "Мария Николаевна (1819-1876)",
+    "value": "29",
+    "url": "http://www.wikidata.org/entity/Q234052"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q235595",
+    "label": "Илеана Румынская (1909-1991)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q235595"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q235597",
+    "label": "Беатриса Саксен-Кобург-Готская (1884-1966)",
+    "value": "26",
+    "url": "http://www.wikidata.org/entity/Q235597"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q236196",
+    "label": "Сесилия Греческая (1911-1937)",
+    "value": "32",
+    "url": "http://www.wikidata.org/entity/Q236196"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q240282",
+    "label": "Вера Константиновна (1854-1912)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q240282"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q242338",
+    "label": "Екатерина Греческая и Датская (1913-2007)",
+    "value": "28",
+    "url": "http://www.wikidata.org/entity/Q242338"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q248900",
+    "label": "Сергей Александрович (1857-1905)",
+    "value": "35",
+    "url": "http://www.wikidata.org/entity/Q248900"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q277611",
+    "label": "Романов, Никита Александрович (1900-1974)",
+    "value": "16",
+    "url": "http://www.wikidata.org/entity/Q277611"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q311442",
+    "label": "Луи Фердинанд Прусский (1907-1994)",
+    "value": "27",
+    "url": "http://www.wikidata.org/entity/Q311442"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q381069",
+    "label": "Кнуд, принц Датский (1900-1976)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q381069"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q433753",
+    "label": "Романова, Ксения Георгиевна (1903-1965)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q433753"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q524437",
+    "label": "Романов, Иоанн Константинович (1886-1918)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q524437"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q524451",
+    "label": "Георгий Михайлович (1863-1919)",
+    "value": "24",
+    "url": "http://www.wikidata.org/entity/Q524451"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q529045",
+    "label": "Николай Румынский (1903-1978)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q529045"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q539712",
+    "label": "Романов, Игорь Константинович (1894-1918)",
+    "value": "20",
+    "url": "http://www.wikidata.org/entity/Q539712"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q564226",
+    "label": "Леннарт Бернадот (1909-2004)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q564226"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q601229",
+    "label": "Пётр Греческий (1908-1980)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q601229"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q619068",
+    "label": "Александр Александрович (1869-1870)",
+    "value": "24",
+    "url": "http://www.wikidata.org/entity/Q619068"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q621088",
+    "label": "Алексей Михайлович (1875-1895)",
+    "value": "20",
+    "url": "http://www.wikidata.org/entity/Q621088"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q630371",
+    "label": "София Греческая и Датская (1914-2001)",
+    "value": "32",
+    "url": "http://www.wikidata.org/entity/Q630371"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q661504",
+    "label": "Романов, Николай Романович (1922-2014)",
+    "value": "18",
+    "url": "http://www.wikidata.org/entity/Q661504"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q700060",
+    "label": "Владимир Павлович Палей (1897-1918)",
+    "value": "18",
+    "url": "http://www.wikidata.org/entity/Q700060"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q706069",
+    "label": "Олег Константинович Романов (1892-1914)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q706069"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q706075",
+    "label": "Николай Константинович (1850-1918)",
+    "value": "22",
+    "url": "http://www.wikidata.org/entity/Q706075"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1188421",
+    "label": "Вячеслав Константинович (1862-1879)",
+    "value": "16",
+    "url": "http://www.wikidata.org/entity/Q1188421"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2204793",
+    "label": "Эльза Вюртембергская (1876-1936)",
+    "value": "15",
+    "url": "http://www.wikidata.org/entity/Q2204793"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2332225",
+    "label": "Мария Мелита Гогенлоэ-Лангенбургская (1899-1967)",
+    "value": "15",
+    "url": "http://www.wikidata.org/entity/Q2332225"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2339401",
+    "label": "Андрей Андреевич Романов (1923-2021)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q2339401"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2379307",
+    "label": "Евгения Греческая и Датская (1910-1989)",
+    "value": "18",
+    "url": "http://www.wikidata.org/entity/Q2379307"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2589734",
+    "label": "Георгий Максимилианович, 6-й герцог Лейхтенбергский (1852-1912)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q2589734"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2621015",
+    "label": "Давид Павлович Чавчавадзе (1924-2014)",
+    "value": "7",
+    "url": "http://www.wikidata.org/entity/Q2621015"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2834460",
+    "label": "Белёвский-Жуковский, Алексей Алексеевич (1871-1931)",
+    "value": "6",
+    "url": "http://www.wikidata.org/entity/Q2834460"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2900643",
+    "label": "Теймураз Константинович Багратион-Мухранский (1912-1992)",
+    "value": "8",
+    "url": "http://www.wikidata.org/entity/Q2900643"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3309617",
+    "label": "Михаил Романов (1924-2008)",
+    "value": "8",
+    "url": "http://www.wikidata.org/entity/Q3309617"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3336341",
+    "label": "Андросова, Наталья Николаевна (1917-1999)",
+    "value": "6",
+    "url": "http://www.wikidata.org/entity/Q3336341"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3442879",
+    "label": "Ростислав Ростиславович Романов (1938-1999)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q3442879"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4089010",
+    "label": "Дарья Евгеньевна Богарне (1870-1937)",
+    "value": "5",
+    "url": "http://www.wikidata.org/entity/Q4089010"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4172853",
+    "label": "Евгений Максимилианович, 5-й герцог Лейхтенбергский (1847-1901)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q4172853"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4397150",
+    "label": "Романов, Всеволод Иоаннович (1914-1973)",
+    "value": "11",
+    "url": "http://www.wikidata.org/entity/Q4397150"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4458023",
+    "label": "Тира Мекленбургская (1919-1981)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q4458023"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7243972",
+    "label": "Евгений Шаумбург-Липпский (1899-1929)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q7243972"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16010996",
+    "label": "Наталья Константиновна Багратион-Мухранская (1914-1984)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q16010996"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20851046",
+    "label": "Елена Георгиевна Лейхтенбергская (1892-1971)",
+    "value": "4",
+    "url": "http://www.wikidata.org/entity/Q20851046"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q27121600",
+    "label": "Count Eugene Tyszkiewicz (1935-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q27121600"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q47003361",
+    "label": "Дарья Николаевна Часовитина (1896-1966)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q47003361"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q47139432",
+    "label": "Ирма Хелена Гогенлоэ-Лангенбуржская (1902-1986)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q47139432"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75244263",
+    "label": "Роман Сергеевич Путятин (1918-1919)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75244263"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75304478",
+    "label": "Франц Иосиф Шаумбург-Липпский (1899-1963)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75304478"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318498",
+    "label": "Alexander Fricero (1850-1904)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318498"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318502",
+    "label": "Nicolas Fricero (1853-1884)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318502"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318505",
+    "label": "Michel Fricero (1858-1914)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318505"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318510",
+    "label": "Emanuel Fricero (1861-1880)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318510"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318515",
+    "label": "Ольга Карловна Альбрехт (1828-1898)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318515"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318518",
+    "label": "Максим Александрович Рейтерн (-1897)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318518"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318519",
+    "label": "Александр Максимович Рейтерн (1849-1912)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318519"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318522",
+    "label": "Мария Максимовна фон Рейтерн (-1918)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318522"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75318526",
+    "label": "Ольга Максимовна Рейтерн (1860-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75318526"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75324948",
+    "label": "Ольга Павловна Волынская (1877-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75324948"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75324951",
+    "label": "Николай Павлович Волынский (1878-1913)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q75324951"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328088",
+    "label": "Dominique-Alexandre Roman-Fricero (1894-1980)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328088"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328089",
+    "label": "Margarita Fricero (1877-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328089"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328090",
+    "label": "Maria Fricero (1878-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328090"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328093",
+    "label": "Serge Roman-Fricero (1931-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328093"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328104",
+    "label": "Andree Valentine Roman-Fricero (1919-1953)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328104"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328211",
+    "label": "Maria Fricero (1903-1909)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328211"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328212",
+    "label": "Josephine Charlotte Fricero (1904-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328212"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328228",
+    "label": "Catherine Fricero (1878-1923)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328228"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328231",
+    "label": "Olga Fricero (1879-1922)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328231"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328234",
+    "label": "Renee Fricero (1907-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328234"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328244",
+    "label": "Максим Александрович Рейтерн (1900-1991)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328244"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328245",
+    "label": "Ольга Александровна Рейтерн (1897-1995)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328245"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328252",
+    "label": "Irine Stroukov (1924-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328252"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328255",
+    "label": "Countess Alice Tyszkiewicz (1928-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328255"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329747",
+    "label": "James de St. Leger (1882-1884)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329747"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329748",
+    "label": "Vera Marie Grace Stolte (1874-1893)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329748"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329750",
+    "label": "Joan de St. Leger (1886-1955)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329750"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329751",
+    "label": "Richard Muller (1915-1977)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329751"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329766",
+    "label": "Charles Robert Muller (1919-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329766"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329786",
+    "label": "Johanna Mathilda Maria Muller (1920-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329786"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75388944",
+    "label": "Prince Wilhelm of Hesse-Kassel (1844-1844)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75388944"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391072",
+    "label": "Карл Евгений Вюртембергский (1875-1875)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391072"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70850",
+    "label": "Елизавета Гессен-Дармштадтская (1895-1903)",
+    "value": "16",
+    "url": "http://www.wikidata.org/entity/Q70850"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q77556",
+    "label": "Вильгельм Прусский (1906-1940)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q77556"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q83171",
+    "label": "Александр II (1818-1881)",
+    "value": "102",
+    "url": "http://www.wikidata.org/entity/Q83171"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q151312",
+    "label": "Фредерик IX (1899-1972)",
+    "value": "64",
+    "url": "http://www.wikidata.org/entity/Q151312"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q151742",
+    "label": "Александр I (1893-1920)",
+    "value": "51",
+    "url": "http://www.wikidata.org/entity/Q151742"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q155394",
+    "label": "Павел I Греческий (1901-1964)",
+    "value": "53",
+    "url": "http://www.wikidata.org/entity/Q155394"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q155422",
+    "label": "Мария Николаевна (1899-1918)",
+    "value": "52",
+    "url": "http://www.wikidata.org/entity/Q155422"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q160948",
+    "label": "Кирилл Владимирович (1876-1938)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q160948"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q165113",
+    "label": "Ксения Александровна (1875-1960)",
+    "value": "34",
+    "url": "http://www.wikidata.org/entity/Q165113"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q170160",
+    "label": "Николай (1872-1938)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q170160"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q170184",
+    "label": "Марина, герцогиня Кентская (1906-1968)",
+    "value": "36",
+    "url": "http://www.wikidata.org/entity/Q170184"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q170293",
+    "label": "Георгий Александрович (1871-1899)",
+    "value": "32",
+    "url": "http://www.wikidata.org/entity/Q170293"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q215791",
+    "label": "Фридрих Франц Мекленбургский (1910-2001)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q215791"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q232159",
+    "label": "Анастасия Михайловна (1860-1922)",
+    "value": "28",
+    "url": "http://www.wikidata.org/entity/Q232159"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q232728",
+    "label": "Александра Георгиевна (1870-1891)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q232728"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q232732",
+    "label": "Мария Георгиевна (1876-1940)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q232732"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q232735",
+    "label": "Елизавета Румынская (1894-1956)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q232735"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q234230",
+    "label": "Ирина Александровна Романова (1895-1970)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q234230"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q235812",
+    "label": "Цецилия Мекленбург-Шверинская (1886-1954)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q235812"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q236770",
+    "label": "Ирина Греческая (1904-1974)",
+    "value": "29",
+    "url": "http://www.wikidata.org/entity/Q236770"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q237341",
+    "label": "Кира Кирилловна Романова (1909-1967)",
+    "value": "23",
+    "url": "http://www.wikidata.org/entity/Q237341"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q240317",
+    "label": "Маргарита Греческая и Датская (1905-1981)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q240317"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q242886",
+    "label": "Татьяна Константиновна Романова (1890-1979)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q242886"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q254675",
+    "label": "Наталья Павловна Палей (1905-1981)",
+    "value": "20",
+    "url": "http://www.wikidata.org/entity/Q254675"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q270516",
+    "label": "Мария Максимилиановна Лейхтенбергская (1841-1914)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q270516"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q372954",
+    "label": "Дмитрий Павлович (1891-1942)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q372954"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q372964",
+    "label": "Павел Александрович (1860-1919)",
+    "value": "29",
+    "url": "http://www.wikidata.org/entity/Q372964"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q382226",
+    "label": "Владимир Кириллович Романов (1917-1992)",
+    "value": "28",
+    "url": "http://www.wikidata.org/entity/Q382226"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q428256",
+    "label": "Сергей Михайлович (1869-1918)",
+    "value": "24",
+    "url": "http://www.wikidata.org/entity/Q428256"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q446676",
+    "label": "Пётр Николаевич (1864-1931)",
+    "value": "24",
+    "url": "http://www.wikidata.org/entity/Q446676"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q446724",
+    "label": "Константин Николаевич (1827-1892)",
+    "value": "34",
+    "url": "http://www.wikidata.org/entity/Q446724"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q447757",
+    "label": "Христофор, принц Греческий и Датский (1888-1940)",
+    "value": "28",
+    "url": "http://www.wikidata.org/entity/Q447757"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q464626",
+    "label": "Александр Михайлович (1866-1933)",
+    "value": "27",
+    "url": "http://www.wikidata.org/entity/Q464626"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q512800",
+    "label": "Романов, Роман Петрович (1896-1978)",
+    "value": "22",
+    "url": "http://www.wikidata.org/entity/Q512800"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q682770",
+    "label": "Ольденбургский, Пётр Александрович (1868-1924)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q682770"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q701150",
+    "label": "Евгений Иванович Алексеев (1843-1917)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q701150"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q705311",
+    "label": "Романов, Георгий Константинович (1903-1938)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q705311"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q819458",
+    "label": "Романов, Гавриил Константинович (1887-1955)",
+    "value": "18",
+    "url": "http://www.wikidata.org/entity/Q819458"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q898347",
+    "label": "Нина Георгиевна Романова (1901-1974)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q898347"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q961833",
+    "label": "Фёдор Александрович Романов (1898-1968)",
+    "value": "18",
+    "url": "http://www.wikidata.org/entity/Q961833"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1049387",
+    "label": "Романова, Надежда Петровна (1898-1988)",
+    "value": "18",
+    "url": "http://www.wikidata.org/entity/Q1049387"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1289925",
+    "label": "Николай Максимилианович, 4-й герцог Лейхтенбергский (1843-1891)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q1289925"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1607433",
+    "label": "Романов, Александр Никитич (1929-2002)",
+    "value": "5",
+    "url": "http://www.wikidata.org/entity/Q1607433"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1607860",
+    "label": "Романов, Никита Никитич (1923-2007)",
+    "value": "7",
+    "url": "http://www.wikidata.org/entity/Q1607860"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1939139",
+    "label": "Батильда Шаумбург-Липпская (1903-1983)",
+    "value": "2",
+    "url": "http://www.wikidata.org/entity/Q1939139"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2053914",
+    "label": "Элизабет Клотильда фон Меренберг (1941-)",
+    "value": "7",
+    "url": "http://www.wikidata.org/entity/Q2053914"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2083011",
+    "label": "Альваро Орлеанский и Саксен-Кобург-Готский (1910-1997)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q2083011"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2301222",
+    "label": "Ольга Вюртембергская (1876-1932)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q2301222"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2734291",
+    "label": "леди Анастасия Уэрнер (1892-1977)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q2734291"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2834124",
+    "label": "Александр Владимирович (1875-1877) (1875-1877)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q2834124"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4060920",
+    "label": "Александр Георгиевич, 7-й герцог Лейхтенбергский (1881-1942)",
+    "value": "11",
+    "url": "http://www.wikidata.org/entity/Q4060920"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4246270",
+    "label": "Куликовский, Гурий Николаевич (1919-1984)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q4246270"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4397221",
+    "label": "Романова, Екатерина Иоанновна (1915-2007)",
+    "value": "8",
+    "url": "http://www.wikidata.org/entity/Q4397221"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4397223",
+    "label": "Романова, Марина Васильевна (1940-)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q4397223"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4397226",
+    "label": "Романова, Ксения Андреевна (1919-2000)",
+    "value": "5",
+    "url": "http://www.wikidata.org/entity/Q4397226"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4397242",
+    "label": "Ольга Андреевна Романова (1950-)",
+    "value": "10",
+    "url": "http://www.wikidata.org/entity/Q4397242"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5548261",
+    "label": "Джорджина Кеннард (1919-2011)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q5548261"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7244121",
+    "label": "Кирилл Николаевич Андросов (1915-1992)",
+    "value": "5",
+    "url": "http://www.wikidata.org/entity/Q7244121"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7244648",
+    "label": "Ирина Николаевна Орлова (1918-1989)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q7244648"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16445994",
+    "label": "Богдан Иринеевич Огинский (1848-1909)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q16445994"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23758934",
+    "label": "Георг-Михаэль Александр фон Меренберг (1897-1965)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q23758934"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75261311",
+    "label": "Ирина Фёдоровна Романова (1934-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75261311"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75270527",
+    "label": "Нэнси Лидс (1925-2006)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75270527"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75275622",
+    "label": "Александр Михайлович Лорис-Меликов (1926-2005)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75275622"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75304823",
+    "label": "Александр Шаумбург-Липпский (1901-1923)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75304823"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75304830",
+    "label": "Альбрехт Шаумбург-Липпский (1900-1984)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75304830"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75324749",
+    "label": "Софья Петровна Романова (1898-1898)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q75324749"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328136",
+    "label": "Serge Saenger (1896-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328136"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328137",
+    "label": "Nicolas Saenger (1896-1932)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328137"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328141",
+    "label": "Vera Saenger (-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328141"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328147",
+    "label": "Marguerite Saenger (1901-1984)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328147"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328166",
+    "label": "Maria Saenger (-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328166"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328181",
+    "label": "Emanuel Fricero (1880-1959)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328181"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328184",
+    "label": "Nicolas Fricero (1909-1979)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328184"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328321",
+    "label": "Гижицкий, Александр Александрович (1890-1931)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328321"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328324",
+    "label": "Гижицкая, Ольга Александровна (1901-1969)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328324"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328325",
+    "label": "Сергей Павлович Устинов (-1928)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328325"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328328",
+    "label": "Мария Павловна Устинова (-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328328"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328332",
+    "label": "Ольга Валериановна Бутурлина (1905-1947)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328332"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329688",
+    "label": "Белёвский-Жуковский, Сергей Алексеевич (1903-1956)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329688"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329734",
+    "label": "Елена Андреевна Барятинская (1927-1988)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329734"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329744",
+    "label": "Peppino Stolte (1876-1892)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329744"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329745",
+    "label": "Julio Antonio Jaeger (-1950)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329745"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329870",
+    "label": "Михаил Николаевич Лейхтенбергский (1905-1928)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329870"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329872",
+    "label": "Александра Николаевна фон Лейхтенберг (1895-1960)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329872"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329876",
+    "label": "Надежда Николаевна фон Лейхтенберг (1898-1962)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329876"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329884",
+    "label": "Мария Николаевна Лейхтенбергская (1907-1992)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329884"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329892",
+    "label": "Андрей Георгиевич Лейхтенбергский (1903-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329892"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329895",
+    "label": "Константин Георгиевич Лейхтенбергский (1905-1983)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329895"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75381574",
+    "label": "Татьяна Элизабет Маунтбеттен (1917-1988)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75381574"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382955",
+    "label": "Артемий Николаевич Искандер (1883-1919)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75382955"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75383962",
+    "label": "stillborn son von Hessen-Darmstadt (1900-1900)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75383962"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391622",
+    "label": "Елизавета Алексеевна Белёвская-Жуковская (1896-1975)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391622"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391625",
+    "label": "Александра Алексеевна Белёвская-Жуковская (1899-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391625"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391629",
+    "label": "Мария Алексеевна  Белёвская-Жуковская (1901-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391629"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391810",
+    "label": "Романова, Надежда Дмитриевна (1933-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391810"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q66546",
+    "label": "Готфрид Гогенлоэ-Лангенбургский (1897-1960)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q66546"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70632",
+    "label": "Фридрих Прусский (1911-1966)",
+    "value": "14",
+    "url": "http://www.wikidata.org/entity/Q70632"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q105976",
+    "label": "Цецилия Прусская (1917-1975)",
+    "value": "11",
+    "url": "http://www.wikidata.org/entity/Q105976"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q312819",
+    "label": "Владимир Александрович (1847-1909)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q312819"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q313832",
+    "label": "Константин Константинович (1856-1915)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q313832"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q375275",
+    "label": "Ирина Палей (1903-1990)",
+    "value": "14",
+    "url": "http://www.wikidata.org/entity/Q375275"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q502763",
+    "label": "Андрей Владимирович (1879-1956)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q502763"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q704489",
+    "label": "Романов, Константин Константинович (1891-1918)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q704489"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2752971",
+    "label": "Дэвид Майкл Маунтбеттен (1919-1970)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q2752971"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3154370",
+    "label": "Ирина Феликсовна Юсупова (1915-1983)",
+    "value": "8",
+    "url": "http://www.wikidata.org/entity/Q3154370"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3186654",
+    "label": "Юзия Кобервейн (1825-1893)",
+    "value": "2",
+    "url": "http://www.wikidata.org/entity/Q3186654"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q37999521",
+    "label": "Дмитрий Георгиевич Лейхтенбергский (1898-1972)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q37999521"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75261332",
+    "label": "Борис Юрьевский (1876-1876)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75261332"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75304832",
+    "label": "Бернард Шаумбург-Липпский (1902-1903)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75304832"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329922",
+    "label": "Елена Георгиевна Лейхтенбергская (1896-1977)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329922"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329930",
+    "label": "Наталья Георгиевна Лейхтенбергская (1900-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329930"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329932",
+    "label": "Тамара Георгиевна Лейхтенбергская (1901-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329932"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75393429",
+    "label": "Джордж Майкл Александр Уэрнер (1918-1942)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75393429"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391593",
+    "label": "second unnamed daughter Romanov (1823-1823)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391593"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391596",
+    "label": "third unnamed daughter Romanov (1829-1829)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391596"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q76236389",
+    "label": "Anastasie Alexandrine Paule Louis de Wenden (1935-1995)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q76236389"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382212",
+    "label": "Ольга Екатерина Ада Лорис-Меликова (1898-1983)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75382212"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382215",
+    "label": "Андрей Александрович Барятинский (1902-1931)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75382215"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382216",
+    "label": "Александр Александрович Барятинский (1905-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75382216"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75384225",
+    "label": "Princess Alexandra of Hohenlohe-Langenburg (1901-1963)",
+    "value": "2",
+    "url": "http://www.wikidata.org/entity/Q75384225"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75384227",
+    "label": "Prince Alfred of Hohenlohe-Langenburg (1911-1911)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75384227"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75384228",
+    "label": "unnamed son Saxe-Coburg and Gotha (1879-1879)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75384228"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75393306",
+    "label": "Майра Элис Баттер (1925-2022)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75393306"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75393859",
+    "label": "Ксения Николаевна Орлова (1921-1963)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75393859"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391592",
+    "label": "unnamed daughter Romanov (1820-1820)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391592"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75391827",
+    "label": "Николай Ростиславович Романов (1945-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75391827"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q76236382",
+    "label": "Алексис Луи де Венден (1902-1976)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q76236382"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q76236386",
+    "label": "Xénia Anastasie Germaine Louis de Wenden (1930-2021)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q76236386"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328301",
+    "label": "Гижицкая, Елена Александровна (1896-1992)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328301"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329797",
+    "label": "Александра Лейхтенбергская (1840-1843)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329797"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329826",
+    "label": "Joseph Raboxicz (-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329826"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329830",
+    "label": "Строганова, Елена Григорьевна (1861-1908)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q75329830"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329847",
+    "label": "Лейхтенбергский, Максимиллиан Николаевич (1900-1905)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329847"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329961",
+    "label": "Евгений Львович Кочубей-Богарнэ (1894-1951)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329961"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75329996",
+    "label": "Наталья-Роза-Мария Тышкевич (1921-2003)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75329996"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75330004",
+    "label": "Никита Сергеевич Шереметев (1908-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75330004"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75330020",
+    "label": "София Владимировна Шереметева (1883-1955)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75330020"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75381564",
+    "label": "Princess Olga of Greece and Denmark (1880-1880)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75381564"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382207",
+    "label": "Георгий Александрович Юрьевский (1961-)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q75382207"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382209",
+    "label": "Александр Георгиевич Юрьевский (1900-1988)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75382209"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75382210",
+    "label": "Александр Адольф фон Меренберг (1896-1897)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75382210"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19006",
+    "label": "Елизавета Греческая (1904-1955)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q19006"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q40787",
+    "label": "Николай II (1868-1918)",
+    "value": "130",
+    "url": "http://www.wikidata.org/entity/Q40787"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q57264",
+    "label": "Александрина Мекленбург-Шверинская (1879-1952)",
+    "value": "38",
+    "url": "http://www.wikidata.org/entity/Q57264"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q57666",
+    "label": "Мария Эдинбургская (1875-1938)",
+    "value": "49",
+    "url": "http://www.wikidata.org/entity/Q57666"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q61345",
+    "label": "Александра Саксен-Кобург-Готская (1878-1942)",
+    "value": "29",
+    "url": "http://www.wikidata.org/entity/Q61345"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75112",
+    "label": "Александрина Прусская (1915-1980)",
+    "value": "15",
+    "url": "http://www.wikidata.org/entity/Q75112"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q113584",
+    "label": "Ольга Николаевна (1895-1918)",
+    "value": "50",
+    "url": "http://www.wikidata.org/entity/Q113584"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q120180",
+    "label": "Александр III (1845-1894)",
+    "value": "96",
+    "url": "http://www.wikidata.org/entity/Q120180"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q152935",
+    "label": "Георг II (1890-1947)",
+    "value": "58",
+    "url": "http://www.wikidata.org/entity/Q152935"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q154045",
+    "label": "Алексей Николаевич (1904-1918)",
+    "value": "49",
+    "url": "http://www.wikidata.org/entity/Q154045"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q154444",
+    "label": "Михаил Александрович (1878-1918)",
+    "value": "47",
+    "url": "http://www.wikidata.org/entity/Q154444"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q156531",
+    "label": "Андрей Греческий (1882-1944)",
+    "value": "45",
+    "url": "http://www.wikidata.org/entity/Q156531"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q158148",
+    "label": "Татьяна Николаевна (1897-1918)",
+    "value": "49",
+    "url": "http://www.wikidata.org/entity/Q158148"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q158154",
+    "label": "Мария Александровна (1853-1920)",
+    "value": "36",
+    "url": "http://www.wikidata.org/entity/Q158154"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q161199",
+    "label": "Михаил Николаевич (1832-1909)",
+    "value": "32",
+    "url": "http://www.wikidata.org/entity/Q161199"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q162177",
+    "label": "Елена Греческая и Датская (1896-1982)",
+    "value": "36",
+    "url": "http://www.wikidata.org/entity/Q162177"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q163176",
+    "label": "Ольга Александровна (1882-1960)",
+    "value": "37",
+    "url": "http://www.wikidata.org/entity/Q163176"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q167387",
+    "label": "Мария Румынская (1900-1961)",
+    "value": "38",
+    "url": "http://www.wikidata.org/entity/Q167387"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q170396",
+    "label": "Георг, граф Корфский (1869-1957)",
+    "value": "32",
+    "url": "http://www.wikidata.org/entity/Q170396"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q212897",
+    "label": "Кароль II (1893-1953)",
+    "value": "48",
+    "url": "http://www.wikidata.org/entity/Q212897"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q234926",
+    "label": "Ольга Николаевна (1822-1892)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q234926"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q235432",
+    "label": "Ольга Греческая (1903-1997)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q235432"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q235438",
+    "label": "Мария Павловна (1890-1958)",
+    "value": "27",
+    "url": "http://www.wikidata.org/entity/Q235438"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q238478",
+    "label": "Александра Николаевна (1825-1844)",
+    "value": "25",
+    "url": "http://www.wikidata.org/entity/Q238478"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q255382",
+    "label": "Теодора Греческая и Датская (1906-1969)",
+    "value": "30",
+    "url": "http://www.wikidata.org/entity/Q255382"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q259488",
+    "label": "Надежда Маунтбеттен, маркиза Милфорд-Хейвен (1896-1963)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q259488"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q269263",
+    "label": "Романова, Вера Константиновна (1906-2001)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q269263"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q315726",
+    "label": "Алексей Александрович (1850-1908)",
+    "value": "27",
+    "url": "http://www.wikidata.org/entity/Q315726"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q373048",
+    "label": "Борис Владимирович (1877-1943)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q373048"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q428885",
+    "label": "Романов, Дмитрий Александрович (1901-1980)",
+    "value": "15",
+    "url": "http://www.wikidata.org/entity/Q428885"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q445399",
+    "label": "Николай Александрович (1843-1865)",
+    "value": "28",
+    "url": "http://www.wikidata.org/entity/Q445399"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q487309",
+    "label": "Романов-Ильинский, Павел Дмитриевич (1928-2004)",
+    "value": "12",
+    "url": "http://www.wikidata.org/entity/Q487309"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q535400",
+    "label": "Николай Михайлович (1859-1919)",
+    "value": "31",
+    "url": "http://www.wikidata.org/entity/Q535400"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q620933",
+    "label": "Александра Александровна (1842-1849)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q620933"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q628679",
+    "label": "Михаил Михайлович (1861-1929)",
+    "value": "22",
+    "url": "http://www.wikidata.org/entity/Q628679"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q667007",
+    "label": "Георгий Михайлович Брасов (1910-1931)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q667007"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q724825",
+    "label": "Михаил, принц Греческий и Датский (1939-2024)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q724825"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q764785",
+    "label": "Андрей Александрович Романов (1897-1981)",
+    "value": "21",
+    "url": "http://www.wikidata.org/entity/Q764785"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q778200",
+    "label": "Мария Кирилловна Романова (1907-1951)",
+    "value": "20",
+    "url": "http://www.wikidata.org/entity/Q778200"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1019229",
+    "label": "Романов, Василий Александрович (1907-1989)",
+    "value": "16",
+    "url": "http://www.wikidata.org/entity/Q1019229"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1060210",
+    "label": "Ростислав Александрович Романов (1902-1978)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q1060210"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1078179",
+    "label": "Романова, Марина Петровна (1892-1981)",
+    "value": "19",
+    "url": "http://www.wikidata.org/entity/Q1078179"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1913732",
+    "label": "Макс Шаумбург-Липпе (1898-1974)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q1913732"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2383852",
+    "label": "Boris Lacroix (1902-1984)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q2383852"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2397614",
+    "label": "Николай Николаевич Лейхтенбергский (1868-1928)",
+    "value": "5",
+    "url": "http://www.wikidata.org/entity/Q2397614"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2419125",
+    "label": "Мирча Румынский (1913-1916)",
+    "value": "14",
+    "url": "http://www.wikidata.org/entity/Q2419125"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2657659",
+    "label": "Димитрий Романович Романов (1926-2016)",
+    "value": "16",
+    "url": "http://www.wikidata.org/entity/Q2657659"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2709348",
+    "label": "Евгения Максимилиановна Лейхтенбергская (1845-1925)",
+    "value": "17",
+    "url": "http://www.wikidata.org/entity/Q2709348"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2833919",
+    "label": "Александр Николаевич Искандер (1887-1935)",
+    "value": "4",
+    "url": "http://www.wikidata.org/entity/Q2833919"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2941803",
+    "label": "Юрьевская, Екатерина Александровна (1878-1959)",
+    "value": "9",
+    "url": "http://www.wikidata.org/entity/Q2941803"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3102183",
+    "label": "Юрьевский, Георгий Александрович (1872-1913)",
+    "value": "7",
+    "url": "http://www.wikidata.org/entity/Q3102183"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3260259",
+    "label": "Мария Александра Баденская (1902-1944)",
+    "value": "13",
+    "url": "http://www.wikidata.org/entity/Q3260259"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3308867",
+    "label": "Михаил Андреевич Романов (1920-2008)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q3308867"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3340629",
+    "label": "Лейхтенбергский, Николай Николаевич (1896) (1896-1937)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q3340629"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3350398",
+    "label": "Ольга Александровна Юрьевская (1873-1925)",
+    "value": "8",
+    "url": "http://www.wikidata.org/entity/Q3350398"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3615078",
+    "label": "Анастасия Мекленбургская (1923-1979)",
+    "value": "7",
+    "url": "http://www.wikidata.org/entity/Q3615078"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3847612",
+    "label": "Мария Баденская (1865-1939)",
+    "value": "15",
+    "url": "http://www.wikidata.org/entity/Q3847612"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4156250",
+    "label": "Михаил Михайлович де Торби (1898-1959)",
+    "value": "5",
+    "url": "http://www.wikidata.org/entity/Q4156250"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4246276",
+    "label": "Куликовский-Романов, Тихон Николаевич (1917-1993)",
+    "value": "2",
+    "url": "http://www.wikidata.org/entity/Q4246276"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4257584",
+    "label": "Лейхтенбергский, Георгий Николаевич (1872-1929)",
+    "value": "4",
+    "url": "http://www.wikidata.org/entity/Q4257584"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4257585",
+    "label": "Лейхтенбергский, Сергей Николаевич (1903-1966)",
+    "value": "3",
+    "url": "http://www.wikidata.org/entity/Q4257585"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4346762",
+    "label": "Пасхин, Алексей Андреевич (1831-1863)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q4346762"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4397363",
+    "label": "Романовский-Красинский, Владимир Андреевич (1902-1974)",
+    "value": "2",
+    "url": "http://www.wikidata.org/entity/Q4397363"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4417000",
+    "label": "Сергей Георгиевич, 8-й герцог Лейхтенбергский (1890-1974)",
+    "value": "6",
+    "url": "http://www.wikidata.org/entity/Q4417000"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4417012",
+    "label": "Сергей Максимилианович, герцог Лейхтенбергский (1849-1877)",
+    "value": "4",
+    "url": "http://www.wikidata.org/entity/Q4417012"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5594505",
+    "label": "Елизавета Николаевна (1826-1829)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q5594505"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18640593",
+    "label": "Шереметев, Сергей Владимирович (1880-1968)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q18640593"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28854014",
+    "label": "Велио, Владимир Иванович (1879-1961)",
+    "value": "1",
+    "url": "http://www.wikidata.org/entity/Q28854014"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30327888",
+    "label": "Michel Lacave (1944-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q30327888"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q64697923",
+    "label": "Prince Alfonso of Orleans (1912-1936)",
+    "value": "4",
+    "url": "http://www.wikidata.org/entity/Q64697923"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q64697947",
+    "label": "Prince Ataulfo of Orleans (1913-1974)",
+    "value": "8",
+    "url": "http://www.wikidata.org/entity/Q64697947"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75243464",
+    "label": "Байер, Антуанетта (1856-1948)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75243464"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75244353",
+    "label": "Наталия Константиновна Романова (1905-1905)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75244353"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328264",
+    "label": "Countess Marie-Christine Tyszkiewicz (1930-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328264"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328267",
+    "label": "Countess Clementine Tyszkiewicz (1933-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328267"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328281",
+    "label": "Countess Olga Tyszkiewicz (1935-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328281"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328291",
+    "label": "Мария Ивановна Велио (1877-)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328291"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328292",
+    "label": "Елена Ивановна Велио (1875-1946)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328292"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q75328295",
+    "label": "Гижицкая, Мария Александровна (1894-1943)",
+    "value": "0",
+    "url": "http://www.wikidata.org/entity/Q75328295"
+  }
+]
+  //NODES_END
+  ;
+	  
+      const edges = 
+	  //EDGES_START
+[
+  {
+    "source": "http://www.wikidata.org/entity/Q446724",
+    "target": "http://www.wikidata.org/entity/Q27606"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q232159",
+    "target": "http://www.wikidata.org/entity/Q57930"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q158154",
+    "target": "http://www.wikidata.org/entity/Q62477"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q76908",
+    "target": "http://www.wikidata.org/entity/Q62602"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57930",
+    "target": "http://www.wikidata.org/entity/Q70203"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235812",
+    "target": "http://www.wikidata.org/entity/Q70760"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q270516",
+    "target": "http://www.wikidata.org/entity/Q76908"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q156531",
+    "target": "http://www.wikidata.org/entity/Q80976"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q40787",
+    "target": "http://www.wikidata.org/entity/Q151130"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q152099"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446724",
+    "target": "http://www.wikidata.org/entity/Q155178"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q163863",
+    "target": "http://www.wikidata.org/entity/Q160869"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q163863"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q158154",
+    "target": "http://www.wikidata.org/entity/Q164500"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q312819",
+    "target": "http://www.wikidata.org/entity/Q232483"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q234052"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57666",
+    "target": "http://www.wikidata.org/entity/Q235595"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q158154",
+    "target": "http://www.wikidata.org/entity/Q235597"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q156531",
+    "target": "http://www.wikidata.org/entity/Q236196"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446724",
+    "target": "http://www.wikidata.org/entity/Q240282"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q152099",
+    "target": "http://www.wikidata.org/entity/Q242338"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q248900"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q277611"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235812",
+    "target": "http://www.wikidata.org/entity/Q311442"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57264",
+    "target": "http://www.wikidata.org/entity/Q381069"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q524451",
+    "target": "http://www.wikidata.org/entity/Q433753"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q524437"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q524451"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57666",
+    "target": "http://www.wikidata.org/entity/Q529045"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q539712"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235438",
+    "target": "http://www.wikidata.org/entity/Q564226"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q170396",
+    "target": "http://www.wikidata.org/entity/Q601229"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q120180",
+    "target": "http://www.wikidata.org/entity/Q619068"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q621088"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q156531",
+    "target": "http://www.wikidata.org/entity/Q630371"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q512800",
+    "target": "http://www.wikidata.org/entity/Q661504"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q372964",
+    "target": "http://www.wikidata.org/entity/Q700060"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q706069"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446724",
+    "target": "http://www.wikidata.org/entity/Q706075"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446724",
+    "target": "http://www.wikidata.org/entity/Q1188421"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q240282",
+    "target": "http://www.wikidata.org/entity/Q2204793"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q61345",
+    "target": "http://www.wikidata.org/entity/Q2332225"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q764785",
+    "target": "http://www.wikidata.org/entity/Q2339401"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q170396",
+    "target": "http://www.wikidata.org/entity/Q2379307"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q2589734"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q898347",
+    "target": "http://www.wikidata.org/entity/Q2621015"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q315726",
+    "target": "http://www.wikidata.org/entity/Q2834460"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q242886",
+    "target": "http://www.wikidata.org/entity/Q2900643"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q375275",
+    "target": "http://www.wikidata.org/entity/Q3309617"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2833919",
+    "target": "http://www.wikidata.org/entity/Q3336341"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1060210",
+    "target": "http://www.wikidata.org/entity/Q3442879"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4172853",
+    "target": "http://www.wikidata.org/entity/Q4089010"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q4172853"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q524437",
+    "target": "http://www.wikidata.org/entity/Q4397150"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57930",
+    "target": "http://www.wikidata.org/entity/Q4458023"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2301222",
+    "target": "http://www.wikidata.org/entity/Q7243972"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q242886",
+    "target": "http://www.wikidata.org/entity/Q16010996"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2589734",
+    "target": "http://www.wikidata.org/entity/Q20851046"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328245",
+    "target": "http://www.wikidata.org/entity/Q27121600"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q706075",
+    "target": "http://www.wikidata.org/entity/Q47003361"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q61345",
+    "target": "http://www.wikidata.org/entity/Q47139432"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235438",
+    "target": "http://www.wikidata.org/entity/Q75244263"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2204793",
+    "target": "http://www.wikidata.org/entity/Q75304478"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3186654",
+    "target": "http://www.wikidata.org/entity/Q75318498"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3186654",
+    "target": "http://www.wikidata.org/entity/Q75318502"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3186654",
+    "target": "http://www.wikidata.org/entity/Q75318505"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3186654",
+    "target": "http://www.wikidata.org/entity/Q75318510"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q75318515"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318515",
+    "target": "http://www.wikidata.org/entity/Q75318518"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318515",
+    "target": "http://www.wikidata.org/entity/Q75318519"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318515",
+    "target": "http://www.wikidata.org/entity/Q75318522"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318515",
+    "target": "http://www.wikidata.org/entity/Q75318526"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q706075",
+    "target": "http://www.wikidata.org/entity/Q75324948"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q706075",
+    "target": "http://www.wikidata.org/entity/Q75324951"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318498",
+    "target": "http://www.wikidata.org/entity/Q75328088"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318498",
+    "target": "http://www.wikidata.org/entity/Q75328089"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318498",
+    "target": "http://www.wikidata.org/entity/Q75328090"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328088",
+    "target": "http://www.wikidata.org/entity/Q75328093"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328088",
+    "target": "http://www.wikidata.org/entity/Q75328104"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328181",
+    "target": "http://www.wikidata.org/entity/Q75328211"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328181",
+    "target": "http://www.wikidata.org/entity/Q75328212"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318502",
+    "target": "http://www.wikidata.org/entity/Q75328228"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318502",
+    "target": "http://www.wikidata.org/entity/Q75328231"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318505",
+    "target": "http://www.wikidata.org/entity/Q75328234"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318519",
+    "target": "http://www.wikidata.org/entity/Q75328244"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318519",
+    "target": "http://www.wikidata.org/entity/Q75328245"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328245",
+    "target": "http://www.wikidata.org/entity/Q75328252"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328245",
+    "target": "http://www.wikidata.org/entity/Q75328255"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75243464",
+    "target": "http://www.wikidata.org/entity/Q75329747"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75243464",
+    "target": "http://www.wikidata.org/entity/Q75329748"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75243464",
+    "target": "http://www.wikidata.org/entity/Q75329750"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75329750",
+    "target": "http://www.wikidata.org/entity/Q75329751"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75329750",
+    "target": "http://www.wikidata.org/entity/Q75329766"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75329750",
+    "target": "http://www.wikidata.org/entity/Q75329786"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q238478",
+    "target": "http://www.wikidata.org/entity/Q75388944"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q240282",
+    "target": "http://www.wikidata.org/entity/Q75391072"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q164500",
+    "target": "http://www.wikidata.org/entity/Q70850"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235812",
+    "target": "http://www.wikidata.org/entity/Q77556"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q83171"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57264",
+    "target": "http://www.wikidata.org/entity/Q151312"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q152099",
+    "target": "http://www.wikidata.org/entity/Q151742"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q152099",
+    "target": "http://www.wikidata.org/entity/Q155394"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q40787",
+    "target": "http://www.wikidata.org/entity/Q155422"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q312819",
+    "target": "http://www.wikidata.org/entity/Q160948"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q120180",
+    "target": "http://www.wikidata.org/entity/Q165113"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q170160"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q170160",
+    "target": "http://www.wikidata.org/entity/Q170184"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q120180",
+    "target": "http://www.wikidata.org/entity/Q170293"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57930",
+    "target": "http://www.wikidata.org/entity/Q215791"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q232159"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q232728"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q232732"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57666",
+    "target": "http://www.wikidata.org/entity/Q232735"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q234230"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q232159",
+    "target": "http://www.wikidata.org/entity/Q235812"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q152099",
+    "target": "http://www.wikidata.org/entity/Q236770"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q160948",
+    "target": "http://www.wikidata.org/entity/Q237341"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q156531",
+    "target": "http://www.wikidata.org/entity/Q240317"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q242886"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q372964",
+    "target": "http://www.wikidata.org/entity/Q254675"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q270516"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q372964",
+    "target": "http://www.wikidata.org/entity/Q372954"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q372964"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q160948",
+    "target": "http://www.wikidata.org/entity/Q382226"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q428256"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q163863",
+    "target": "http://www.wikidata.org/entity/Q446676"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q446724"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q447757"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q464626"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446676",
+    "target": "http://www.wikidata.org/entity/Q512800"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2709348",
+    "target": "http://www.wikidata.org/entity/Q682770"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q701150"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q705311"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q819458"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q524451",
+    "target": "http://www.wikidata.org/entity/Q898347"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q961833"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446676",
+    "target": "http://www.wikidata.org/entity/Q1049387"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q1289925"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q277611",
+    "target": "http://www.wikidata.org/entity/Q1607433"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q277611",
+    "target": "http://www.wikidata.org/entity/Q1607860"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2204793",
+    "target": "http://www.wikidata.org/entity/Q1939139"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q23758934",
+    "target": "http://www.wikidata.org/entity/Q2053914"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235597",
+    "target": "http://www.wikidata.org/entity/Q2083011"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q240282",
+    "target": "http://www.wikidata.org/entity/Q2301222"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q628679",
+    "target": "http://www.wikidata.org/entity/Q2734291"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q312819",
+    "target": "http://www.wikidata.org/entity/Q2834124"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2589734",
+    "target": "http://www.wikidata.org/entity/Q4060920"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q163176",
+    "target": "http://www.wikidata.org/entity/Q4246270"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q524437",
+    "target": "http://www.wikidata.org/entity/Q4397221"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1019229",
+    "target": "http://www.wikidata.org/entity/Q4397223"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q764785",
+    "target": "http://www.wikidata.org/entity/Q4397226"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q764785",
+    "target": "http://www.wikidata.org/entity/Q4397242"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2734291",
+    "target": "http://www.wikidata.org/entity/Q5548261"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2833919",
+    "target": "http://www.wikidata.org/entity/Q7244121"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1049387",
+    "target": "http://www.wikidata.org/entity/Q7244648"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q16445994"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3350398",
+    "target": "http://www.wikidata.org/entity/Q23758934"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q375275",
+    "target": "http://www.wikidata.org/entity/Q75261311"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q433753",
+    "target": "http://www.wikidata.org/entity/Q75270527"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75382212",
+    "target": "http://www.wikidata.org/entity/Q75275622"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2204793",
+    "target": "http://www.wikidata.org/entity/Q75304823"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2301222",
+    "target": "http://www.wikidata.org/entity/Q75304830"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446676",
+    "target": "http://www.wikidata.org/entity/Q75324749"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328089",
+    "target": "http://www.wikidata.org/entity/Q75328136"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328089",
+    "target": "http://www.wikidata.org/entity/Q75328137"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328089",
+    "target": "http://www.wikidata.org/entity/Q75328141"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328089",
+    "target": "http://www.wikidata.org/entity/Q75328147"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328089",
+    "target": "http://www.wikidata.org/entity/Q75328166"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318502",
+    "target": "http://www.wikidata.org/entity/Q75328181"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328181",
+    "target": "http://www.wikidata.org/entity/Q75328184"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328292",
+    "target": "http://www.wikidata.org/entity/Q75328321"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328292",
+    "target": "http://www.wikidata.org/entity/Q75328324"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318526",
+    "target": "http://www.wikidata.org/entity/Q75328325"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318526",
+    "target": "http://www.wikidata.org/entity/Q75328328"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328328",
+    "target": "http://www.wikidata.org/entity/Q75328332"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2834460",
+    "target": "http://www.wikidata.org/entity/Q75329688"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75382215",
+    "target": "http://www.wikidata.org/entity/Q75329734"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75243464",
+    "target": "http://www.wikidata.org/entity/Q75329744"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75243464",
+    "target": "http://www.wikidata.org/entity/Q75329745"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q75329870"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q75329872"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q75329876"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q75329884"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4257584",
+    "target": "http://www.wikidata.org/entity/Q75329892"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4257584",
+    "target": "http://www.wikidata.org/entity/Q75329895"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q259488",
+    "target": "http://www.wikidata.org/entity/Q75381574"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q706075",
+    "target": "http://www.wikidata.org/entity/Q75382955"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q164500",
+    "target": "http://www.wikidata.org/entity/Q75383962"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2834460",
+    "target": "http://www.wikidata.org/entity/Q75391622"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2834460",
+    "target": "http://www.wikidata.org/entity/Q75391625"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2834460",
+    "target": "http://www.wikidata.org/entity/Q75391629"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q428885",
+    "target": "http://www.wikidata.org/entity/Q75391810"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q61345",
+    "target": "http://www.wikidata.org/entity/Q66546"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235812",
+    "target": "http://www.wikidata.org/entity/Q70632"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235812",
+    "target": "http://www.wikidata.org/entity/Q105976"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q312819"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446724",
+    "target": "http://www.wikidata.org/entity/Q313832"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q372964",
+    "target": "http://www.wikidata.org/entity/Q375275"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q312819",
+    "target": "http://www.wikidata.org/entity/Q502763"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q704489"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q259488",
+    "target": "http://www.wikidata.org/entity/Q2752971"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234230",
+    "target": "http://www.wikidata.org/entity/Q3154370"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q3186654"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4257584",
+    "target": "http://www.wikidata.org/entity/Q37999521"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q75261332"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2301222",
+    "target": "http://www.wikidata.org/entity/Q75304832"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4257584",
+    "target": "http://www.wikidata.org/entity/Q75329922"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4257584",
+    "target": "http://www.wikidata.org/entity/Q75329930"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4257584",
+    "target": "http://www.wikidata.org/entity/Q75329932"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2734291",
+    "target": "http://www.wikidata.org/entity/Q75393429"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q75391593"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q75391596"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q76236382",
+    "target": "http://www.wikidata.org/entity/Q76236389"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3350398",
+    "target": "http://www.wikidata.org/entity/Q75382212"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2941803",
+    "target": "http://www.wikidata.org/entity/Q75382215"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2941803",
+    "target": "http://www.wikidata.org/entity/Q75382216"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q61345",
+    "target": "http://www.wikidata.org/entity/Q75384225"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q61345",
+    "target": "http://www.wikidata.org/entity/Q75384227"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q158154",
+    "target": "http://www.wikidata.org/entity/Q75384228"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2734291",
+    "target": "http://www.wikidata.org/entity/Q75393306"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1049387",
+    "target": "http://www.wikidata.org/entity/Q75393859"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q75391592"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1060210",
+    "target": "http://www.wikidata.org/entity/Q75391827"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q232159",
+    "target": "http://www.wikidata.org/entity/Q76236382"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q76236382",
+    "target": "http://www.wikidata.org/entity/Q76236386"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328292",
+    "target": "http://www.wikidata.org/entity/Q75328301"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q75329797"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q75329826"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q75329830"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q75329847"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q4089010",
+    "target": "http://www.wikidata.org/entity/Q75329961"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q20851046",
+    "target": "http://www.wikidata.org/entity/Q75329996"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q18640593",
+    "target": "http://www.wikidata.org/entity/Q75330004"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75329830",
+    "target": "http://www.wikidata.org/entity/Q75330020"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q75381564"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75382209",
+    "target": "http://www.wikidata.org/entity/Q75382207"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3102183",
+    "target": "http://www.wikidata.org/entity/Q75382209"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3350398",
+    "target": "http://www.wikidata.org/entity/Q75382210"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q170160",
+    "target": "http://www.wikidata.org/entity/Q19006"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q120180",
+    "target": "http://www.wikidata.org/entity/Q40787"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q232159",
+    "target": "http://www.wikidata.org/entity/Q57264"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q158154",
+    "target": "http://www.wikidata.org/entity/Q57666"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q158154",
+    "target": "http://www.wikidata.org/entity/Q61345"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235812",
+    "target": "http://www.wikidata.org/entity/Q75112"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q40787",
+    "target": "http://www.wikidata.org/entity/Q113584"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q120180"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q152099",
+    "target": "http://www.wikidata.org/entity/Q152935"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q40787",
+    "target": "http://www.wikidata.org/entity/Q154045"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q120180",
+    "target": "http://www.wikidata.org/entity/Q154444"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q156531"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q40787",
+    "target": "http://www.wikidata.org/entity/Q158148"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q158154"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q161199"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q152099",
+    "target": "http://www.wikidata.org/entity/Q162177"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q120180",
+    "target": "http://www.wikidata.org/entity/Q163176"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57666",
+    "target": "http://www.wikidata.org/entity/Q167387"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q155178",
+    "target": "http://www.wikidata.org/entity/Q170396"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57666",
+    "target": "http://www.wikidata.org/entity/Q212897"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q234926"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q170160",
+    "target": "http://www.wikidata.org/entity/Q235432"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q372964",
+    "target": "http://www.wikidata.org/entity/Q235438"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q238478"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q156531",
+    "target": "http://www.wikidata.org/entity/Q255382"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q628679",
+    "target": "http://www.wikidata.org/entity/Q259488"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q269263"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q315726"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q312819",
+    "target": "http://www.wikidata.org/entity/Q373048"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q428885"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q445399"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q372954",
+    "target": "http://www.wikidata.org/entity/Q487309"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q535400"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q620933"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q161199",
+    "target": "http://www.wikidata.org/entity/Q628679"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q154444",
+    "target": "http://www.wikidata.org/entity/Q667007"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q447757",
+    "target": "http://www.wikidata.org/entity/Q724825"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q764785"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q160948",
+    "target": "http://www.wikidata.org/entity/Q778200"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q1019229"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q464626",
+    "target": "http://www.wikidata.org/entity/Q1060210"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q446676",
+    "target": "http://www.wikidata.org/entity/Q1078179"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2204793",
+    "target": "http://www.wikidata.org/entity/Q1913732"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q373048",
+    "target": "http://www.wikidata.org/entity/Q2383852"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1289925",
+    "target": "http://www.wikidata.org/entity/Q2397614"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57666",
+    "target": "http://www.wikidata.org/entity/Q2419125"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q512800",
+    "target": "http://www.wikidata.org/entity/Q2657659"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q2709348"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q706075",
+    "target": "http://www.wikidata.org/entity/Q2833919"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q2941803"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q3102183"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q76908",
+    "target": "http://www.wikidata.org/entity/Q3260259"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q764785",
+    "target": "http://www.wikidata.org/entity/Q3308867"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q3340629"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q3350398"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q57930",
+    "target": "http://www.wikidata.org/entity/Q3615078"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q270516",
+    "target": "http://www.wikidata.org/entity/Q3847612"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q628679",
+    "target": "http://www.wikidata.org/entity/Q4156250"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q163176",
+    "target": "http://www.wikidata.org/entity/Q4246276"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1289925",
+    "target": "http://www.wikidata.org/entity/Q4257584"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2397614",
+    "target": "http://www.wikidata.org/entity/Q4257585"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q4346762"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q502763",
+    "target": "http://www.wikidata.org/entity/Q4397363"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2589734",
+    "target": "http://www.wikidata.org/entity/Q4417000"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q234052",
+    "target": "http://www.wikidata.org/entity/Q4417012"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q130734",
+    "target": "http://www.wikidata.org/entity/Q5594505"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75329830",
+    "target": "http://www.wikidata.org/entity/Q18640593"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318522",
+    "target": "http://www.wikidata.org/entity/Q28854014"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328234",
+    "target": "http://www.wikidata.org/entity/Q30327888"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235597",
+    "target": "http://www.wikidata.org/entity/Q64697923"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q235597",
+    "target": "http://www.wikidata.org/entity/Q64697947"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q83171",
+    "target": "http://www.wikidata.org/entity/Q75243464"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q313832",
+    "target": "http://www.wikidata.org/entity/Q75244353"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328245",
+    "target": "http://www.wikidata.org/entity/Q75328264"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328245",
+    "target": "http://www.wikidata.org/entity/Q75328267"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328245",
+    "target": "http://www.wikidata.org/entity/Q75328281"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318522",
+    "target": "http://www.wikidata.org/entity/Q75328291"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75318522",
+    "target": "http://www.wikidata.org/entity/Q75328292"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q75328292",
+    "target": "http://www.wikidata.org/entity/Q75328295"
+  }
+]
+	  //EDGES_END
+	  ;
+  
+    
+    const gData = {nodes:nodes, links:edges};
+	;
+
+    // Initialize the graph
+    const Graph = new ForceGraph3D(document.getElementById('3d-graph'))
+      .nodeAutoColorBy('group') // Auto-color nodes by their 'group' property
+	  .nodeLabel('label')
+	  .nodeVal(node => Math.max(node.value, 0.1))
+	  .linkLabel('group')
+      .linkAutoColorBy('group') // Auto-color links by the group
+      .linkOpacity(0.5)
+	  .linkDirectionalArrowLength(5)
+	  .linkDirectionalArrowRelPos(1)
+	  .onNodeClick(node => {
+        if (node.url) {
+          window.open(node.url, '_blank'); // Open URL in a new tab if it exists
+        }
+      })
+      .graphData(gData);
+  </script>
+</body>
+</html>
+
+
