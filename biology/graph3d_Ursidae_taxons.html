@@ -45,7 +45,27 @@ html, body {
 
 <body>
 	<div id="3d-graph"></div>
-	
+	<details>
+	<summary>Details</summary>
+	<pre>$sparql = @&#39;
+SELECT DISTINCT ?obj ?objLabel ?links ?wikipedia ?parent WHERE {
+  ?obj (wdt:P171*) wd:Q11788.
+  ?obj  wdt:P171 ?parent.
+  ?obj  wikibase:sitelinks ?links.
+  OPTIONAL {
+    ?wikipedia schema:about ?obj;
+      schema:isPartOf &lt;https://ru.wikipedia.org/&gt;.
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language &quot;ru,mul,en&quot;. }
+}
+ORDER BY DESC(?links)
+&#39;@
+$taxons = Invoke-Sparql $sparql
+$taxons | ? wikipedia -Match &#39;^$&#39; | % {$_.wikipedia = $null}
+$nodes = $taxons | select @{n=&#39;id&#39;;e=&#39;obj&#39;},@{n=&#39;label&#39;;e=&#39;objLabel&#39;},@{n=&#39;url&#39;;e={$_.wikipedia ?? $_.obj}},@{n=&#39;value&#39;;e=&#39;links&#39;}
+$edges = $taxons | ? {$_.parent -In $nodes.id} | select @{n=&#39;source&#39;;e=&#39;parent&#39;},@{n=&#39;target&#39;;e=&#39;obj&#39;}
+Format-HtmlGraph3D -nodes $nodes -edges $edges -OutVariable html | Invoke-Item</pre>
+	</details>
   
 
   <script>
@@ -89,15 +109,15 @@ html, body {
     "value": "87"
   },
   {
-    "id": "http://www.wikidata.org/entity/Q144923",
-    "label": "Малайский медведь",
-    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B0%D0%BB%D0%B0%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
-    "value": "75"
-  },
-  {
     "id": "http://www.wikidata.org/entity/Q171004",
     "label": "гризли",
     "url": "https://ru.wikipedia.org/wiki/%D0%93%D1%80%D0%B8%D0%B7%D0%BB%D0%B8",
+    "value": "75"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q144923",
+    "label": "Малайский медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B0%D0%BB%D0%B0%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
     "value": "75"
   },
   {
@@ -155,15 +175,15 @@ html, body {
     "value": "38"
   },
   {
-    "id": "http://www.wikidata.org/entity/Q1997493",
-    "label": "Ursus arctos pruinosus",
-    "url": "https://ru.wikipedia.org/wiki/%D0%A2%D0%B8%D0%B1%D0%B5%D1%82%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
-    "value": "33"
-  },
-  {
     "id": "http://www.wikidata.org/entity/Q525781",
     "label": "Кермодский медведь",
     "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C_%D0%9A%D0%B5%D1%80%D0%BC%D0%BE%D0%B4%D0%B0",
+    "value": "33"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1997493",
+    "label": "Ursus arctos pruinosus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A2%D0%B8%D0%B1%D0%B5%D1%82%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
     "value": "33"
   },
   {
@@ -317,18 +337,6 @@ html, body {
     "value": "16"
   },
   {
-    "id": "http://www.wikidata.org/entity/Q793475",
-    "label": "Иркуйем",
-    "url": "https://ru.wikipedia.org/wiki/%D0%98%D1%80%D0%BA%D1%83%D0%B9%D0%B5%D0%BC",
-    "value": "15"
-  },
-  {
-    "id": "http://www.wikidata.org/entity/Q2840949",
-    "label": "Ursus thibetanus ussuricus",
-    "url": "https://ru.wikipedia.org/wiki/%D0%A3%D1%81%D1%81%D1%83%D1%80%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B5%D0%BB%D0%BE%D0%B3%D1%80%D1%83%D0%B4%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
-    "value": "15"
-  },
-  {
     "id": "http://www.wikidata.org/entity/Q255441",
     "label": "Ursus deningeri",
     "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C_%D0%94%D0%B5%D0%BD%D0%B8%D0%BD%D0%B3%D0%B5%D1%80%D0%B0",
@@ -344,6 +352,18 @@ html, body {
     "id": "http://www.wikidata.org/entity/Q311939",
     "label": "Ursus minimus",
     "url": "https://ru.wikipedia.org/wiki/Ursus_minimus",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q793475",
+    "label": "Иркуйем",
+    "url": "https://ru.wikipedia.org/wiki/%D0%98%D1%80%D0%BA%D1%83%D0%B9%D0%B5%D0%BC",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2840949",
+    "label": "Ursus thibetanus ussuricus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A3%D1%81%D1%81%D1%83%D1%80%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B5%D0%BB%D0%BE%D0%B3%D1%80%D1%83%D0%B4%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
     "value": "15"
   },
   {
@@ -401,15 +421,15 @@ html, body {
     "value": "13"
   },
   {
-    "id": "http://www.wikidata.org/entity/Q1035243",
-    "label": "Hemicyon",
-    "url": "https://ru.wikipedia.org/wiki/Hemicyon",
-    "value": "13"
-  },
-  {
     "id": "http://www.wikidata.org/entity/Q4119064",
     "label": "Ailurarctos",
     "url": "https://ru.wikipedia.org/wiki/Ailurarctos",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1035243",
+    "label": "Hemicyon",
+    "url": "https://ru.wikipedia.org/wiki/Hemicyon",
     "value": "13"
   },
   {
@@ -437,15 +457,15 @@ html, body {
     "value": "11"
   },
   {
-    "id": "http://www.wikidata.org/entity/Q3445718",
-    "label": "Plionarctos",
-    "url": "https://ru.wikipedia.org/wiki/Plionarctos",
-    "value": "11"
-  },
-  {
     "id": "http://www.wikidata.org/entity/Q17560554",
     "label": "Ailuropodinae",
     "url": "https://ru.wikipedia.org/wiki/Ailuropodinae",
+    "value": "11"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3445718",
+    "label": "Plionarctos",
+    "url": "https://ru.wikipedia.org/wiki/Plionarctos",
     "value": "11"
   },
   {
@@ -1274,12 +1294,12 @@ html, body {
     "target": "http://www.wikidata.org/entity/Q124410"
   },
   {
-    "source": "http://www.wikidata.org/entity/Q19817117",
-    "target": "http://www.wikidata.org/entity/Q144923"
-  },
-  {
     "source": "http://www.wikidata.org/entity/Q36341",
     "target": "http://www.wikidata.org/entity/Q171004"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q19817117",
+    "target": "http://www.wikidata.org/entity/Q144923"
   },
   {
     "source": "http://www.wikidata.org/entity/Q3768986",
@@ -1318,12 +1338,12 @@ html, body {
     "target": "http://www.wikidata.org/entity/Q839509"
   },
   {
-    "source": "http://www.wikidata.org/entity/Q36341",
-    "target": "http://www.wikidata.org/entity/Q1997493"
-  },
-  {
     "source": "http://www.wikidata.org/entity/Q122783",
     "target": "http://www.wikidata.org/entity/Q525781"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q1997493"
   },
   {
     "source": "http://www.wikidata.org/entity/Q17560554",
@@ -1426,14 +1446,6 @@ html, body {
     "target": "http://www.wikidata.org/entity/Q2500116"
   },
   {
-    "source": "http://www.wikidata.org/entity/Q36341",
-    "target": "http://www.wikidata.org/entity/Q793475"
-  },
-  {
-    "source": "http://www.wikidata.org/entity/Q124410",
-    "target": "http://www.wikidata.org/entity/Q2840949"
-  },
-  {
     "source": "http://www.wikidata.org/entity/Q243359",
     "target": "http://www.wikidata.org/entity/Q255441"
   },
@@ -1444,6 +1456,14 @@ html, body {
   {
     "source": "http://www.wikidata.org/entity/Q243359",
     "target": "http://www.wikidata.org/entity/Q311939"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q793475"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q2840949"
   },
   {
     "source": "http://www.wikidata.org/entity/Q11788",
@@ -1478,12 +1498,12 @@ html, body {
     "target": "http://www.wikidata.org/entity/Q11704940"
   },
   {
-    "source": "http://www.wikidata.org/entity/Q16916505",
-    "target": "http://www.wikidata.org/entity/Q1035243"
-  },
-  {
     "source": "http://www.wikidata.org/entity/Q11788",
     "target": "http://www.wikidata.org/entity/Q4119064"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q1035243"
   },
   {
     "source": "http://www.wikidata.org/entity/Q535979",
@@ -1502,12 +1522,12 @@ html, body {
     "target": "http://www.wikidata.org/entity/Q3769927"
   },
   {
-    "source": "http://www.wikidata.org/entity/Q7838042",
-    "target": "http://www.wikidata.org/entity/Q3445718"
-  },
-  {
     "source": "http://www.wikidata.org/entity/Q11788",
     "target": "http://www.wikidata.org/entity/Q17560554"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7838042",
+    "target": "http://www.wikidata.org/entity/Q3445718"
   },
   {
     "source": "http://www.wikidata.org/entity/Q18644716",
