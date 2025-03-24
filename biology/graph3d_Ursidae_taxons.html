@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <style>
+html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+	/* Make the graph container take up the full viewport */
+    #3d-graph {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Style the details/summary section */
+    details {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
+      border-top: 1px solid #ccc;
+      z-index: 10; /* Ensure it appears above the graph */
+      max-height: 50vh; /* Limit the height when expanded */
+      overflow-y: auto; /* Add scrollbar if content overflows */
+    }
+
+    summary {
+      //padding: 10px;
+      cursor: pointer;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    pre {
+      margin: 0;
+    //  padding: 10px;
+      white-space: pre-wrap; /* Preserve formatting but wrap text */
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@latest/dist/3d-force-graph.min.js"></script>
+</head>
+
+<body>
+	<div id="3d-graph"></div>
+	
+  
+
+  <script>
+  const nodes = 
+  //NODES_START
+[
+  {
+    "id": "http://www.wikidata.org/entity/Q11788",
+    "label": "медвежьи",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B6%D1%8C%D0%B8",
+    "value": "219"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33609",
+    "label": "белый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D0%B5%D0%BB%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "152"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33602",
+    "label": "большая панда",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D0%BE%D0%BB%D1%8C%D1%88%D0%B0%D1%8F_%D0%BF%D0%B0%D0%BD%D0%B4%D0%B0",
+    "value": "145"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q36341",
+    "label": "бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "136"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122783",
+    "label": "Барибал",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D0%B0%D1%80%D0%B8%D0%B1%D0%B0%D0%BB",
+    "value": "95"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q124410",
+    "label": "белогрудый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D0%B8%D0%BC%D0%B0%D0%BB%D0%B0%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "87"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q144923",
+    "label": "Малайский медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B0%D0%BB%D0%B0%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "75"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q171004",
+    "label": "гризли",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D1%80%D0%B8%D0%B7%D0%BB%D0%B8",
+    "value": "75"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q137641",
+    "label": "Очковый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9E%D1%87%D0%BA%D0%BE%D0%B2%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "72"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q145016",
+    "label": "губач",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D1%83%D0%B1%D0%B0%D1%87",
+    "value": "71"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q243359",
+    "label": "медведи",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D0%B8",
+    "value": "67"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q237260",
+    "label": "кадьяк",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9A%D0%B0%D0%B4%D1%8C%D1%8F%D0%BA_(%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C)",
+    "value": "58"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q188851",
+    "label": "Пещерный медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9F%D0%B5%D1%89%D0%B5%D1%80%D0%BD%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "57"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q839769",
+    "label": "Ursus arctos arctos",
+    "url": "https://ru.wikipedia.org/wiki/%D0%95%D0%B2%D1%80%D0%BE%D0%BF%D0%B5%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "43"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q695431",
+    "label": "Атласский медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%90%D1%82%D0%BB%D0%B0%D1%81%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "40"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q944893",
+    "label": "тяньшанский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A2%D1%8F%D0%BD%D1%8C%D1%88%D0%B0%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "40"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q839509",
+    "label": "Сирийский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%80%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "38"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1997493",
+    "label": "Ursus arctos pruinosus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A2%D0%B8%D0%B1%D0%B5%D1%82%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "33"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q525781",
+    "label": "Кермодский медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C_%D0%9A%D0%B5%D1%80%D0%BC%D0%BE%D0%B4%D0%B0",
+    "value": "33"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q535979",
+    "label": "Большие панды",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D0%BE%D0%BB%D1%8C%D1%88%D0%B8%D0%B5_%D0%BF%D0%B0%D0%BD%D0%B4%D1%8B",
+    "value": "32"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q535979",
+    "label": "Большие панды",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D0%BE%D0%BB%D1%8C%D1%88%D0%B8%D0%B5_%D0%BF%D0%B0%D0%BD%D0%B4%D1%8B",
+    "value": "32"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q844216",
+    "label": "Мексиканский гризли",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%BA%D1%81%D0%B8%D0%BA%D0%B0%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%B3%D1%80%D0%B8%D0%B7%D0%BB%D0%B8",
+    "value": "31"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q932079",
+    "label": "камчатский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "31"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q716455",
+    "label": "Ursus thibetanus formosanus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D0%BE%D0%B7%D1%81%D0%BA%D0%B8%D0%B9_%D1%87%D1%91%D1%80%D0%BD%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "29"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3278878",
+    "label": "уссурийский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%AF%D0%BF%D0%BE%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "29"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1533533",
+    "label": "Гобийский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D0%BE%D0%B1%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "28"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2089056",
+    "label": "Гибрид белого и бурого медведя",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D0%B8%D0%B1%D1%80%D0%B8%D0%B4_%D0%B1%D0%B5%D0%BB%D0%BE%D0%B3%D0%BE_%D0%B8_%D0%B1%D1%83%D1%80%D0%BE%D0%B3%D0%BE_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8F",
+    "value": "28"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2626037",
+    "label": "Arctodus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9A%D0%BE%D1%80%D0%BE%D1%82%D0%BA%D0%BE%D0%BC%D0%BE%D1%80%D0%B4%D1%8B%D0%B5_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D0%B8",
+    "value": "28"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q683207",
+    "label": "Короткомордый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D0%B8%D0%B3%D0%B0%D0%BD%D1%82%D1%81%D0%BA%D0%B8%D0%B9_%D0%BA%D0%BE%D1%80%D0%BE%D1%82%D0%BA%D0%BE%D0%BC%D0%BE%D1%80%D0%B4%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "27"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2360936",
+    "label": "Апеннинский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%90%D0%BF%D0%B5%D0%BD%D0%BD%D0%B8%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "25"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q337197",
+    "label": "Tremarctinae",
+    "url": "https://ru.wikipedia.org/wiki/Tremarctinae",
+    "value": "24"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11954112",
+    "label": "Ursus thibetanus laniger",
+    "url": "http://www.wikidata.org/entity/Q11954112",
+    "value": "23"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7901176",
+    "label": "Ursinae",
+    "url": "https://ru.wikipedia.org/wiki/Ursinae",
+    "value": "23"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2089426",
+    "label": "Сибирский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D0%B1%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "23"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2562912",
+    "label": "Циньлинская панда",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A6%D0%B8%D0%BD%D1%8C%D0%BB%D0%B8%D0%BD%D1%81%D0%BA%D0%B0%D1%8F_%D0%BF%D0%B0%D0%BD%D0%B4%D0%B0",
+    "value": "23"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2565286",
+    "label": "Калифорнийский бурый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9A%D0%B0%D0%BB%D0%B8%D1%84%D0%BE%D1%80%D0%BD%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "23"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2089432",
+    "label": "Ursus americanus cinnamomum",
+    "url": "https://ru.wikipedia.org/wiki/Ursus_americanus_cinnamomum",
+    "value": "21"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3768986",
+    "label": "Tremarctos",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9E%D1%87%D0%BA%D0%BE%D0%B2%D1%8B%D0%B5_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D0%B8",
+    "value": "20"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11954115",
+    "label": "Ursus thibetanus japonicus",
+    "url": "https://ru.wikipedia.org/wiki/Ursus_thibetanus_japonicus",
+    "value": "20"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4853062",
+    "label": "Ursus thibetanus gedrosianus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%91%D0%B5%D0%BB%D1%83%D0%B4%D0%B6%D0%B8%D1%81%D1%82%D0%B0%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B5%D0%BB%D0%BE%D0%B3%D1%80%D1%83%D0%B4%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "19"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2076664",
+    "label": "Арктотерии",
+    "url": "https://ru.wikipedia.org/wiki/%D0%90%D1%80%D0%BA%D1%82%D0%BE%D1%82%D0%B5%D1%80%D0%B8%D0%B8",
+    "value": "19"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2985924",
+    "label": "Гигантский белый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%93%D0%B8%D0%B3%D0%B0%D0%BD%D1%82%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B5%D0%BB%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "18"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2672197",
+    "label": "Этрусский медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%AD%D1%82%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "17"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2500116",
+    "label": "Колпономосы",
+    "url": "https://ru.wikipedia.org/wiki/Kolponomos",
+    "value": "16"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q793475",
+    "label": "Иркуйем",
+    "url": "https://ru.wikipedia.org/wiki/%D0%98%D1%80%D0%BA%D1%83%D0%B9%D0%B5%D0%BC",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2840949",
+    "label": "Ursus thibetanus ussuricus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A3%D1%81%D1%81%D1%83%D1%80%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B5%D0%BB%D0%BE%D0%B3%D1%80%D1%83%D0%B4%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q255441",
+    "label": "Ursus deningeri",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C_%D0%94%D0%B5%D0%BD%D0%B8%D0%BD%D0%B3%D0%B5%D1%80%D0%B0",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q310780",
+    "label": "Флоридский пещерный медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A4%D0%BB%D0%BE%D1%80%D0%B8%D0%B4%D1%81%D0%BA%D0%B8%D0%B9_%D0%BF%D0%B5%D1%89%D0%B5%D1%80%D0%BD%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q311939",
+    "label": "Ursus minimus",
+    "url": "https://ru.wikipedia.org/wiki/Ursus_minimus",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11905313",
+    "label": "Amphicynodontidae",
+    "url": "https://ru.wikipedia.org/wiki/Amphicynodontinae",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11905313",
+    "label": "Amphicynodontidae",
+    "url": "https://ru.wikipedia.org/wiki/Amphicynodontinae",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2333795",
+    "label": "Agriotherium",
+    "url": "https://ru.wikipedia.org/wiki/Agriotherium",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2892917",
+    "label": "Indarctos",
+    "url": "https://ru.wikipedia.org/wiki/Indarctos",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3308205",
+    "label": "Ursavus",
+    "url": "https://ru.wikipedia.org/wiki/Ursavus",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q948186",
+    "label": "Ursus americanus carlottae",
+    "url": "http://www.wikidata.org/entity/Q948186",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3137681",
+    "label": "Ursus americanus floridanus",
+    "url": "http://www.wikidata.org/entity/Q3137681",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11704938",
+    "label": "Ursus arctos gyas",
+    "url": "http://www.wikidata.org/entity/Q11704938",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11704940",
+    "label": "Ursus arctos sitkensis",
+    "url": "http://www.wikidata.org/entity/Q11704940",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1035243",
+    "label": "Hemicyon",
+    "url": "https://ru.wikipedia.org/wiki/Hemicyon",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4119064",
+    "label": "Ailurarctos",
+    "url": "https://ru.wikipedia.org/wiki/Ailurarctos",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2576461",
+    "label": "Ailuropoda microta",
+    "url": "https://ru.wikipedia.org/wiki/Ailuropoda_microta",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2333391",
+    "label": "Melursus ursinus inornatus",
+    "url": "http://www.wikidata.org/entity/Q2333391",
+    "value": "12"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092013",
+    "label": "Ursus americanus emmonsii",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9B%D0%B5%D0%B4%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "12"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3769927",
+    "label": "Ursus americanus hamiltoni",
+    "url": "http://www.wikidata.org/entity/Q3769927",
+    "value": "11"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3445718",
+    "label": "Plionarctos",
+    "url": "https://ru.wikipedia.org/wiki/Plionarctos",
+    "value": "11"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q17560554",
+    "label": "Ailuropodinae",
+    "url": "https://ru.wikipedia.org/wiki/Ailuropodinae",
+    "value": "11"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q276979",
+    "label": "Kretzoiarctos beatrix",
+    "url": "http://www.wikidata.org/entity/Q276979",
+    "value": "10"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092022",
+    "label": "Ursus arctos stikeenensis",
+    "url": "http://www.wikidata.org/entity/Q9092022",
+    "value": "10"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18609695",
+    "label": "Cephalogale",
+    "url": "https://ru.wikipedia.org/wiki/Cephalogale",
+    "value": "10"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5033519",
+    "label": "Ursus arctos pyrenaicus",
+    "url": "http://www.wikidata.org/entity/Q5033519",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16350420",
+    "label": "Ailuropoda baconi",
+    "url": "https://ru.wikipedia.org/wiki/Ailuropoda_baconi",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16916505",
+    "label": "Хемиционины",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A5%D0%B5%D0%BC%D0%B8%D1%86%D0%B8%D0%BE%D0%BD%D0%B8%D0%BD%D1%8B",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16916505",
+    "label": "Хемиционины",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A5%D0%B5%D0%BC%D0%B8%D1%86%D0%B8%D0%BE%D0%BD%D0%B8%D0%BD%D1%8B",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7901157",
+    "label": "Ursavini",
+    "url": "http://www.wikidata.org/entity/Q7901157",
+    "value": "8"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20907605",
+    "label": "Ursus americanus luteolus",
+    "url": "http://www.wikidata.org/entity/Q20907605",
+    "value": "8"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1388482",
+    "label": "Ursus inopinatus",
+    "url": "http://www.wikidata.org/entity/Q1388482",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3441656",
+    "label": "Parictis",
+    "url": "http://www.wikidata.org/entity/Q3441656",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18202820",
+    "label": "Ballusia",
+    "url": "http://www.wikidata.org/entity/Q18202820",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30693320",
+    "label": "Ursus ingressus",
+    "url": "http://www.wikidata.org/entity/Q30693320",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q61622321",
+    "label": "Ursus arctos priscus",
+    "url": "https://ru.wikipedia.org/wiki/%D0%A1%D1%82%D0%B5%D0%BF%D0%BD%D0%BE%D0%B9_%D0%B1%D1%83%D1%80%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7205035",
+    "label": "Plithocyon",
+    "url": "https://ru.wikipedia.org/wiki/Plithocyon",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q13228332",
+    "label": "Малый пещерный медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B0%D0%BB%D1%8B%D0%B9_%D0%BF%D0%B5%D1%89%D0%B5%D1%80%D0%BD%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q17024721",
+    "label": "Dinocyon",
+    "url": "https://ru.wikipedia.org/wiki/Dinocyon",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3752453",
+    "label": "Ursus arctos alascensis",
+    "url": "http://www.wikidata.org/entity/Q3752453",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19817117",
+    "label": "Helarctos",
+    "url": "http://www.wikidata.org/entity/Q19817117",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21356805",
+    "label": "Agriarctos",
+    "url": "https://ru.wikipedia.org/wiki/Agriarctos",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3621833",
+    "label": "Малый короткомордый медведь",
+    "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%B0%D0%BB%D1%8B%D0%B9_%D0%BA%D0%BE%D1%80%D0%BE%D1%82%D0%BA%D0%BE%D0%BC%D0%BE%D1%80%D0%B4%D1%8B%D0%B9_%D0%BC%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D1%8C",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5893611",
+    "label": "Helarctos malayanus malayanus",
+    "url": "http://www.wikidata.org/entity/Q5893611",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092015",
+    "label": "Ursus americanus pugnax",
+    "url": "http://www.wikidata.org/entity/Q9092015",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092017",
+    "label": "Ursus arctos dalli",
+    "url": "http://www.wikidata.org/entity/Q9092017",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2641484",
+    "label": "Arctotherium angustidens",
+    "url": "http://www.wikidata.org/entity/Q2641484",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5477997",
+    "label": "Ursus americanus californiensis",
+    "url": "http://www.wikidata.org/entity/Q5477997",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5674669",
+    "label": "Ursus americanus vancouveri",
+    "url": "http://www.wikidata.org/entity/Q5674669",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6158080",
+    "label": "Ursus dolinensis",
+    "url": "http://www.wikidata.org/entity/Q6158080",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092007",
+    "label": "Ursus americanus altifrontalis",
+    "url": "http://www.wikidata.org/entity/Q9092007",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092009",
+    "label": "Ursus americanus americanus",
+    "url": "http://www.wikidata.org/entity/Q9092009",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092014",
+    "label": "Ursus americanus eremicus",
+    "url": "http://www.wikidata.org/entity/Q9092014",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9092036",
+    "label": "Ursus thibetanus thibetanus",
+    "url": "http://www.wikidata.org/entity/Q9092036",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q11704936",
+    "label": "Ursus americanus amblyceps",
+    "url": "http://www.wikidata.org/entity/Q11704936",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16352096",
+    "label": "Ursus savini",
+    "url": "http://www.wikidata.org/entity/Q16352096",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q17484766",
+    "label": "Melursus",
+    "url": "http://www.wikidata.org/entity/Q17484766",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18644716",
+    "label": "Kretzoiarctos",
+    "url": "http://www.wikidata.org/entity/Q18644716",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20907612",
+    "label": "Ursus thibetanus mupinensis",
+    "url": "http://www.wikidata.org/entity/Q20907612",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21366809",
+    "label": "Ailuropoda wulingshanensis",
+    "url": "https://ru.wikipedia.org/wiki/Ailuropoda_wulingshanensis",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4006547",
+    "label": "Ursus ladinicus",
+    "url": "http://www.wikidata.org/entity/Q4006547",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5893608",
+    "label": "Helarctos malayanus euryspilus",
+    "url": "http://www.wikidata.org/entity/Q5893608",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7838042",
+    "label": "Tremarctini",
+    "url": "http://www.wikidata.org/entity/Q7838042",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9367140",
+    "label": "Ursus wenzensis",
+    "url": "http://www.wikidata.org/entity/Q9367140",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20907603",
+    "label": "Melursus ursinus ursinus",
+    "url": "http://www.wikidata.org/entity/Q20907603",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20907606",
+    "label": "Ursus americanus machetes",
+    "url": "http://www.wikidata.org/entity/Q20907606",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20907607",
+    "label": "Ursus americanus perniger",
+    "url": "http://www.wikidata.org/entity/Q20907607",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q106199641",
+    "label": "Miomaci",
+    "url": "http://www.wikidata.org/entity/Q106199641",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q110448412",
+    "label": "Aurorarctos",
+    "url": "http://www.wikidata.org/entity/Q110448412",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q120024195",
+    "label": "Huracan",
+    "url": "http://www.wikidata.org/entity/Q120024195",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5703270",
+    "label": "Arctotherium tarijense",
+    "url": "http://www.wikidata.org/entity/Q5703270",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5703273",
+    "label": "Arctotherium vetustum",
+    "url": "http://www.wikidata.org/entity/Q5703273",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6387853",
+    "label": "Arctotherium bonariense",
+    "url": "http://www.wikidata.org/entity/Q6387853",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6427869",
+    "label": "Kolponomos clallamensis",
+    "url": "http://www.wikidata.org/entity/Q6427869",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19717304",
+    "label": "Ursulus stehlini",
+    "url": "http://www.wikidata.org/entity/Q19717304",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21369112",
+    "label": "Adelpharctos",
+    "url": "http://www.wikidata.org/entity/Q21369112",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21401250",
+    "label": "Ursus arctos yesoensis",
+    "url": "http://www.wikidata.org/entity/Q21401250",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33177334",
+    "label": "Agriotheriini",
+    "url": "http://www.wikidata.org/entity/Q33177334",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q63525329",
+    "label": "Miomaci pannonicum",
+    "url": "http://www.wikidata.org/entity/Q63525329",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q112892960",
+    "label": "Ailuropoda fovealis",
+    "url": "https://ru.wikipedia.org/wiki/Ailuropoda_fovealis",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q116547814",
+    "label": "cyonarctos dessei",
+    "url": "https://ru.wikipedia.org/wiki/Cyonarctos_dessei",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3895278",
+    "label": "Pararctotherium",
+    "url": "http://www.wikidata.org/entity/Q3895278",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5278577",
+    "label": "Dinocyon thenardi",
+    "url": "http://www.wikidata.org/entity/Q5278577",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5489312",
+    "label": "Arctotherium wingei",
+    "url": "http://www.wikidata.org/entity/Q5489312",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6080755",
+    "label": "Plionarctos harroldorum",
+    "url": "http://www.wikidata.org/entity/Q6080755",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6080752",
+    "label": "Plionarctos edensis",
+    "url": "http://www.wikidata.org/entity/Q6080752",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6427870",
+    "label": "Kolponomos newportensis",
+    "url": "http://www.wikidata.org/entity/Q6427870",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18644718",
+    "label": "Ailuropodini",
+    "url": "http://www.wikidata.org/entity/Q18644718",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19245514",
+    "label": "Adelpharctos mirus",
+    "url": "http://www.wikidata.org/entity/Q19245514",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21070611",
+    "label": "Agriotherium inexpectans",
+    "url": "http://www.wikidata.org/entity/Q21070611",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21401249",
+    "label": "Ailuropoda melanoleuca melanoleuca",
+    "url": "http://www.wikidata.org/entity/Q21401249",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33176416",
+    "label": "Cephalogalini",
+    "url": "http://www.wikidata.org/entity/Q33176416",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q40685874",
+    "label": "Ursus arctos shanorum",
+    "url": "http://www.wikidata.org/entity/Q40685874",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q40719646",
+    "label": "Ursus lasiotus",
+    "url": "http://www.wikidata.org/entity/Q40719646",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q40719711",
+    "label": "Ursus nasutus",
+    "url": "http://www.wikidata.org/entity/Q40719711",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q108583865",
+    "label": "Arctotherium latidens",
+    "url": "http://www.wikidata.org/entity/Q108583865",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q112863605",
+    "label": "Hemicyon barbouri",
+    "url": "http://www.wikidata.org/entity/Q112863605",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q113407746",
+    "label": "Agriarctos nikolovi",
+    "url": "http://www.wikidata.org/entity/Q113407746",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q116547818",
+    "label": "cyonarctos",
+    "url": "http://www.wikidata.org/entity/Q116547818",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122069773",
+    "label": "Indarctos arctoides",
+    "url": "http://www.wikidata.org/entity/Q122069773",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q120277194",
+    "label": "Plithocyon ursinus",
+    "url": "https://ru.wikipedia.org/wiki/Plithocyon_ursinus",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q124668428",
+    "label": "Ursus arctos penghuensis",
+    "url": "http://www.wikidata.org/entity/Q124668428",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126723012",
+    "label": "Ursus kokeni",
+    "url": "http://www.wikidata.org/entity/Q126723012",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126893244",
+    "label": "Ursus spelaeus eremus",
+    "url": "http://www.wikidata.org/entity/Q126893244",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126893260",
+    "label": "Ursus spelaeus ladinicus",
+    "url": "http://www.wikidata.org/entity/Q126893260",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130243529",
+    "label": "Ursus kudarensis",
+    "url": "http://www.wikidata.org/entity/Q130243529",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130243540",
+    "label": "Ursus kanivetz",
+    "url": "http://www.wikidata.org/entity/Q130243540",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q131742962",
+    "label": "Filholictis",
+    "url": "http://www.wikidata.org/entity/Q131742962",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q131981277",
+    "label": "Helarctos namadicus",
+    "url": "http://www.wikidata.org/entity/Q131981277",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5063291",
+    "label": "Cephalogale geoffroyi",
+    "url": "http://www.wikidata.org/entity/Q5063291",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19868678",
+    "label": "Ursulus",
+    "url": "http://www.wikidata.org/entity/Q19868678",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19868678",
+    "label": "Ursulus",
+    "url": "http://www.wikidata.org/entity/Q19868678",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20716815",
+    "label": "Agriotherium sivalensis",
+    "url": "http://www.wikidata.org/entity/Q20716815",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33146894",
+    "label": "Agriotheriinae",
+    "url": "http://www.wikidata.org/entity/Q33146894",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q37927494",
+    "label": "Ursus melanoleucus",
+    "url": "http://www.wikidata.org/entity/Q37927494",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q40719597",
+    "label": "Ursus avernensis",
+    "url": "http://www.wikidata.org/entity/Q40719597",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q40719820",
+    "label": "Ursus sp.",
+    "url": "http://www.wikidata.org/entity/Q40719820",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q41155921",
+    "label": "Myrmarctos",
+    "url": "http://www.wikidata.org/entity/Q41155921",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q41163322",
+    "label": "Cephalogale brevirostris",
+    "url": "http://www.wikidata.org/entity/Q41163322",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q41166242",
+    "label": "Myrmarctos eversmanni",
+    "url": "http://www.wikidata.org/entity/Q41166242",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q106448107",
+    "label": "Ursus lotor",
+    "url": "http://www.wikidata.org/entity/Q106448107",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q106448115",
+    "label": "Ursus meles",
+    "url": "http://www.wikidata.org/entity/Q106448115",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q109646847",
+    "label": "Arctodus floridanus",
+    "url": "http://www.wikidata.org/entity/Q109646847",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q109647610",
+    "label": "Ursus malayanus",
+    "url": "http://www.wikidata.org/entity/Q109647610",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q109647611",
+    "label": "Ursus ornatus",
+    "url": "http://www.wikidata.org/entity/Q109647611",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q109647612",
+    "label": "Ursus taxus",
+    "url": "http://www.wikidata.org/entity/Q109647612",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q119319247",
+    "label": "Parictis primaevus",
+    "url": "http://www.wikidata.org/entity/Q119319247",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q119327608",
+    "label": "Parictis major",
+    "url": "http://www.wikidata.org/entity/Q119327608",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q119327745",
+    "label": "Parictis personi",
+    "url": "http://www.wikidata.org/entity/Q119327745",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q121502670",
+    "label": "Ursus japonicus",
+    "url": "http://www.wikidata.org/entity/Q121502670",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122069842",
+    "label": "Indarctos atticus",
+    "url": "http://www.wikidata.org/entity/Q122069842",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122171794",
+    "label": "Ursus luscus",
+    "url": "http://www.wikidata.org/entity/Q122171794",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122451732",
+    "label": "Arcticonus",
+    "url": "http://www.wikidata.org/entity/Q122451732",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122451771",
+    "label": "Arcticonus thibetanus",
+    "url": "http://www.wikidata.org/entity/Q122451771",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122735229",
+    "label": "Ursus ferox Temminck, 1834",
+    "url": "http://www.wikidata.org/entity/Q122735229",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122750382",
+    "label": "Ursus isabellinus",
+    "url": "http://www.wikidata.org/entity/Q122750382",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122840943",
+    "label": "Ursus tanakai",
+    "url": "http://www.wikidata.org/entity/Q122840943",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122841684",
+    "label": "Ursus cultridens",
+    "url": "http://www.wikidata.org/entity/Q122841684",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122841694",
+    "label": "Ursus cultridens issiodorensis",
+    "url": "http://www.wikidata.org/entity/Q122841694",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122841730",
+    "label": "Ursus cultridens arvernensis",
+    "url": "http://www.wikidata.org/entity/Q122841730",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122841742",
+    "label": "Ursus arvernensis",
+    "url": "http://www.wikidata.org/entity/Q122841742",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122848168",
+    "label": "Ursus labiatus",
+    "url": "http://www.wikidata.org/entity/Q122848168",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122848185",
+    "label": "Ursus arctoideus",
+    "url": "http://www.wikidata.org/entity/Q122848185",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122848195",
+    "label": "Ursus priscus",
+    "url": "http://www.wikidata.org/entity/Q122848195",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122864075",
+    "label": "Ursus malayanus wardi",
+    "url": "http://www.wikidata.org/entity/Q122864075",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q122871180",
+    "label": "Ursus primaevus",
+    "url": "http://www.wikidata.org/entity/Q122871180",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q125622607",
+    "label": "Indarctos vireti",
+    "url": "http://www.wikidata.org/entity/Q125622607",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q125622775",
+    "label": "Indarctos nevadensis",
+    "url": "http://www.wikidata.org/entity/Q125622775",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126689277",
+    "label": "Ursus marinus",
+    "url": "http://www.wikidata.org/entity/Q126689277",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126717699",
+    "label": "Ursavus sylvestris",
+    "url": "http://www.wikidata.org/entity/Q126717699",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126723218",
+    "label": "Ursus dentrificius",
+    "url": "http://www.wikidata.org/entity/Q126723218",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q126924141",
+    "label": "Ursavus tedfordi",
+    "url": "http://www.wikidata.org/entity/Q126924141",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130225684",
+    "label": "Hemicyon mayorali",
+    "url": "http://www.wikidata.org/entity/Q130225684",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q131981329",
+    "label": "Ursus namadicus",
+    "url": "http://www.wikidata.org/entity/Q131981329",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q132062244",
+    "label": "Ursus sivalensis",
+    "url": "http://www.wikidata.org/entity/Q132062244",
+    "value": "0"
+  }
+]
+  //NODES_END
+  ;
+	  
+      const edges = 
+	  //EDGES_START
+[
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q33609"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q535979",
+    "target": "http://www.wikidata.org/entity/Q33602"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q36341"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122783"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q124410"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q19817117",
+    "target": "http://www.wikidata.org/entity/Q144923"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q171004"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3768986",
+    "target": "http://www.wikidata.org/entity/Q137641"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q17484766",
+    "target": "http://www.wikidata.org/entity/Q145016"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7901176",
+    "target": "http://www.wikidata.org/entity/Q243359"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q237260"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q188851"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q839769"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q695431"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q944893"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q839509"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q1997493"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q525781"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q17560554",
+    "target": "http://www.wikidata.org/entity/Q535979"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q535979"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q844216"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q932079"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q716455"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q3278878"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q1533533"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q2089056"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q337197",
+    "target": "http://www.wikidata.org/entity/Q2626037"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2626037",
+    "target": "http://www.wikidata.org/entity/Q683207"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q2360936"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q337197"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q11954112"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q7901176"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q2089426"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q33602",
+    "target": "http://www.wikidata.org/entity/Q2562912"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q2565286"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q2089432"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q3768986"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q11954115"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q4853062"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q337197",
+    "target": "http://www.wikidata.org/entity/Q2076664"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q33609",
+    "target": "http://www.wikidata.org/entity/Q2985924"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q2672197"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11905313",
+    "target": "http://www.wikidata.org/entity/Q2500116"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q793475"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q2840949"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q255441"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3768986",
+    "target": "http://www.wikidata.org/entity/Q310780"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q311939"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q11905313"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q2333795"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q33177334",
+    "target": "http://www.wikidata.org/entity/Q2892917"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q3308205"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q948186"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q3137681"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q11704938"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q11704940"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q1035243"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q4119064"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q535979",
+    "target": "http://www.wikidata.org/entity/Q2576461"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q145016",
+    "target": "http://www.wikidata.org/entity/Q2333391"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q9092013"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q3769927"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7838042",
+    "target": "http://www.wikidata.org/entity/Q3445718"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q17560554"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q18644716",
+    "target": "http://www.wikidata.org/entity/Q276979"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q9092022"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q18609695"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q5033519"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q535979",
+    "target": "http://www.wikidata.org/entity/Q16350420"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q16916505"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7901176",
+    "target": "http://www.wikidata.org/entity/Q7901157"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q20907605"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q1388482"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q3441656"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7901176",
+    "target": "http://www.wikidata.org/entity/Q18202820"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q30693320"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q61622321"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q7205035"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q13228332"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q17024721"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q3752453"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7901176",
+    "target": "http://www.wikidata.org/entity/Q19817117"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q18644718",
+    "target": "http://www.wikidata.org/entity/Q21356805"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2626037",
+    "target": "http://www.wikidata.org/entity/Q3621833"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q144923",
+    "target": "http://www.wikidata.org/entity/Q5893611"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q9092015"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q9092017"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2076664",
+    "target": "http://www.wikidata.org/entity/Q2641484"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q5477997"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q5674669"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q6158080"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q9092007"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q9092009"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q9092014"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q9092036"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q11704936"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q16352096"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7901176",
+    "target": "http://www.wikidata.org/entity/Q17484766"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q18644718",
+    "target": "http://www.wikidata.org/entity/Q18644716"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q124410",
+    "target": "http://www.wikidata.org/entity/Q20907612"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q535979",
+    "target": "http://www.wikidata.org/entity/Q21366809"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q4006547"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q144923",
+    "target": "http://www.wikidata.org/entity/Q5893608"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q337197",
+    "target": "http://www.wikidata.org/entity/Q7838042"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q9367140"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q145016",
+    "target": "http://www.wikidata.org/entity/Q20907603"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q20907606"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122783",
+    "target": "http://www.wikidata.org/entity/Q20907607"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q17560554",
+    "target": "http://www.wikidata.org/entity/Q106199641"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7901176",
+    "target": "http://www.wikidata.org/entity/Q110448412"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q17560554",
+    "target": "http://www.wikidata.org/entity/Q120024195"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2076664",
+    "target": "http://www.wikidata.org/entity/Q5703270"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2076664",
+    "target": "http://www.wikidata.org/entity/Q5703273"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2076664",
+    "target": "http://www.wikidata.org/entity/Q6387853"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2500116",
+    "target": "http://www.wikidata.org/entity/Q6427869"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q19868678",
+    "target": "http://www.wikidata.org/entity/Q19717304"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q21369112"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q21401250"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q33146894",
+    "target": "http://www.wikidata.org/entity/Q33177334"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q106199641",
+    "target": "http://www.wikidata.org/entity/Q63525329"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q535979",
+    "target": "http://www.wikidata.org/entity/Q112892960"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q116547818",
+    "target": "http://www.wikidata.org/entity/Q116547814"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q337197",
+    "target": "http://www.wikidata.org/entity/Q3895278"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q17024721",
+    "target": "http://www.wikidata.org/entity/Q5278577"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2076664",
+    "target": "http://www.wikidata.org/entity/Q5489312"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3445718",
+    "target": "http://www.wikidata.org/entity/Q6080755"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3445718",
+    "target": "http://www.wikidata.org/entity/Q6080752"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2500116",
+    "target": "http://www.wikidata.org/entity/Q6427870"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q17560554",
+    "target": "http://www.wikidata.org/entity/Q18644718"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q21369112",
+    "target": "http://www.wikidata.org/entity/Q19245514"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2333795",
+    "target": "http://www.wikidata.org/entity/Q21070611"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q33602",
+    "target": "http://www.wikidata.org/entity/Q21401249"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q33176416"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q40685874"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q40719646"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q40719711"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2076664",
+    "target": "http://www.wikidata.org/entity/Q108583865"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1035243",
+    "target": "http://www.wikidata.org/entity/Q112863605"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q21356805",
+    "target": "http://www.wikidata.org/entity/Q113407746"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q16916505",
+    "target": "http://www.wikidata.org/entity/Q116547818"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2892917",
+    "target": "http://www.wikidata.org/entity/Q122069773"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q7205035",
+    "target": "http://www.wikidata.org/entity/Q120277194"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q36341",
+    "target": "http://www.wikidata.org/entity/Q124668428"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q126723012"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q188851",
+    "target": "http://www.wikidata.org/entity/Q126893244"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q188851",
+    "target": "http://www.wikidata.org/entity/Q126893260"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q130243529"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q130243540"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q33176416",
+    "target": "http://www.wikidata.org/entity/Q131742962"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q19817117",
+    "target": "http://www.wikidata.org/entity/Q131981277"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q18609695",
+    "target": "http://www.wikidata.org/entity/Q5063291"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q19868678"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2333795",
+    "target": "http://www.wikidata.org/entity/Q20716815"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q33146894"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q37927494"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q40719597"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q40719820"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q41155921"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q18609695",
+    "target": "http://www.wikidata.org/entity/Q41163322"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q41155921",
+    "target": "http://www.wikidata.org/entity/Q41166242"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q106448107"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q106448115"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2626037",
+    "target": "http://www.wikidata.org/entity/Q109646847"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q109647610"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q109647611"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q109647612"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3441656",
+    "target": "http://www.wikidata.org/entity/Q119319247"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3441656",
+    "target": "http://www.wikidata.org/entity/Q119327608"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3441656",
+    "target": "http://www.wikidata.org/entity/Q119327745"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q121502670"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2892917",
+    "target": "http://www.wikidata.org/entity/Q122069842"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122171794"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q11788",
+    "target": "http://www.wikidata.org/entity/Q122451732"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122451732",
+    "target": "http://www.wikidata.org/entity/Q122451771"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122735229"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122750382"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122840943"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122841684"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122841684",
+    "target": "http://www.wikidata.org/entity/Q122841694"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q122841684",
+    "target": "http://www.wikidata.org/entity/Q122841730"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122841742"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122848168"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122848185"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122848195"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q109647610",
+    "target": "http://www.wikidata.org/entity/Q122864075"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q122871180"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2892917",
+    "target": "http://www.wikidata.org/entity/Q125622607"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q2892917",
+    "target": "http://www.wikidata.org/entity/Q125622775"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q126689277"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3308205",
+    "target": "http://www.wikidata.org/entity/Q126717699"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q126723218"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q3308205",
+    "target": "http://www.wikidata.org/entity/Q126924141"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q1035243",
+    "target": "http://www.wikidata.org/entity/Q130225684"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q131981329"
+  },
+  {
+    "source": "http://www.wikidata.org/entity/Q243359",
+    "target": "http://www.wikidata.org/entity/Q132062244"
+  }
+]
+	  //EDGES_END
+	  ;
+  
+    
+    const gData = {nodes:nodes, links:edges};
+	;
+
+    // Initialize the graph
+    const Graph = new ForceGraph3D(document.getElementById('3d-graph'))
+      .nodeAutoColorBy('group') // Auto-color nodes by their 'group' property
+	  .nodeLabel('label')
+	  .nodeVal(node => Math.max(node.value, 0.1))
+	  .linkLabel('group')
+      .linkAutoColorBy('group') // Auto-color links by the group
+      .linkOpacity(0.5)
+	  .linkDirectionalArrowLength(5)
+	  .linkDirectionalArrowRelPos(1)
+	  .onNodeClick(node => {
+        if (node.url) {
+          window.open(node.url, '_blank'); // Open URL in a new tab if it exists
+        }
+      })
+      .graphData(gData);
+  </script>
+</body>
+</html>
+
+
