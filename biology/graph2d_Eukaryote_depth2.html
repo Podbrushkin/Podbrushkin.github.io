@@ -1,0 +1,5998 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Vis Network | Data | Dynamic filtering</title>
+	
+
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style type="text/css">
+		
+      #mynetwork {
+        width: 100%;
+        height: 95vh;
+        border: 1px solid lightgray;
+		background-color: #242424;
+		resize: both;
+		overflow: auto;
+      }
+	  #configuration {
+		//background-color: #FFFFFF;
+		color: #242424;
+	  }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+		color: #ffffff;
+		background-color: #1e1e1e;
+      }
+      code {
+        font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+          monospace;
+      }
+	  .labels-container {
+			display: flex;
+		}
+
+		.labels-container > label {
+		  margin-right: 20px; /* Adjust spacing as needed */
+		}
+    </style>
+  </head>
+  <body>
+    <!-- <h1>Dynamic filtering</h1> -->
+    <details>
+		<summary>Details</summary>
+		<pre>$sparql = @&#39;
+#efaultView:Graph
+PREFIX gas: &lt;http://www.bigdata.com/rdf/gas#&gt;
+
+SELECT ?obj ?objLabel ?links ?parent
+WHERE {
+  SERVICE gas:service {
+    gas:program gas:gasClass &quot;com.bigdata.rdf.graph.analytics.SSSP&quot; ;
+                gas:in wd:Q19088 ;
+                gas:traversalDirection &quot;Reverse&quot; ;
+                gas:out ?obj ;
+                #gas:out1 ?depth ;
+                gas:out2 ?parent ;  # Capture the parent ID
+                gas:maxIterations 2 ;
+                gas:linkType wdt:P171 .
+  }
+  ?obj wikibase:sitelinks ?links.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language &quot;ru,mul,en&quot; }
+}
+&#39;@
+$taxons = Invoke-Sparql $sparql
+
+$nodes = $taxons | select @{n=&#39;id&#39;;e=&#39;obj&#39;},@{n=&#39;label&#39;;e=&#39;objLabel&#39;},@{n=&#39;url&#39;;e={$_.wikipedia ?? $_.obj}},@{n=&#39;value&#39;;e=&#39;links&#39;}
+$edges = $taxons | ? {$_.parent -In $nodes.id} | select @{n=&#39;source&#39;;e=&#39;parent&#39;},@{n=&#39;target&#39;;e=&#39;obj&#39;}
+Format-HtmlGraph -nodes $nodes -edges $edges -OutVariable html | Invoke-Item</pre>
+	</details>
+	<div class="labels-container">
+    <label>
+      Filter nodes
+	  <!-- FILTER_NODES_CHECKBOXES_START -->
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="" checked />
+        
+    </label>
+</div>
+	  <!-- END -->
+    </label>
+    <br />
+    <br />
+    <label>
+      Filter edges
+	  <!-- FILTER_EDGES_CHECKBOXES_START -->
+<div>
+    <label>
+        <input type="checkbox" name="edgesFilter" value="" checked />
+        
+    </label>
+</div>
+	  <!-- END -->
+    </label>
+	</div>
+    <br />
+    <div id="mynetwork"></div>
+    <div id="configuration"></div>
+	<button onclick="toggleShape()">Toggle Shape</button>
+	<button onclick="changeLabelColor()">Change Label Color</button>
+	
+    <script type="text/javascript">
+	
+	
+	
+      
+      const edgeFilters = document.getElementsByName("edgesFilter");
+      const nodeFilters = document.getElementsByName("nodesFilter");
+	  let network = null;
+
+      function startNetwork(data) {
+        const container = document.getElementById("mynetwork");
+        const options = {
+			physics:{
+				stabilization: false	// fast but shaky startup
+		   },
+		   nodes: {
+		   shape: 'dot',
+			scaling: {
+				min: 10,
+				max: 30,
+				label: {
+					enabled: true,
+					min: 14,
+					max: 30,
+				},
+			},
+		   },
+			edges: {
+				arrows: {
+				  to: {
+					enabled: true,
+				  }
+				},
+				arrowStrikethrough: true,
+			  },
+			configure: {
+				filter: function (option, path) {
+				  return path.indexOf('physics') !== -1;
+				},
+				container: document.getElementById('configuration'),
+			}
+		};
+        network = new vis.Network(container, data, options);
+      }
+
+      /**
+       * In this example we do not mutate nodes or edges source data.
+       */
+      const nodes = new vis.DataSet(
+	  //NODES_START
+[
+  {
+    "id": "http://www.wikidata.org/entity/Q101274",
+    "label": "простейшие",
+    "url": "http://www.wikidata.org/entity/Q101274",
+    "value": "100"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q648056",
+    "label": "Дейтеромицеты",
+    "url": "http://www.wikidata.org/entity/Q648056",
+    "value": "35"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q941929",
+    "label": "Neocallimastigomycota",
+    "url": "http://www.wikidata.org/entity/Q941929",
+    "value": "19"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q964455",
+    "label": "униконты",
+    "url": "http://www.wikidata.org/entity/Q964455",
+    "value": "32"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1317786",
+    "label": "слоевищные растения",
+    "url": "http://www.wikidata.org/entity/Q1317786",
+    "value": "32"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2312047",
+    "label": "Spongiophytaceae",
+    "url": "http://www.wikidata.org/entity/Q2312047",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2312057",
+    "label": "Spongiophyton",
+    "url": "http://www.wikidata.org/entity/Q2312057",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2468682",
+    "label": "Chitinozoa",
+    "url": "http://www.wikidata.org/entity/Q2468682",
+    "value": "15"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2998108",
+    "label": "Corticata",
+    "url": "http://www.wikidata.org/entity/Q2998108",
+    "value": "11"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7267086",
+    "label": "Qataniaria",
+    "url": "http://www.wikidata.org/entity/Q7267086",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7616510",
+    "label": "Stigmea",
+    "url": "http://www.wikidata.org/entity/Q7616510",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q8025051",
+    "label": "Winfrenatia",
+    "url": "http://www.wikidata.org/entity/Q8025051",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9642991",
+    "label": "Bacillariophyta",
+    "url": "http://www.wikidata.org/entity/Q9642991",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10293247",
+    "label": "Gynandria",
+    "url": "http://www.wikidata.org/entity/Q10293247",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10334205",
+    "label": "Myxomycota",
+    "url": "http://www.wikidata.org/entity/Q10334205",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10713068",
+    "label": "Variolaria",
+    "url": "http://www.wikidata.org/entity/Q10713068",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16525215",
+    "label": "Acrasiomycota",
+    "url": "http://www.wikidata.org/entity/Q16525215",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398223",
+    "label": "Actinocoma",
+    "url": "http://www.wikidata.org/entity/Q21398223",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398233",
+    "label": "Myxodictyum",
+    "url": "http://www.wikidata.org/entity/Q21398233",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398238",
+    "label": "Protomyxa",
+    "url": "http://www.wikidata.org/entity/Q21398238",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398247",
+    "label": "Rhabdospora Laguesse, 1895",
+    "url": "http://www.wikidata.org/entity/Q21398247",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398262",
+    "label": "Triangulomonas",
+    "url": "http://www.wikidata.org/entity/Q21398262",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446189",
+    "label": "Haptomonada",
+    "url": "http://www.wikidata.org/entity/Q21446189",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447197",
+    "label": "Cormobionta",
+    "url": "http://www.wikidata.org/entity/Q21447197",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447403",
+    "label": "Marteiliida",
+    "url": "http://www.wikidata.org/entity/Q21447403",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070213",
+    "label": "Acuturris",
+    "url": "http://www.wikidata.org/entity/Q23070213",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070214",
+    "label": "Amaurolithus",
+    "url": "http://www.wikidata.org/entity/Q23070214",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070216",
+    "label": "Harpakter",
+    "url": "http://www.wikidata.org/entity/Q23070216",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070217",
+    "label": "Pleuromastix",
+    "url": "http://www.wikidata.org/entity/Q23070217",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070219",
+    "label": "Stichochrysis",
+    "url": "http://www.wikidata.org/entity/Q23070219",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070220",
+    "label": "Sulcochrysis",
+    "url": "http://www.wikidata.org/entity/Q23070220",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070221",
+    "label": "Trichothrauma",
+    "url": "http://www.wikidata.org/entity/Q23070221",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25368093",
+    "label": "Schizamoeba",
+    "url": "http://www.wikidata.org/entity/Q25368093",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30540367",
+    "label": "Tandonea",
+    "url": "http://www.wikidata.org/entity/Q30540367",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33135249",
+    "label": "Sphenopteridae",
+    "url": "http://www.wikidata.org/entity/Q33135249",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33225355",
+    "label": "Dictyosteliomycota",
+    "url": "http://www.wikidata.org/entity/Q33225355",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q37033394",
+    "label": "Ordospora",
+    "url": "http://www.wikidata.org/entity/Q37033394",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54287550",
+    "label": "Ancoracysta twista",
+    "url": "http://www.wikidata.org/entity/Q54287550",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54371413",
+    "label": "Amylophagus algarum",
+    "url": "http://www.wikidata.org/entity/Q54371413",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q65007794",
+    "label": "Celyphus",
+    "url": "http://www.wikidata.org/entity/Q65007794",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212104",
+    "label": "Elektoriskos",
+    "url": "http://www.wikidata.org/entity/Q67212104",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213150",
+    "label": "Impluviculus",
+    "url": "http://www.wikidata.org/entity/Q67213150",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213189",
+    "label": "Kildinella",
+    "url": "http://www.wikidata.org/entity/Q67213189",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213221",
+    "label": "Lacunalites",
+    "url": "http://www.wikidata.org/entity/Q67213221",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214158",
+    "label": "Matanomadhia",
+    "url": "http://www.wikidata.org/entity/Q67214158",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214169",
+    "label": "Monocrodium",
+    "url": "http://www.wikidata.org/entity/Q67214169",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214227",
+    "label": "Nucellosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214227",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214241",
+    "label": "Octaedryxium",
+    "url": "http://www.wikidata.org/entity/Q67214241",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214242",
+    "label": "Orygmatosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214242",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214244",
+    "label": "Ozotobrachion",
+    "url": "http://www.wikidata.org/entity/Q67214244",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214248",
+    "label": "Palaeostomocystis",
+    "url": "http://www.wikidata.org/entity/Q67214248",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214252",
+    "label": "Palaiosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214252",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67215223",
+    "label": "Striatotheca",
+    "url": "http://www.wikidata.org/entity/Q67215223",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216216",
+    "label": "Tariccrodium",
+    "url": "http://www.wikidata.org/entity/Q67216216",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216234",
+    "label": "Trichosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67216234",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216255",
+    "label": "Trilobatum",
+    "url": "http://www.wikidata.org/entity/Q67216255",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216280",
+    "label": "Tylotopalla",
+    "url": "http://www.wikidata.org/entity/Q67216280",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216293",
+    "label": "Vavososphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67216293",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70608726",
+    "label": "Merrettia",
+    "url": "http://www.wikidata.org/entity/Q70608726",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q94686741",
+    "label": "Prosomatifera",
+    "url": "http://www.wikidata.org/entity/Q94686741",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q105009429",
+    "label": "Micareaceae",
+    "url": "http://www.wikidata.org/entity/Q105009429",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q106696145",
+    "label": "Ticoa",
+    "url": "http://www.wikidata.org/entity/Q106696145",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q108389880",
+    "label": "Sanchytriomycota",
+    "url": "http://www.wikidata.org/entity/Q108389880",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549710",
+    "label": "Heteromastix amabilis",
+    "url": "http://www.wikidata.org/entity/Q111549710",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549711",
+    "label": "Heteromastix angustus",
+    "url": "http://www.wikidata.org/entity/Q111549711",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549716",
+    "label": "Heteromastix bispinicornis",
+    "url": "http://www.wikidata.org/entity/Q111549716",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549717",
+    "label": "Heteromastix bryanti",
+    "url": "http://www.wikidata.org/entity/Q111549717",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549718",
+    "label": "Heteromastix castigatus",
+    "url": "http://www.wikidata.org/entity/Q111549718",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549728",
+    "label": "Heteromastix discoflavus",
+    "url": "http://www.wikidata.org/entity/Q111549728",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549729",
+    "label": "Heteromastix distortus",
+    "url": "http://www.wikidata.org/entity/Q111549729",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549730",
+    "label": "Heteromastix dolichocephalus",
+    "url": "http://www.wikidata.org/entity/Q111549730",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549731",
+    "label": "Heteromastix flavifrons",
+    "url": "http://www.wikidata.org/entity/Q111549731",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549732",
+    "label": "Heteromastix flavipennis",
+    "url": "http://www.wikidata.org/entity/Q111549732",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549733",
+    "label": "Heteromastix flaviventris",
+    "url": "http://www.wikidata.org/entity/Q111549733",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549734",
+    "label": "Heteromastix flavoterminalis",
+    "url": "http://www.wikidata.org/entity/Q111549734",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549735",
+    "label": "Heteromastix fragilis",
+    "url": "http://www.wikidata.org/entity/Q111549735",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549736",
+    "label": "Heteromastix frater",
+    "url": "http://www.wikidata.org/entity/Q111549736",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549737",
+    "label": "Heteromastix fusicornis",
+    "url": "http://www.wikidata.org/entity/Q111549737",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549738",
+    "label": "Heteromastix gagaticeps",
+    "url": "http://www.wikidata.org/entity/Q111549738",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549739",
+    "label": "Heteromastix galeatus",
+    "url": "http://www.wikidata.org/entity/Q111549739",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549740",
+    "label": "Heteromastix geniculatus",
+    "url": "http://www.wikidata.org/entity/Q111549740",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549742",
+    "label": "Heteromastix glaber",
+    "url": "http://www.wikidata.org/entity/Q111549742",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549743",
+    "label": "Heteromastix imitator",
+    "url": "http://www.wikidata.org/entity/Q111549743",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549745",
+    "label": "Heteromastix inflatus",
+    "url": "http://www.wikidata.org/entity/Q111549745",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549746",
+    "label": "Heteromastix insignicornis",
+    "url": "http://www.wikidata.org/entity/Q111549746",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549747",
+    "label": "Heteromastix irregularis",
+    "url": "http://www.wikidata.org/entity/Q111549747",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549748",
+    "label": "Heteromastix laticollis",
+    "url": "http://www.wikidata.org/entity/Q111549748",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549749",
+    "label": "Heteromastix latus",
+    "url": "http://www.wikidata.org/entity/Q111549749",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549750",
+    "label": "Heteromastix longicornis",
+    "url": "http://www.wikidata.org/entity/Q111549750",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549751",
+    "label": "Heteromastix macleayi",
+    "url": "http://www.wikidata.org/entity/Q111549751",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549752",
+    "label": "Heteromastix major",
+    "url": "http://www.wikidata.org/entity/Q111549752",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549753",
+    "label": "Heteromastix mcdonaldi",
+    "url": "http://www.wikidata.org/entity/Q111549753",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549754",
+    "label": "Heteromastix mediofuscus",
+    "url": "http://www.wikidata.org/entity/Q111549754",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549755",
+    "label": "Heteromastix megalops",
+    "url": "http://www.wikidata.org/entity/Q111549755",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549756",
+    "label": "Heteromastix melanocephalus",
+    "url": "http://www.wikidata.org/entity/Q111549756",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549757",
+    "label": "Heteromastix minor",
+    "url": "http://www.wikidata.org/entity/Q111549757",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549758",
+    "label": "Heteromastix mirabilis",
+    "url": "http://www.wikidata.org/entity/Q111549758",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549759",
+    "label": "Heteromastix mirocerus",
+    "url": "http://www.wikidata.org/entity/Q111549759",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q117038416",
+    "label": "Cranwellia",
+    "url": "http://www.wikidata.org/entity/Q117038416",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130427981",
+    "label": "Nibbleridia",
+    "url": "http://www.wikidata.org/entity/Q130427981",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q756",
+    "label": "растения",
+    "url": "http://www.wikidata.org/entity/Q756",
+    "value": "260"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q764",
+    "label": "грибы",
+    "url": "http://www.wikidata.org/entity/Q764",
+    "value": "202"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q133366",
+    "label": "риниофиты",
+    "url": "http://www.wikidata.org/entity/Q133366",
+    "value": "22"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1044732",
+    "label": "Hacrobia",
+    "url": "http://www.wikidata.org/entity/Q1044732",
+    "value": "18"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1096964",
+    "label": "Myzozoa",
+    "url": "http://www.wikidata.org/entity/Q1096964",
+    "value": "19"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1363241",
+    "label": "сорт растений",
+    "url": "http://www.wikidata.org/entity/Q1363241",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1756496",
+    "label": "Blastocystis",
+    "url": "http://www.wikidata.org/entity/Q1756496",
+    "value": "16"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2980992",
+    "label": "Cnidospora",
+    "url": "http://www.wikidata.org/entity/Q2980992",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3055913",
+    "label": "Equisetophyta",
+    "url": "http://www.wikidata.org/entity/Q3055913",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3365001",
+    "label": "Parenchymophyta",
+    "url": "http://www.wikidata.org/entity/Q3365001",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3391720",
+    "label": "Plasmodesmophyta",
+    "url": "http://www.wikidata.org/entity/Q3391720",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3409254",
+    "label": "Prespermaphyta",
+    "url": "http://www.wikidata.org/entity/Q3409254",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5571932",
+    "label": "Glossomastix",
+    "url": "http://www.wikidata.org/entity/Q5571932",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5609633",
+    "label": "Grisellatheca",
+    "url": "http://www.wikidata.org/entity/Q5609633",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10261972",
+    "label": "Cryptogamia",
+    "url": "http://www.wikidata.org/entity/Q10261972",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10264640",
+    "label": "Decandria",
+    "url": "http://www.wikidata.org/entity/Q10264640",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10266045",
+    "label": "Diandria",
+    "url": "http://www.wikidata.org/entity/Q10266045",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10295350",
+    "label": "Hexagynia",
+    "url": "http://www.wikidata.org/entity/Q10295350",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10295354",
+    "label": "Hexandria",
+    "url": "http://www.wikidata.org/entity/Q10295354",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10447962",
+    "label": "Chaetotrichum",
+    "url": "http://www.wikidata.org/entity/Q10447962",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12021881",
+    "label": "Isuasphaera",
+    "url": "http://www.wikidata.org/entity/Q12021881",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12899838",
+    "label": "Eumycota",
+    "url": "http://www.wikidata.org/entity/Q12899838",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q14905764",
+    "label": "Rhizomorpha",
+    "url": "http://www.wikidata.org/entity/Q14905764",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16943601",
+    "label": "Metakaryota",
+    "url": "http://www.wikidata.org/entity/Q16943601",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q17488341",
+    "label": "Prasinophyta",
+    "url": "http://www.wikidata.org/entity/Q17488341",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19596324",
+    "label": "Cephalonyx",
+    "url": "http://www.wikidata.org/entity/Q19596324",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19597370",
+    "label": "Granomarginata",
+    "url": "http://www.wikidata.org/entity/Q19597370",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20739127",
+    "label": "Euphemerites",
+    "url": "http://www.wikidata.org/entity/Q20739127",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21220739",
+    "label": "Paraphysomonadaceae",
+    "url": "http://www.wikidata.org/entity/Q21220739",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21334138",
+    "label": "Oidospora",
+    "url": "http://www.wikidata.org/entity/Q21334138",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21397901",
+    "label": "Plataninium",
+    "url": "http://www.wikidata.org/entity/Q21397901",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446030",
+    "label": "Granuloreticulosa",
+    "url": "http://www.wikidata.org/entity/Q21446030",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446061",
+    "label": "Ascetospora",
+    "url": "http://www.wikidata.org/entity/Q21446061",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446097",
+    "label": "Gymnomyxa",
+    "url": "http://www.wikidata.org/entity/Q21446097",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446100",
+    "label": "Gymnophrea",
+    "url": "http://www.wikidata.org/entity/Q21446100",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446736",
+    "label": "Centramoebae",
+    "url": "http://www.wikidata.org/entity/Q21446736",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22087764",
+    "label": "Obazoa",
+    "url": "http://www.wikidata.org/entity/Q22087764",
+    "value": "26"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22103470",
+    "label": "Anehmia",
+    "url": "http://www.wikidata.org/entity/Q22103470",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22104516",
+    "label": "Harbinia",
+    "url": "http://www.wikidata.org/entity/Q22104516",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22109609",
+    "label": "Protogenes",
+    "url": "http://www.wikidata.org/entity/Q22109609",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23832616",
+    "label": "Flagellatae",
+    "url": "http://www.wikidata.org/entity/Q23832616",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23832620",
+    "label": "Chrysophycea",
+    "url": "http://www.wikidata.org/entity/Q23832620",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23832644",
+    "label": "Flagelloopalinida",
+    "url": "http://www.wikidata.org/entity/Q23832644",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23832651",
+    "label": "Mastigomycetes",
+    "url": "http://www.wikidata.org/entity/Q23832651",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q24088016",
+    "label": "Discomitochondria",
+    "url": "http://www.wikidata.org/entity/Q24088016",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q24894879",
+    "label": "Aphyllopteris",
+    "url": "http://www.wikidata.org/entity/Q24894879",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365768",
+    "label": "Lymphosporidium",
+    "url": "http://www.wikidata.org/entity/Q25365768",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365800",
+    "label": "Tentaculomonas",
+    "url": "http://www.wikidata.org/entity/Q25365800",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365811",
+    "label": "Jolya",
+    "url": "http://www.wikidata.org/entity/Q25365811",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365812",
+    "label": "Colemania",
+    "url": "http://www.wikidata.org/entity/Q25365812",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365813",
+    "label": "Neurosporidium",
+    "url": "http://www.wikidata.org/entity/Q25365813",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365814",
+    "label": "Paraplasma",
+    "url": "http://www.wikidata.org/entity/Q25365814",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365816",
+    "label": "Physcosporidium",
+    "url": "http://www.wikidata.org/entity/Q25365816",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365817",
+    "label": "Piridium",
+    "url": "http://www.wikidata.org/entity/Q25365817",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365818",
+    "label": "Protoentospora",
+    "url": "http://www.wikidata.org/entity/Q25365818",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365822",
+    "label": "Sergentella",
+    "url": "http://www.wikidata.org/entity/Q25365822",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365825",
+    "label": "Spirogregarina",
+    "url": "http://www.wikidata.org/entity/Q25365825",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365826",
+    "label": "Asthmatos",
+    "url": "http://www.wikidata.org/entity/Q25365826",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365829",
+    "label": "Magosphaera",
+    "url": "http://www.wikidata.org/entity/Q25365829",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365832",
+    "label": "Spongocyclia",
+    "url": "http://www.wikidata.org/entity/Q25365832",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365839",
+    "label": "Bacterioidomonas",
+    "url": "http://www.wikidata.org/entity/Q25365839",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365844",
+    "label": "Actinelius",
+    "url": "http://www.wikidata.org/entity/Q25365844",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365864",
+    "label": "Coelosporidium",
+    "url": "http://www.wikidata.org/entity/Q25365864",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365865",
+    "label": "Luffisphaera",
+    "url": "http://www.wikidata.org/entity/Q25365865",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25373990",
+    "label": "Synchytriales",
+    "url": "http://www.wikidata.org/entity/Q25373990",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25373991",
+    "label": "Klebsina",
+    "url": "http://www.wikidata.org/entity/Q25373991",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692728",
+    "label": "Acanthochitina",
+    "url": "http://www.wikidata.org/entity/Q30692728",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692729",
+    "label": "Ancyrochitina",
+    "url": "http://www.wikidata.org/entity/Q30692729",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692731",
+    "label": "Angochitina",
+    "url": "http://www.wikidata.org/entity/Q30692731",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q37632684",
+    "label": "Lonchopteris",
+    "url": "http://www.wikidata.org/entity/Q37632684",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q41664373",
+    "label": "Spongia",
+    "url": "http://www.wikidata.org/entity/Q41664373",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q41775946",
+    "label": "Lithoxylon",
+    "url": "http://www.wikidata.org/entity/Q41775946",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q47162942",
+    "label": "Medusomyces",
+    "url": "http://www.wikidata.org/entity/Q47162942",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q48971320",
+    "label": "Pakupaku",
+    "url": "http://www.wikidata.org/entity/Q48971320",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q48995893",
+    "label": "Podiata",
+    "url": "http://www.wikidata.org/entity/Q48995893",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54969228",
+    "label": "Rozellomyceta",
+    "url": "http://www.wikidata.org/entity/Q54969228",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67206356",
+    "label": "Centrasphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67206356",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67206358",
+    "label": "Carminella",
+    "url": "http://www.wikidata.org/entity/Q67206358",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67207442",
+    "label": "Comasphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67207442",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212438",
+    "label": "Eomicrhystridium",
+    "url": "http://www.wikidata.org/entity/Q67212438",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212492",
+    "label": "Estiastra",
+    "url": "http://www.wikidata.org/entity/Q67212492",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212562",
+    "label": "Eupoikilofusa",
+    "url": "http://www.wikidata.org/entity/Q67212562",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212621",
+    "label": "Exochoderma",
+    "url": "http://www.wikidata.org/entity/Q67212621",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213555",
+    "label": "Leiofusa",
+    "url": "http://www.wikidata.org/entity/Q67213555",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70616233",
+    "label": "Pleolpidium",
+    "url": "http://www.wikidata.org/entity/Q70616233",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q83638366",
+    "label": "Endolepis",
+    "url": "http://www.wikidata.org/entity/Q83638366",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q101793497",
+    "label": "Liaoningnema",
+    "url": "http://www.wikidata.org/entity/Q101793497",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107456380",
+    "label": "Galtierella",
+    "url": "http://www.wikidata.org/entity/Q107456380",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q108390247",
+    "label": "Spiromastix",
+    "url": "http://www.wikidata.org/entity/Q108390247",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q108390250",
+    "label": "Spiromastix verrucosus",
+    "url": "http://www.wikidata.org/entity/Q108390250",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111026688",
+    "label": "Bursaria truncatella",
+    "url": "http://www.wikidata.org/entity/Q111026688",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q121556580",
+    "label": "Bursaria africana",
+    "url": "http://www.wikidata.org/entity/Q121556580",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q121556581",
+    "label": "Bursaria americana",
+    "url": "http://www.wikidata.org/entity/Q121556581",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q121556582",
+    "label": "Bursaria salisburgensis",
+    "url": "http://www.wikidata.org/entity/Q121556582",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q121556583",
+    "label": "Bursaria uluruensis",
+    "url": "http://www.wikidata.org/entity/Q121556583",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q121556584",
+    "label": "Bursaria fluviatilis",
+    "url": "http://www.wikidata.org/entity/Q121556584",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q124031922",
+    "label": "Heteromastix angulata",
+    "url": "http://www.wikidata.org/entity/Q124031922",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q127695681",
+    "label": "Victoriniella multiformis",
+    "url": "http://www.wikidata.org/entity/Q127695681",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130325138",
+    "label": "Obamus",
+    "url": "http://www.wikidata.org/entity/Q130325138",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q130991984",
+    "label": "Eubikonta",
+    "url": "http://www.wikidata.org/entity/Q130991984",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q288807",
+    "label": "Kamera lens",
+    "url": "http://www.wikidata.org/entity/Q288807",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q372866",
+    "label": "Protosalvinia",
+    "url": "http://www.wikidata.org/entity/Q372866",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q474156",
+    "label": "Amorphea",
+    "url": "http://www.wikidata.org/entity/Q474156",
+    "value": "19"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q645245",
+    "label": "Apusozoa",
+    "url": "http://www.wikidata.org/entity/Q645245",
+    "value": "18"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q755714",
+    "label": "высшие грибы",
+    "url": "http://www.wikidata.org/entity/Q755714",
+    "value": "33"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q860203",
+    "label": "биконты",
+    "url": "http://www.wikidata.org/entity/Q860203",
+    "value": "30"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q862296",
+    "label": "хромисты",
+    "url": "http://www.wikidata.org/entity/Q862296",
+    "value": "41"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1140791",
+    "label": "бластокладиевые",
+    "url": "http://www.wikidata.org/entity/Q1140791",
+    "value": "22"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2029688",
+    "label": "Orestovia",
+    "url": "http://www.wikidata.org/entity/Q2029688",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2113650",
+    "label": "Protoctista",
+    "url": "http://www.wikidata.org/entity/Q2113650",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2903052",
+    "label": "Biliphyta",
+    "url": "http://www.wikidata.org/entity/Q2903052",
+    "value": "12"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2997417",
+    "label": "Cormophyta",
+    "url": "http://www.wikidata.org/entity/Q2997417",
+    "value": "12"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3055655",
+    "label": "Eozoa",
+    "url": "http://www.wikidata.org/entity/Q3055655",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4040768",
+    "label": "Horodyskia",
+    "url": "http://www.wikidata.org/entity/Q4040768",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q5114906",
+    "label": "Chrysophyta",
+    "url": "http://www.wikidata.org/entity/Q5114906",
+    "value": "10"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7231511",
+    "label": "Portalites",
+    "url": "http://www.wikidata.org/entity/Q7231511",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7268423",
+    "label": "Quadrisporites",
+    "url": "http://www.wikidata.org/entity/Q7268423",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10267812",
+    "label": "Dodecandria",
+    "url": "http://www.wikidata.org/entity/Q10267812",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10272998",
+    "label": "Enneandria",
+    "url": "http://www.wikidata.org/entity/Q10272998",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10384549",
+    "label": "Triandria",
+    "url": "http://www.wikidata.org/entity/Q10384549",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12746992",
+    "label": "Sphenophyllostachis",
+    "url": "http://www.wikidata.org/entity/Q12746992",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16943367",
+    "label": "Magosphaera planula",
+    "url": "http://www.wikidata.org/entity/Q16943367",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18607516",
+    "label": "Micrhystridium",
+    "url": "http://www.wikidata.org/entity/Q18607516",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19597639",
+    "label": "Korilophyton",
+    "url": "http://www.wikidata.org/entity/Q19597639",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19830063",
+    "label": "Myxomycetes",
+    "url": "http://www.wikidata.org/entity/Q19830063",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21078342",
+    "label": "Cyperaceaepollis",
+    "url": "http://www.wikidata.org/entity/Q21078342",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21368085",
+    "label": "Aldanophyton",
+    "url": "http://www.wikidata.org/entity/Q21368085",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446083",
+    "label": "Paramyxea",
+    "url": "http://www.wikidata.org/entity/Q21446083",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446916",
+    "label": "Chlorobionts",
+    "url": "http://www.wikidata.org/entity/Q21446916",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446920",
+    "label": "Pyrrhophyta",
+    "url": "http://www.wikidata.org/entity/Q21446920",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446953",
+    "label": "Chromobionta",
+    "url": "http://www.wikidata.org/entity/Q21446953",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446972",
+    "label": "Ramicristates",
+    "url": "http://www.wikidata.org/entity/Q21446972",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446977",
+    "label": "Chrysomonada",
+    "url": "http://www.wikidata.org/entity/Q21446977",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447010",
+    "label": "Raphidophyta",
+    "url": "http://www.wikidata.org/entity/Q21447010",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447985",
+    "label": "Volvocida",
+    "url": "http://www.wikidata.org/entity/Q21447985",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21448006",
+    "label": "Xanthophyta",
+    "url": "http://www.wikidata.org/entity/Q21448006",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21448056",
+    "label": "Zoomastigina",
+    "url": "http://www.wikidata.org/entity/Q21448056",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22106474",
+    "label": "Aletium",
+    "url": "http://www.wikidata.org/entity/Q22106474",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22108522",
+    "label": "Cichkovia",
+    "url": "http://www.wikidata.org/entity/Q22108522",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23069975",
+    "label": "Diploselmis",
+    "url": "http://www.wikidata.org/entity/Q23069975",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23069990",
+    "label": "Trichonema",
+    "url": "http://www.wikidata.org/entity/Q23069990",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23069996",
+    "label": "Phyllomonas",
+    "url": "http://www.wikidata.org/entity/Q23069996",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070007",
+    "label": "Rigidomastix",
+    "url": "http://www.wikidata.org/entity/Q23070007",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070021",
+    "label": "Diplomonas",
+    "url": "http://www.wikidata.org/entity/Q23070021",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070025",
+    "label": "Branchipocola",
+    "url": "http://www.wikidata.org/entity/Q23070025",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070027",
+    "label": "Cinetidomyxa",
+    "url": "http://www.wikidata.org/entity/Q23070027",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070028",
+    "label": "Dictiomyxa",
+    "url": "http://www.wikidata.org/entity/Q23070028",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070032",
+    "label": "Enteromyxa",
+    "url": "http://www.wikidata.org/entity/Q23070032",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070033",
+    "label": "Gymnophrydium",
+    "url": "http://www.wikidata.org/entity/Q23070033",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070037",
+    "label": "Liegeoisia",
+    "url": "http://www.wikidata.org/entity/Q23070037",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070047",
+    "label": "Malpighiella",
+    "url": "http://www.wikidata.org/entity/Q23070047",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070049",
+    "label": "Megamoebomyxa",
+    "url": "http://www.wikidata.org/entity/Q23070049",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070060",
+    "label": "Topsentella",
+    "url": "http://www.wikidata.org/entity/Q23070060",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25363930",
+    "label": "Pontifex",
+    "url": "http://www.wikidata.org/entity/Q25363930",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365760",
+    "label": "Endomonas",
+    "url": "http://www.wikidata.org/entity/Q25365760",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365761",
+    "label": "Eperythrocytozoon",
+    "url": "http://www.wikidata.org/entity/Q25365761",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365762",
+    "label": "Gymnococcus",
+    "url": "http://www.wikidata.org/entity/Q25365762",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365765",
+    "label": "Immanoplasma",
+    "url": "http://www.wikidata.org/entity/Q25365765",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365767",
+    "label": "Lymphocytozoon",
+    "url": "http://www.wikidata.org/entity/Q25365767",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365769",
+    "label": "Myrmecisporidium",
+    "url": "http://www.wikidata.org/entity/Q25365769",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692760",
+    "label": "Anthochitina",
+    "url": "http://www.wikidata.org/entity/Q30692760",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692763",
+    "label": "Bursachitina",
+    "url": "http://www.wikidata.org/entity/Q30692763",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692764",
+    "label": "Cingulochitina",
+    "url": "http://www.wikidata.org/entity/Q30692764",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692765",
+    "label": "Belonechitina",
+    "url": "http://www.wikidata.org/entity/Q30692765",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692769",
+    "label": "Clathrochitina",
+    "url": "http://www.wikidata.org/entity/Q30692769",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692770",
+    "label": "Cyathochitina",
+    "url": "http://www.wikidata.org/entity/Q30692770",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692772",
+    "label": "Desmochitina",
+    "url": "http://www.wikidata.org/entity/Q30692772",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692773",
+    "label": "Eisenackitina",
+    "url": "http://www.wikidata.org/entity/Q30692773",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692791",
+    "label": "Halochitina",
+    "url": "http://www.wikidata.org/entity/Q30692791",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692793",
+    "label": "Fungochitina",
+    "url": "http://www.wikidata.org/entity/Q30692793",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692795",
+    "label": "Linochitina",
+    "url": "http://www.wikidata.org/entity/Q30692795",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692796",
+    "label": "Margachitina",
+    "url": "http://www.wikidata.org/entity/Q30692796",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692797",
+    "label": "Lagenochitina",
+    "url": "http://www.wikidata.org/entity/Q30692797",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692799",
+    "label": "Plectochitina",
+    "url": "http://www.wikidata.org/entity/Q30692799",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692802",
+    "label": "Pterochitina",
+    "url": "http://www.wikidata.org/entity/Q30692802",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692804",
+    "label": "Ramochitina",
+    "url": "http://www.wikidata.org/entity/Q30692804",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692805",
+    "label": "Salopochitina",
+    "url": "http://www.wikidata.org/entity/Q30692805",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q30692808",
+    "label": "Sphaerochitina",
+    "url": "http://www.wikidata.org/entity/Q30692808",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33135097",
+    "label": "Neuropteridae",
+    "url": "http://www.wikidata.org/entity/Q33135097",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q53818215",
+    "label": "Aphelidiomyceta",
+    "url": "http://www.wikidata.org/entity/Q53818215",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q53818225",
+    "label": "Basidiobolomyceta",
+    "url": "http://www.wikidata.org/entity/Q53818225",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q53818231",
+    "label": "Blastocladiomyceta",
+    "url": "http://www.wikidata.org/entity/Q53818231",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54282175",
+    "label": "Zoopagomyceta",
+    "url": "http://www.wikidata.org/entity/Q54282175",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q55224265",
+    "label": "Allogonium",
+    "url": "http://www.wikidata.org/entity/Q55224265",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q55224266",
+    "label": "Allogonium coeruleum",
+    "url": "http://www.wikidata.org/entity/Q55224266",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q55224267",
+    "label": "Allogonium confervaceum",
+    "url": "http://www.wikidata.org/entity/Q55224267",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q55224268",
+    "label": "Allogonium kochianum",
+    "url": "http://www.wikidata.org/entity/Q55224268",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q64755602",
+    "label": "Arthrodia",
+    "url": "http://www.wikidata.org/entity/Q64755602",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q64755647",
+    "label": "Tympanicysta",
+    "url": "http://www.wikidata.org/entity/Q64755647",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67209336",
+    "label": "Dactylofusa",
+    "url": "http://www.wikidata.org/entity/Q67209336",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213443",
+    "label": "Lanternosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67213443",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214358",
+    "label": "Polygonium",
+    "url": "http://www.wikidata.org/entity/Q67214358",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214384",
+    "label": "Pratulasphaera",
+    "url": "http://www.wikidata.org/entity/Q67214384",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q98521583",
+    "label": "Ginkgoophyta",
+    "url": "http://www.wikidata.org/entity/Q98521583",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q104084149",
+    "label": "Melanogramma",
+    "url": "http://www.wikidata.org/entity/Q104084149",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q104395362",
+    "label": "Roseofomes",
+    "url": "http://www.wikidata.org/entity/Q104395362",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q113882847",
+    "label": "sporae dispersae",
+    "url": "http://www.wikidata.org/entity/Q113882847",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q114865801",
+    "label": "Pagiophyllumpollenites",
+    "url": "http://www.wikidata.org/entity/Q114865801",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q131083193",
+    "label": "Q131083193",
+    "url": "http://www.wikidata.org/entity/Q131083193",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q133279626",
+    "label": "Anehmia exotica",
+    "url": "http://www.wikidata.org/entity/Q133279626",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q29993",
+    "label": "мохообразные",
+    "url": "http://www.wikidata.org/entity/Q29993",
+    "value": "68"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q224920",
+    "label": "Infusoria",
+    "url": "http://www.wikidata.org/entity/Q224920",
+    "value": "24"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q226891",
+    "label": "Зостерофиллофиты",
+    "url": "http://www.wikidata.org/entity/Q226891",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q240433",
+    "label": "Жгутиконосцы",
+    "url": "http://www.wikidata.org/entity/Q240433",
+    "value": "45"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q300769",
+    "label": "Aachenosaurus",
+    "url": "http://www.wikidata.org/entity/Q300769",
+    "value": "21"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q342747",
+    "label": "Акритархи",
+    "url": "http://www.wikidata.org/entity/Q342747",
+    "value": "30"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q473809",
+    "label": "Amoebozoa",
+    "url": "http://www.wikidata.org/entity/Q473809",
+    "value": "42"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q477950",
+    "label": "Chromalveolata",
+    "url": "http://www.wikidata.org/entity/Q477950",
+    "value": "36"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q879246",
+    "label": "архепластиды",
+    "url": "http://www.wikidata.org/entity/Q879246",
+    "value": "40"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2852714",
+    "label": "Anterokonta",
+    "url": "http://www.wikidata.org/entity/Q2852714",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3307183",
+    "label": "Metabionta",
+    "url": "http://www.wikidata.org/entity/Q3307183",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4589415",
+    "label": "мегагруппа Растения+HC+SAR",
+    "url": "http://www.wikidata.org/entity/Q4589415",
+    "value": "26"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q4764384",
+    "label": "Anhuiphyton",
+    "url": "http://www.wikidata.org/entity/Q4764384",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6648691",
+    "label": "Litostroma",
+    "url": "http://www.wikidata.org/entity/Q6648691",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9358965",
+    "label": "Пирофитовые водоросли",
+    "url": "http://www.wikidata.org/entity/Q9358965",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10266173",
+    "label": "Didynamia",
+    "url": "http://www.wikidata.org/entity/Q10266173",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10266534",
+    "label": "Dioecia",
+    "url": "http://www.wikidata.org/entity/Q10266534",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10294948",
+    "label": "Heptandria",
+    "url": "http://www.wikidata.org/entity/Q10294948",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10331775",
+    "label": "Monadelphia",
+    "url": "http://www.wikidata.org/entity/Q10331775",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10331895",
+    "label": "Monoecia",
+    "url": "http://www.wikidata.org/entity/Q10331895",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10334132",
+    "label": "Mycophycophyta",
+    "url": "http://www.wikidata.org/entity/Q10334132",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10360436",
+    "label": "Rhyzopoda",
+    "url": "http://www.wikidata.org/entity/Q10360436",
+    "value": "31"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10692512",
+    "label": "Teliomycota",
+    "url": "http://www.wikidata.org/entity/Q10692512",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12844031",
+    "label": "Psilotophyta",
+    "url": "http://www.wikidata.org/entity/Q12844031",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q14422998",
+    "label": "Kiitoksia",
+    "url": "http://www.wikidata.org/entity/Q14422998",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q14899727",
+    "label": "Embryophyta siphonogama",
+    "url": "http://www.wikidata.org/entity/Q14899727",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16976713",
+    "label": "Kakabekia",
+    "url": "http://www.wikidata.org/entity/Q16976713",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18180969",
+    "label": "Kamera",
+    "url": "http://www.wikidata.org/entity/Q18180969",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20672505",
+    "label": "Grypania",
+    "url": "http://www.wikidata.org/entity/Q20672505",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20826015",
+    "label": "Psilophytopsida",
+    "url": "http://www.wikidata.org/entity/Q20826015",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21028363",
+    "label": "Hemimastigea",
+    "url": "http://www.wikidata.org/entity/Q21028363",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398131",
+    "label": "Urbanella",
+    "url": "http://www.wikidata.org/entity/Q21398131",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21400131",
+    "label": "Sarcomastigota",
+    "url": "http://www.wikidata.org/entity/Q21400131",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21445569",
+    "label": "Errera",
+    "url": "http://www.wikidata.org/entity/Q21445569",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21445608",
+    "label": "Euchromista",
+    "url": "http://www.wikidata.org/entity/Q21445608",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446445",
+    "label": "Plasmodiophoromycota",
+    "url": "http://www.wikidata.org/entity/Q21446445",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446448",
+    "label": "Plasmodroma",
+    "url": "http://www.wikidata.org/entity/Q21446448",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446553",
+    "label": "Polymastigotes",
+    "url": "http://www.wikidata.org/entity/Q21446553",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447459",
+    "label": "Dictyostelida",
+    "url": "http://www.wikidata.org/entity/Q21447459",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447465",
+    "label": "Dictyozoa",
+    "url": "http://www.wikidata.org/entity/Q21447465",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447552",
+    "label": "Metaphyta",
+    "url": "http://www.wikidata.org/entity/Q21447552",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447668",
+    "label": "Stramentopila",
+    "url": "http://www.wikidata.org/entity/Q21447668",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447672",
+    "label": "Straminipila",
+    "url": "http://www.wikidata.org/entity/Q21447672",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447675",
+    "label": "Straminopiles",
+    "url": "http://www.wikidata.org/entity/Q21447675",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21451719",
+    "label": "Palaeofluorina",
+    "url": "http://www.wikidata.org/entity/Q21451719",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21588562",
+    "label": "Haptista",
+    "url": "http://www.wikidata.org/entity/Q21588562",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22102921",
+    "label": "Phloxamoeba",
+    "url": "http://www.wikidata.org/entity/Q22102921",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22159986",
+    "label": "Hepatophyta",
+    "url": "http://www.wikidata.org/entity/Q22159986",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22666148",
+    "label": "Tappania",
+    "url": "http://www.wikidata.org/entity/Q22666148",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23674661",
+    "label": "Eomycota",
+    "url": "http://www.wikidata.org/entity/Q23674661",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q24048469",
+    "label": "Subulatomonas",
+    "url": "http://www.wikidata.org/entity/Q24048469",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365292",
+    "label": "Veryhachium",
+    "url": "http://www.wikidata.org/entity/Q25365292",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25539559",
+    "label": "Psilophyta",
+    "url": "http://www.wikidata.org/entity/Q25539559",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25834462",
+    "label": "Euglenozoa",
+    "url": "http://www.wikidata.org/entity/Q25834462",
+    "value": "32"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28177272",
+    "label": "Collodictyon-Malawimonas",
+    "url": "http://www.wikidata.org/entity/Q28177272",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28920818",
+    "label": "Contophora",
+    "url": "http://www.wikidata.org/entity/Q28920818",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q29166402",
+    "label": "Haplospora",
+    "url": "http://www.wikidata.org/entity/Q29166402",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q33137400",
+    "label": "Alethopteridae",
+    "url": "http://www.wikidata.org/entity/Q33137400",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q46674974",
+    "label": "Bursaria",
+    "url": "http://www.wikidata.org/entity/Q46674974",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q46987746",
+    "label": "/Pan-Angiospermae",
+    "url": "http://www.wikidata.org/entity/Q46987746",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q48836620",
+    "label": "Orthokaryotes",
+    "url": "http://www.wikidata.org/entity/Q48836620",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q48836623",
+    "label": "Neokaryotes",
+    "url": "http://www.wikidata.org/entity/Q48836623",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54653003",
+    "label": "Olpidiomyceta",
+    "url": "http://www.wikidata.org/entity/Q54653003",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q55829793",
+    "label": "Chytridiomyceta",
+    "url": "http://www.wikidata.org/entity/Q55829793",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q58687931",
+    "label": "Hemimastigophora",
+    "url": "http://www.wikidata.org/entity/Q58687931",
+    "value": "12"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q59153571",
+    "label": "CRuMs",
+    "url": "http://www.wikidata.org/entity/Q59153571",
+    "value": "8"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q61976018",
+    "label": "Raritania",
+    "url": "http://www.wikidata.org/entity/Q61976018",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q63992209",
+    "label": "Ourasphaira giraldae",
+    "url": "http://www.wikidata.org/entity/Q63992209",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q64008615",
+    "label": "Ourasphaira",
+    "url": "http://www.wikidata.org/entity/Q64008615",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67211981",
+    "label": "Dasydiacrodium",
+    "url": "http://www.wikidata.org/entity/Q67211981",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67211984",
+    "label": "Dateriocradus",
+    "url": "http://www.wikidata.org/entity/Q67211984",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212000",
+    "label": "Diexallophasis",
+    "url": "http://www.wikidata.org/entity/Q67212000",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212007",
+    "label": "Dorsennidium",
+    "url": "http://www.wikidata.org/entity/Q67212007",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212012",
+    "label": "Eisenackidium",
+    "url": "http://www.wikidata.org/entity/Q67212012",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213117",
+    "label": "Halodinium",
+    "url": "http://www.wikidata.org/entity/Q67213117",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214153",
+    "label": "Marrocanium",
+    "url": "http://www.wikidata.org/entity/Q67214153",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214905",
+    "label": "Pterospermopsis",
+    "url": "http://www.wikidata.org/entity/Q67214905",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214921",
+    "label": "Retisphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214921",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214945",
+    "label": "Schizocystia",
+    "url": "http://www.wikidata.org/entity/Q67214945",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214961",
+    "label": "Skiagia",
+    "url": "http://www.wikidata.org/entity/Q67214961",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214994",
+    "label": "Solisphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214994",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67215050",
+    "label": "Stelliferidium",
+    "url": "http://www.wikidata.org/entity/Q67215050",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67215111",
+    "label": "Stellinium",
+    "url": "http://www.wikidata.org/entity/Q67215111",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216199",
+    "label": "Symplassosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67216199",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70597234",
+    "label": "Cryptodesma",
+    "url": "http://www.wikidata.org/entity/Q70597234",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70609520",
+    "label": "Mycothamnion",
+    "url": "http://www.wikidata.org/entity/Q70609520",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q77285999",
+    "label": "Cephalosporium",
+    "url": "http://www.wikidata.org/entity/Q77285999",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q81642396",
+    "label": "Zoopagomycota",
+    "url": "http://www.wikidata.org/entity/Q81642396",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q100742333",
+    "label": "Eumycophyta",
+    "url": "http://www.wikidata.org/entity/Q100742333",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q100742412",
+    "label": "Myxomycophyta",
+    "url": "http://www.wikidata.org/entity/Q100742412",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q103711850",
+    "label": "Ancyrospora",
+    "url": "http://www.wikidata.org/entity/Q103711850",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q105054409",
+    "label": "Fungus elatior",
+    "url": "http://www.wikidata.org/entity/Q105054409",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q105054410",
+    "label": "Fungus versipes",
+    "url": "http://www.wikidata.org/entity/Q105054410",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q105756023",
+    "label": "Erineum",
+    "url": "http://www.wikidata.org/entity/Q105756023",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107455813",
+    "label": "Frankbaronia",
+    "url": "http://www.wikidata.org/entity/Q107455813",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q110769173",
+    "label": "Marteiliidea",
+    "url": "http://www.wikidata.org/entity/Q110769173",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q115803353",
+    "label": "Provora",
+    "url": "http://www.wikidata.org/entity/Q115803353",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q116971952",
+    "label": "Pollenites",
+    "url": "http://www.wikidata.org/entity/Q116971952",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q120106412",
+    "label": "Diplomonas minutus",
+    "url": "http://www.wikidata.org/entity/Q120106412",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q127686997",
+    "label": "Nebulidia",
+    "url": "http://www.wikidata.org/entity/Q127686997",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10892",
+    "label": "протисты",
+    "url": "http://www.wikidata.org/entity/Q10892",
+    "value": "120"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q19088",
+    "label": "эукариоты",
+    "url": "http://www.wikidata.org/entity/Q19088",
+    "value": "146"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q27133",
+    "label": "сосудистые растения",
+    "url": "http://www.wikidata.org/entity/Q27133",
+    "value": "79"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q193030",
+    "label": "апикомплексы",
+    "url": "http://www.wikidata.org/entity/Q193030",
+    "value": "48"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q223597",
+    "label": "Оомицеты",
+    "url": "http://www.wikidata.org/entity/Q223597",
+    "value": "47"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q256478",
+    "label": "нематофитовые водоросли",
+    "url": "http://www.wikidata.org/entity/Q256478",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q510333",
+    "label": "Heterolobosea",
+    "url": "http://www.wikidata.org/entity/Q510333",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1322359",
+    "label": "Nematasketum",
+    "url": "http://www.wikidata.org/entity/Q1322359",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2294279",
+    "label": "саркомастигофоры",
+    "url": "http://www.wikidata.org/entity/Q2294279",
+    "value": "21"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2704770",
+    "label": "Grypania spiralis",
+    "url": "http://www.wikidata.org/entity/Q2704770",
+    "value": "14"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2823622",
+    "label": "Actinopoda",
+    "url": "http://www.wikidata.org/entity/Q2823622",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q2947559",
+    "label": "Chaetosphaeridiophyta",
+    "url": "http://www.wikidata.org/entity/Q2947559",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6380002",
+    "label": "Kawizophyllum",
+    "url": "http://www.wikidata.org/entity/Q6380002",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6897948",
+    "label": "Monandria",
+    "url": "http://www.wikidata.org/entity/Q6897948",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q7439643",
+    "label": "Scylaspora",
+    "url": "http://www.wikidata.org/entity/Q7439643",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q8222313",
+    "label": "клада Растения+HC",
+    "url": "http://www.wikidata.org/entity/Q8222313",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q9656977",
+    "label": "Biciliata",
+    "url": "http://www.wikidata.org/entity/Q9656977",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10265968",
+    "label": "Diadelphia",
+    "url": "http://www.wikidata.org/entity/Q10265968",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10278368",
+    "label": "Euthallophyta",
+    "url": "http://www.wikidata.org/entity/Q10278368",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10299754",
+    "label": "Icosandria",
+    "url": "http://www.wikidata.org/entity/Q10299754",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10350923",
+    "label": "Polyadelphia",
+    "url": "http://www.wikidata.org/entity/Q10350923",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10350924",
+    "label": "Polyandria",
+    "url": "http://www.wikidata.org/entity/Q10350924",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10350931",
+    "label": "Polygamia",
+    "url": "http://www.wikidata.org/entity/Q10350931",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10350939",
+    "label": "Polygynia",
+    "url": "http://www.wikidata.org/entity/Q10350939",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10375498",
+    "label": "Syngenesia",
+    "url": "http://www.wikidata.org/entity/Q10375498",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10380976",
+    "label": "Tetradynamia",
+    "url": "http://www.wikidata.org/entity/Q10380976",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10380985",
+    "label": "Tetragynia",
+    "url": "http://www.wikidata.org/entity/Q10380985",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10380990",
+    "label": "Tetrandria",
+    "url": "http://www.wikidata.org/entity/Q10380990",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12099253",
+    "label": "Hyphochytriomycota",
+    "url": "http://www.wikidata.org/entity/Q12099253",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12824933",
+    "label": "Cnidosporidia",
+    "url": "http://www.wikidata.org/entity/Q12824933",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q13392618",
+    "label": "Entomophthoromycota",
+    "url": "http://www.wikidata.org/entity/Q13392618",
+    "value": "10"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q16653009",
+    "label": "Labyrinthulomycota",
+    "url": "http://www.wikidata.org/entity/Q16653009",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q18397957",
+    "label": "Harosa",
+    "url": "http://www.wikidata.org/entity/Q18397957",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20481166",
+    "label": "Opisthosporidia",
+    "url": "http://www.wikidata.org/entity/Q20481166",
+    "value": "11"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q20675345",
+    "label": "Palaeosclerotium",
+    "url": "http://www.wikidata.org/entity/Q20675345",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21231863",
+    "label": "Quadricilia",
+    "url": "http://www.wikidata.org/entity/Q21231863",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21369020",
+    "label": "Shuiyousphaeridium",
+    "url": "http://www.wikidata.org/entity/Q21369020",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21397675",
+    "label": "Martineziella",
+    "url": "http://www.wikidata.org/entity/Q21397675",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446795",
+    "label": "Prymnesiophyta",
+    "url": "http://www.wikidata.org/entity/Q21446795",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446904",
+    "label": "Chlorarachnia",
+    "url": "http://www.wikidata.org/entity/Q21446904",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447509",
+    "label": "Dinophyta",
+    "url": "http://www.wikidata.org/entity/Q21447509",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447813",
+    "label": "Tetramastigota",
+    "url": "http://www.wikidata.org/entity/Q21447813",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447831",
+    "label": "Thraustochytriacea",
+    "url": "http://www.wikidata.org/entity/Q21447831",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q22111447",
+    "label": "Salpingorhiza",
+    "url": "http://www.wikidata.org/entity/Q22111447",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23044259",
+    "label": "Sphenophyta",
+    "url": "http://www.wikidata.org/entity/Q23044259",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070868",
+    "label": "Coronaster",
+    "url": "http://www.wikidata.org/entity/Q23070868",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23070875",
+    "label": "Ephippium",
+    "url": "http://www.wikidata.org/entity/Q23070875",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23073002",
+    "label": "Bodomonas",
+    "url": "http://www.wikidata.org/entity/Q23073002",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23073004",
+    "label": "Striatococcus",
+    "url": "http://www.wikidata.org/entity/Q23073004",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23073005",
+    "label": "Pterodictyon",
+    "url": "http://www.wikidata.org/entity/Q23073005",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q24056666",
+    "label": "Ebriophyceae",
+    "url": "http://www.wikidata.org/entity/Q24056666",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365736",
+    "label": "Amylophagus",
+    "url": "http://www.wikidata.org/entity/Q25365736",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365738",
+    "label": "Aphelidiopsis",
+    "url": "http://www.wikidata.org/entity/Q25365738",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365740",
+    "label": "Pseudosporopsis",
+    "url": "http://www.wikidata.org/entity/Q25365740",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365742",
+    "label": "Barbetia",
+    "url": "http://www.wikidata.org/entity/Q25365742",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365744",
+    "label": "Bertarellia",
+    "url": "http://www.wikidata.org/entity/Q25365744",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365754",
+    "label": "Diplophysalis",
+    "url": "http://www.wikidata.org/entity/Q25365754",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365756",
+    "label": "Ectobiella",
+    "url": "http://www.wikidata.org/entity/Q25365756",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25365757",
+    "label": "Endobiella",
+    "url": "http://www.wikidata.org/entity/Q25365757",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25373928",
+    "label": "Meteora",
+    "url": "http://www.wikidata.org/entity/Q25373928",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25408744",
+    "label": "Actinastrum Haeckel, 1887",
+    "url": "http://www.wikidata.org/entity/Q25408744",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25408754",
+    "label": "Servetia",
+    "url": "http://www.wikidata.org/entity/Q25408754",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25498848",
+    "label": "Aculeisporites",
+    "url": "http://www.wikidata.org/entity/Q25498848",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25714757",
+    "label": "Gomesiamonas",
+    "url": "http://www.wikidata.org/entity/Q25714757",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25820069",
+    "label": "Monadineae",
+    "url": "http://www.wikidata.org/entity/Q25820069",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q25825385",
+    "label": "Cingula",
+    "url": "http://www.wikidata.org/entity/Q25825385",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q26814663",
+    "label": "Stephanomonadaceae",
+    "url": "http://www.wikidata.org/entity/Q26814663",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q27668533",
+    "label": "Mucormycota",
+    "url": "http://www.wikidata.org/entity/Q27668533",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28194743",
+    "label": "Circulisporites",
+    "url": "http://www.wikidata.org/entity/Q28194743",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28432458",
+    "label": "Cheleutochroa",
+    "url": "http://www.wikidata.org/entity/Q28432458",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28432500",
+    "label": "Coryphidium",
+    "url": "http://www.wikidata.org/entity/Q28432500",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54281951",
+    "label": "Kickxellomycota",
+    "url": "http://www.wikidata.org/entity/Q54281951",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54463184",
+    "label": "Mucoromyceta",
+    "url": "http://www.wikidata.org/entity/Q54463184",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212757",
+    "label": "Globulaesphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67212757",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212767",
+    "label": "Goniosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67212767",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212774",
+    "label": "Gorgonisphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67212774",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212790",
+    "label": "Granodiscus",
+    "url": "http://www.wikidata.org/entity/Q67212790",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213678",
+    "label": "Lophodiacrodium",
+    "url": "http://www.wikidata.org/entity/Q67213678",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67213786",
+    "label": "Lophosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67213786",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214812",
+    "label": "Priscogalea",
+    "url": "http://www.wikidata.org/entity/Q67214812",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214836",
+    "label": "Protoleiosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214836",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214884",
+    "label": "Protosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214884",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q70615502",
+    "label": "Nematococcus",
+    "url": "http://www.wikidata.org/entity/Q70615502",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q72648287",
+    "label": "Diphoda",
+    "url": "http://www.wikidata.org/entity/Q72648287",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q74721669",
+    "label": "Tsar",
+    "url": "http://www.wikidata.org/entity/Q74721669",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q90125126",
+    "label": "Selenia",
+    "url": "http://www.wikidata.org/entity/Q90125126",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q99238008",
+    "label": "Filicophyta",
+    "url": "http://www.wikidata.org/entity/Q99238008",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q100341887",
+    "label": "Polysporella",
+    "url": "http://www.wikidata.org/entity/Q100341887",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107456384",
+    "label": "Hassiella",
+    "url": "http://www.wikidata.org/entity/Q107456384",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107456392",
+    "label": "Palaeachlya",
+    "url": "http://www.wikidata.org/entity/Q107456392",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107456393",
+    "label": "Palaeophthora",
+    "url": "http://www.wikidata.org/entity/Q107456393",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107456396",
+    "label": "Peronosporoides",
+    "url": "http://www.wikidata.org/entity/Q107456396",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q107456398",
+    "label": "Propythium",
+    "url": "http://www.wikidata.org/entity/Q107456398",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q108372922",
+    "label": "Algospongia",
+    "url": "http://www.wikidata.org/entity/Q108372922",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q116029200",
+    "label": "Pirea",
+    "url": "http://www.wikidata.org/entity/Q116029200",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q118482596",
+    "label": "Chichkovia reticulata",
+    "url": "http://www.wikidata.org/entity/Q118482596",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q119841401",
+    "label": "Спиронемателлофиты",
+    "url": "http://www.wikidata.org/entity/Q119841401",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q127695599",
+    "label": "Victoriniella",
+    "url": "http://www.wikidata.org/entity/Q127695599",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q131289592",
+    "label": "Q131289592",
+    "url": "http://www.wikidata.org/entity/Q131289592",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q133457347",
+    "label": "Falcisporites",
+    "url": "http://www.wikidata.org/entity/Q133457347",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q129021",
+    "label": "заднежгутиковые",
+    "url": "http://www.wikidata.org/entity/Q129021",
+    "value": "57"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q904166",
+    "label": "Discicristata",
+    "url": "http://www.wikidata.org/entity/Q904166",
+    "value": "13"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q1371107",
+    "label": "Archezoa",
+    "url": "http://www.wikidata.org/entity/Q1371107",
+    "value": "18"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q3321817",
+    "label": "Cabozoa",
+    "url": "http://www.wikidata.org/entity/Q3321817",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q6373269",
+    "label": "Karotomorpha",
+    "url": "http://www.wikidata.org/entity/Q6373269",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q8074171",
+    "label": "Zoomastigophora",
+    "url": "http://www.wikidata.org/entity/Q8074171",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10340135",
+    "label": "Octandria",
+    "url": "http://www.wikidata.org/entity/Q10340135",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10348371",
+    "label": "Pentagynia",
+    "url": "http://www.wikidata.org/entity/Q10348371",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10348373",
+    "label": "Pentandria",
+    "url": "http://www.wikidata.org/entity/Q10348373",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q10571545",
+    "label": "Lymphocystidium",
+    "url": "http://www.wikidata.org/entity/Q10571545",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q12772144",
+    "label": "Myxosporidia",
+    "url": "http://www.wikidata.org/entity/Q12772144",
+    "value": "3"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398188",
+    "label": "Heteromastix",
+    "url": "http://www.wikidata.org/entity/Q21398188",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398197",
+    "label": "Macapella",
+    "url": "http://www.wikidata.org/entity/Q21398197",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21398202",
+    "label": "Fromentella",
+    "url": "http://www.wikidata.org/entity/Q21398202",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21446311",
+    "label": "Heterochloridea",
+    "url": "http://www.wikidata.org/entity/Q21446311",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q21447354",
+    "label": "Schizophyta",
+    "url": "http://www.wikidata.org/entity/Q21447354",
+    "value": "1"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q23545501",
+    "label": "Hepatopsida",
+    "url": "http://www.wikidata.org/entity/Q23545501",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q27928169",
+    "label": "Mucoromycota",
+    "url": "http://www.wikidata.org/entity/Q27928169",
+    "value": "9"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q28058198",
+    "label": "Amastigomycota",
+    "url": "http://www.wikidata.org/entity/Q28058198",
+    "value": "5"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q47487266",
+    "label": "Ancoracysta twista",
+    "url": "http://www.wikidata.org/entity/Q47487266",
+    "value": "6"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q54069441",
+    "label": "Calcarisporiellomycota",
+    "url": "http://www.wikidata.org/entity/Q54069441",
+    "value": "4"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q55161084",
+    "label": "Obamus coronatus",
+    "url": "http://www.wikidata.org/entity/Q55161084",
+    "value": "7"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67212247",
+    "label": "Entosphaeroides",
+    "url": "http://www.wikidata.org/entity/Q67212247",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214271",
+    "label": "Piliferosphaera",
+    "url": "http://www.wikidata.org/entity/Q67214271",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214284",
+    "label": "Poikilofusa",
+    "url": "http://www.wikidata.org/entity/Q67214284",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214305",
+    "label": "Polonosphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67214305",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67214331",
+    "label": "Polyedryxium",
+    "url": "http://www.wikidata.org/entity/Q67214331",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q67216312",
+    "label": "Yalisphaeridium",
+    "url": "http://www.wikidata.org/entity/Q67216312",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q97465858",
+    "label": "Cheleutochroa elegans",
+    "url": "http://www.wikidata.org/entity/Q97465858",
+    "value": "2"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q99517960",
+    "label": "Dewalquea",
+    "url": "http://www.wikidata.org/entity/Q99517960",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549712",
+    "label": "Heteromastix anticus",
+    "url": "http://www.wikidata.org/entity/Q111549712",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549713",
+    "label": "Heteromastix apicicornis",
+    "url": "http://www.wikidata.org/entity/Q111549713",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549714",
+    "label": "Heteromastix apiciflavus",
+    "url": "http://www.wikidata.org/entity/Q111549714",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549715",
+    "label": "Heteromastix bicolor",
+    "url": "http://www.wikidata.org/entity/Q111549715",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549719",
+    "label": "Heteromastix castor",
+    "url": "http://www.wikidata.org/entity/Q111549719",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549720",
+    "label": "Heteromastix collaris",
+    "url": "http://www.wikidata.org/entity/Q111549720",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549721",
+    "label": "Heteromastix compar",
+    "url": "http://www.wikidata.org/entity/Q111549721",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549722",
+    "label": "Heteromastix crassicornis",
+    "url": "http://www.wikidata.org/entity/Q111549722",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549723",
+    "label": "Heteromastix cribripennis",
+    "url": "http://www.wikidata.org/entity/Q111549723",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549724",
+    "label": "Heteromastix decipiens",
+    "url": "http://www.wikidata.org/entity/Q111549724",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549725",
+    "label": "Heteromastix denticollis",
+    "url": "http://www.wikidata.org/entity/Q111549725",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549726",
+    "label": "Heteromastix diorycerus",
+    "url": "http://www.wikidata.org/entity/Q111549726",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549760",
+    "label": "Heteromastix mirus",
+    "url": "http://www.wikidata.org/entity/Q111549760",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549761",
+    "label": "Heteromastix niger",
+    "url": "http://www.wikidata.org/entity/Q111549761",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549762",
+    "label": "Heteromastix nigriceps",
+    "url": "http://www.wikidata.org/entity/Q111549762",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549763",
+    "label": "Heteromastix nigripes",
+    "url": "http://www.wikidata.org/entity/Q111549763",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549764",
+    "label": "Heteromastix nigriventris",
+    "url": "http://www.wikidata.org/entity/Q111549764",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549765",
+    "label": "Heteromastix nonarius",
+    "url": "http://www.wikidata.org/entity/Q111549765",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549766",
+    "label": "Heteromastix obscuripes",
+    "url": "http://www.wikidata.org/entity/Q111549766",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549767",
+    "label": "Heteromastix obscurus",
+    "url": "http://www.wikidata.org/entity/Q111549767",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549768",
+    "label": "Heteromastix occidentalis",
+    "url": "http://www.wikidata.org/entity/Q111549768",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549769",
+    "label": "Heteromastix pallipes",
+    "url": "http://www.wikidata.org/entity/Q111549769",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549770",
+    "label": "Heteromastix pauxillus",
+    "url": "http://www.wikidata.org/entity/Q111549770",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549771",
+    "label": "Heteromastix perabundans",
+    "url": "http://www.wikidata.org/entity/Q111549771",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549772",
+    "label": "Heteromastix pollux",
+    "url": "http://www.wikidata.org/entity/Q111549772",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549773",
+    "label": "Heteromastix pulchripennis",
+    "url": "http://www.wikidata.org/entity/Q111549773",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549774",
+    "label": "Heteromastix puncticornis",
+    "url": "http://www.wikidata.org/entity/Q111549774",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549775",
+    "label": "Heteromastix pusillior",
+    "url": "http://www.wikidata.org/entity/Q111549775",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549776",
+    "label": "Heteromastix pusio",
+    "url": "http://www.wikidata.org/entity/Q111549776",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549777",
+    "label": "Heteromastix scutellaris",
+    "url": "http://www.wikidata.org/entity/Q111549777",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549778",
+    "label": "Heteromastix serraticornis",
+    "url": "http://www.wikidata.org/entity/Q111549778",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549779",
+    "label": "Heteromastix simplex",
+    "url": "http://www.wikidata.org/entity/Q111549779",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549780",
+    "label": "Heteromastix spinicornis",
+    "url": "http://www.wikidata.org/entity/Q111549780",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549781",
+    "label": "Heteromastix tarsalis",
+    "url": "http://www.wikidata.org/entity/Q111549781",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549782",
+    "label": "Heteromastix tasmaniensis",
+    "url": "http://www.wikidata.org/entity/Q111549782",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549783",
+    "label": "Heteromastix tenuis",
+    "url": "http://www.wikidata.org/entity/Q111549783",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549784",
+    "label": "Heteromastix terminalis",
+    "url": "http://www.wikidata.org/entity/Q111549784",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549785",
+    "label": "Heteromastix tibialis",
+    "url": "http://www.wikidata.org/entity/Q111549785",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549786",
+    "label": "Heteromastix tricolor",
+    "url": "http://www.wikidata.org/entity/Q111549786",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549787",
+    "label": "Heteromastix undecimus",
+    "url": "http://www.wikidata.org/entity/Q111549787",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q111549788",
+    "label": "Heteromastix victoriensis",
+    "url": "http://www.wikidata.org/entity/Q111549788",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q117113119",
+    "label": "Dictyopteris",
+    "url": "http://www.wikidata.org/entity/Q117113119",
+    "value": "0"
+  },
+  {
+    "id": "http://www.wikidata.org/entity/Q127700062",
+    "label": "CAM (клада)",
+    "url": "http://www.wikidata.org/entity/Q127700062",
+    "value": "8"
+  }
+]
+	  //NODES_END
+	  );
+
+      const edges = new vis.DataSet(
+	  //EDGES_START
+[
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q101274"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q648056"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q941929"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q964455"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q1317786"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q2312047"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2312047",
+    "to": "http://www.wikidata.org/entity/Q2312057"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q2468682"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q860203",
+    "to": "http://www.wikidata.org/entity/Q2998108"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q7267086"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q7616510"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q8025051"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q9642991"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10293247"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q10334205"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q10713068"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q16525215"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398223"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398233"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398238"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398247"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398262"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21446189"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q21447197"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21446083",
+    "to": "http://www.wikidata.org/entity/Q21447403"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070213"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070214"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070216"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070217"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070219"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070220"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070221"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q25368093"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q30540367"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q33135249"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q33225355"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q37033394"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q54287550"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q25365736",
+    "to": "http://www.wikidata.org/entity/Q54371413"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q65007794"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212104"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213150"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213189"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213221"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214158"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214169"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214227"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214241"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214242"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214244"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214248"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214252"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67215223"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216216"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216234"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216255"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216280"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216293"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q70608726"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q94686741"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q105009429"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q106696145"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q108389880"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549710"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549711"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549716"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549717"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549718"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549728"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549729"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549730"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549731"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549732"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549733"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549734"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549735"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549736"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549737"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549738"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549739"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549740"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549742"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549743"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549745"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549746"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549747"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549748"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549749"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549750"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549751"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549752"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549753"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549754"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549755"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549756"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549757"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549758"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549759"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q117038416"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q115803353",
+    "to": "http://www.wikidata.org/entity/Q130427981"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q756"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q764"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q133366"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q1044732"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q1096964"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q1363241"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q1756496"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q2980992"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q3055913"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q3365001"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q3391720"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q3409254"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q477950",
+    "to": "http://www.wikidata.org/entity/Q5571932"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q5609633"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10261972"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10264640"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10266045"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10295350"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10295354"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q10447962"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q12021881"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q12899838"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q14905764"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q16943601"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q17488341"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q19596324"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q19597370"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q20739127"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q21220739"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q21334138"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q21397901"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21446030"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21446061"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21446097"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21446100"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21446972",
+    "to": "http://www.wikidata.org/entity/Q21446736"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q474156",
+    "to": "http://www.wikidata.org/entity/Q22087764"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q22103470"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q22104516"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q22109609"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q23832616"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q23832620"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q28920818",
+    "to": "http://www.wikidata.org/entity/Q23832644"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q23832651"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q24088016"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q24894879"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365768"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q25365800"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q25365811"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q25365812"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365813"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365814"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365816"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365817"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365818"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365822"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365825"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q25365826"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q25365829"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365832"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365839"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365844"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365864"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365865"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q25373990"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q25373991"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692728"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692729"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692731"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q37632684"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q41664373"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q41775946"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q47162942"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q48971320"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q48995893"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q54969228"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67206356"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67206358"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67207442"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212438"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212492"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212562"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212621"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213555"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q70616233"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q83638366"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q101793497"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107456380"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q108390247"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q108390247",
+    "to": "http://www.wikidata.org/entity/Q108390250"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q46674974",
+    "to": "http://www.wikidata.org/entity/Q111026688"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q46674974",
+    "to": "http://www.wikidata.org/entity/Q121556580"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q46674974",
+    "to": "http://www.wikidata.org/entity/Q121556581"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q46674974",
+    "to": "http://www.wikidata.org/entity/Q121556582"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q46674974",
+    "to": "http://www.wikidata.org/entity/Q121556583"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q46674974",
+    "to": "http://www.wikidata.org/entity/Q121556584"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q124031922"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q127695599",
+    "to": "http://www.wikidata.org/entity/Q127695681"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q130325138"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q130991984"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q18180969",
+    "to": "http://www.wikidata.org/entity/Q288807"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q372866"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q474156"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q860203",
+    "to": "http://www.wikidata.org/entity/Q645245"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q755714"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q860203"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q862296"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q1140791"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2312047",
+    "to": "http://www.wikidata.org/entity/Q2029688"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q2113650"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q2903052"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q2997417"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q3055655"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q4040768"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q5114906"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q7231511"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q7268423"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10267812"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10272998"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10384549"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q12746992"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q25365829",
+    "to": "http://www.wikidata.org/entity/Q16943367"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q18607516"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q19597639"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q19830063"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q21078342"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q21368085"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21446083"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21446916"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q9358965",
+    "to": "http://www.wikidata.org/entity/Q21446920"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q21446953"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21446972"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21446977"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2113650",
+    "to": "http://www.wikidata.org/entity/Q21447010"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21447985"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q21448006"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2113650",
+    "to": "http://www.wikidata.org/entity/Q21448056"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q22106474"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q22108522"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q23069975"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23069990"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q23069996"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070007"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q23070021"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070025"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070027"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070028"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070032"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q23070033"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070037"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070047"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070049"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q23070060"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25363930"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365760"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365761"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365762"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365765"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365767"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q25365769"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692760"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692763"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692764"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692765"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692769"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692770"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692772"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692773"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692791"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692793"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692795"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692796"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692797"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692799"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692802"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692804"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692805"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2468682",
+    "to": "http://www.wikidata.org/entity/Q30692808"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q33135097"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q53818215"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q53818225"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q53818231"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q54282175"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q55224265"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q55224265",
+    "to": "http://www.wikidata.org/entity/Q55224266"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q55224265",
+    "to": "http://www.wikidata.org/entity/Q55224267"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q55224265",
+    "to": "http://www.wikidata.org/entity/Q55224268"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q64755602"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q64755647"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67209336"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213443"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214358"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214384"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q98521583"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q104084149"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q104395362"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q113882847"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q114865801"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4589415",
+    "to": "http://www.wikidata.org/entity/Q131083193"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q22103470",
+    "to": "http://www.wikidata.org/entity/Q133279626"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q29993"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q224920"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q226891"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q240433"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q300769"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q342747"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q474156",
+    "to": "http://www.wikidata.org/entity/Q473809"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q477950"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4589415",
+    "to": "http://www.wikidata.org/entity/Q879246"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q2852714"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q3307183"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q4589415"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q4764384"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q6648691"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q9358965"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10266173"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10266534"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10294948"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10331775"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10331895"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q10334132"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q10360436"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q10692512"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q12844031"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q14422998"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q14899727"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q16976713"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q18180969"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q20672505"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q20826015"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q58687931",
+    "to": "http://www.wikidata.org/entity/Q21028363"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398131"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21400131"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21445569"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q21445608"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21446445"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21446448"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21446553"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2113650",
+    "to": "http://www.wikidata.org/entity/Q21447459"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21447465"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q21447552"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21447668"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q21447672"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21447675"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q860203",
+    "to": "http://www.wikidata.org/entity/Q21451719"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4589415",
+    "to": "http://www.wikidata.org/entity/Q21588562"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q22102921"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q22159986"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q22666148"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q23674661"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q24048469"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q25365292"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q25539559"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q904166",
+    "to": "http://www.wikidata.org/entity/Q25834462"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q28177272"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q28920818"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2113650",
+    "to": "http://www.wikidata.org/entity/Q29166402"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q33137400"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q46674974"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q46987746"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q48836620"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q48836620",
+    "to": "http://www.wikidata.org/entity/Q48836623"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q54653003"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q55829793"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q58687931"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q48995893",
+    "to": "http://www.wikidata.org/entity/Q59153571"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q61976018"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q63992209"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q64008615"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67211981"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67211984"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212000"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212007"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212012"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213117"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214153"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214905"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214921"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214945"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214961"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214994"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67215050"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67215111"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216199"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q70597234"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q70609520"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q77285999"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q81642396"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q100742333"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q100742412"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q103711850"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q105054409"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q105054410"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q105756023"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107455813"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21446083",
+    "to": "http://www.wikidata.org/entity/Q110769173"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q115803353"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q116971952"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q23070021",
+    "to": "http://www.wikidata.org/entity/Q120106412"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q115803353",
+    "to": "http://www.wikidata.org/entity/Q127686997"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q10892"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q27133"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q193030"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q223597"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q256478"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q904166",
+    "to": "http://www.wikidata.org/entity/Q510333"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q1322359"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q2294279"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q20672505",
+    "to": "http://www.wikidata.org/entity/Q2704770"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q2823622"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q860203",
+    "to": "http://www.wikidata.org/entity/Q2947559"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q6380002"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q6897948"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q7439643"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4589415",
+    "to": "http://www.wikidata.org/entity/Q8222313"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q9656977"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10265968"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10278368"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10299754"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10350923"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10350924"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10350931"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10350939"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10375498"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10380976"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10380985"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10380990"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q12099253"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q12824933"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q13392618"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q16653009"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q18397957"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q20481166"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q20675345"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21231863"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21369020"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21397675"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q2113650",
+    "to": "http://www.wikidata.org/entity/Q21446795"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q21446904"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q21447509"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21447813"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21447831"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q22111447"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q23044259"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070868"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23070875"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23073002"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23073004"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q23073005"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q24056666"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q25365736"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365738"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q25365740"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365742"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365744"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365754"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365756"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25365757"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25373928"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25408744"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q25408754"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q25498848"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q25714757"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q25820069"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q25825385"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q26814663"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q27668533"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q28194743"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q28432458"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q28432500"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q54281951"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q54463184"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212757"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212767"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212774"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212790"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213678"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67213786"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214812"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214836"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214884"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q70615502"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q72648287"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4589415",
+    "to": "http://www.wikidata.org/entity/Q74721669"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q90125126"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q99238008"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q100341887"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107456384"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107456392"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107456393"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107456396"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q862296",
+    "to": "http://www.wikidata.org/entity/Q107456398"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q108372922"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q116029200"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q22108522",
+    "to": "http://www.wikidata.org/entity/Q118482596"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q119841401"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q127695599"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4040768",
+    "to": "http://www.wikidata.org/entity/Q131289592"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q133457347"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q964455",
+    "to": "http://www.wikidata.org/entity/Q129021"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q904166"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q1371107"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q860203",
+    "to": "http://www.wikidata.org/entity/Q3321817"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q101274",
+    "to": "http://www.wikidata.org/entity/Q6373269"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q8074171"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10340135"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10348371"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q10348373"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q10571545"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q12772144"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398188"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398197"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q19088",
+    "to": "http://www.wikidata.org/entity/Q21398202"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q10892",
+    "to": "http://www.wikidata.org/entity/Q21446311"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q1371107",
+    "to": "http://www.wikidata.org/entity/Q21447354"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q23545501"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q27928169"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q28058198"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q54287550",
+    "to": "http://www.wikidata.org/entity/Q47487266"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q764",
+    "to": "http://www.wikidata.org/entity/Q54069441"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q130325138",
+    "to": "http://www.wikidata.org/entity/Q55161084"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67212247"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214271"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214284"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214305"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67214331"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q342747",
+    "to": "http://www.wikidata.org/entity/Q67216312"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q28432458",
+    "to": "http://www.wikidata.org/entity/Q97465858"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q99517960"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549712"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549713"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549714"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549715"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549719"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549720"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549721"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549722"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549723"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549724"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549725"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549726"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549760"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549761"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549762"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549763"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549764"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549765"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549766"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549767"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549768"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549769"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549770"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549771"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549772"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549773"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549774"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549775"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549776"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549777"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549778"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549779"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549780"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549781"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549782"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549783"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549784"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549785"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549786"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549787"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q21398188",
+    "to": "http://www.wikidata.org/entity/Q111549788"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q756",
+    "to": "http://www.wikidata.org/entity/Q117113119"
+  },
+  {
+    "from": "http://www.wikidata.org/entity/Q4589415",
+    "to": "http://www.wikidata.org/entity/Q127700062"
+  }
+]
+	  //EDGES_END
+	  );
+
+      /**
+       * filter values are updated in the outer scope.
+       * in order to apply filters to new values, DataView.refresh() should be called
+       */
+      
+	  
+      const edgesFilterValues = {
+	  //edgesFilterValues_START
+"": true,
+		//END
+      };
+	  const nodesFilterValues = {
+	  //nodesFilterValues_START
+"": true,
+		//END
+      };
+
+      const edgesFilter = (edge) => {
+        return !edge.group || edgesFilterValues[edge.group];
+      };
+	  const nodesFilter = (node) => {
+        return !node.group || nodesFilterValues[node.group];
+      };
+
+      const nodesView = new vis.DataView(nodes, { filter: nodesFilter });
+      const edgesView = new vis.DataView(edges, { filter: edgesFilter });
+
+      
+
+      edgeFilters.forEach((filter) =>
+        filter.addEventListener("change", (e) => {
+          const { value, checked } = e.target;
+          edgesFilterValues[value] = checked;
+          edgesView.refresh();
+        })
+      );
+	  nodeFilters.forEach((node) =>
+        node.addEventListener("change", (e) => {
+          const { value, checked } = e.target;
+          nodesFilterValues[value] = checked;
+          nodesView.refresh();
+        })
+      );
+
+      startNetwork({ nodes: nodesView, edges: edgesView });
+	  
+	  network.on('click', function(params) {
+		  var nodeId = params.nodes[0];
+		  var node = nodes.get(nodeId);
+		  
+		  
+		  if (node.url && window.event.ctrlKey) {
+            window.open(node.url, '_blank');
+            //return;
+          }
+		//  console.log('clicked '+nodeId);
+		//nodes.update({id: nodeId, fixed: {x: false, y: false}});
+		});
+		//network.on('doubleClick', function(params) {
+		//	var nodeId = params.nodes[0];
+		//	var node = nodes.get(nodeId);
+		//	if (node.url && !node.fixed.x && !node.fixed.y) {
+		//		console.log(node.fixed);
+		//		window.open(node.url, '_blank');
+		//	}
+		//});
+	  ebableNodeLocking();
+	  
+	  function toggleShape() {
+      nodes.forEach(function(node) {
+        node.shape = node.shape === "ellipse" ? "dot" : "ellipse";
+      });
+      nodes.update(nodes.get());
+    }
+	function changeLabelColor() {
+	  let randomColor = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
+      nodes.forEach(function(node) {
+        node.font = { color: randomColor };
+      });
+      nodes.update(nodes.get());
+    }
+	function ebableNodeLocking() {
+		network.on("dragEnd", function (params) {
+		  for (var i = 0; i < params.nodes.length; i++) {
+			  var nodeId = params.nodes[i];
+			  nodes.update({id: nodeId, fixed: {x: true, y: true}});
+		  }
+		});
+		network.on('dragStart', function(params) {
+		  for (var i = 0; i < params.nodes.length; i++) {
+			  var nodeId = params.nodes[i];
+			  nodes.update({id: nodeId, fixed: {x: false, y: false}});
+		  }
+		});
+		network.on('doubleClick', function(params) {
+		  for (var i = 0; i < params.nodes.length; i++) {
+			  var nodeId = params.nodes[i];
+			  nodes.update({id: nodeId, fixed: {x: false, y: false}});
+		  }
+		});
+	}
+    </script>
+  </body>
+</html>
