@@ -1,7 +1,188 @@
-<ul>
-	<li><a href="./biology/index.html">./biology/</a></li>
-	<li><a href="./librivox/index.html">./librivox/</a></li>
-	<li><a href="./other/index.html">./other/</a></li>
-	<li><a href="./wikimediaCommons/index.html">./wikimediaCommons/</a></li>
-	<li><a href="./wikisource/index.html">./wikisource/</a></li>
-</ul>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tagged Index</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .tag-filters { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .tag-filter { margin: 5px; display: inline-block; }
+        .tag-label { margin-left: 5px; }
+        .item-list { display: none; }
+        .item-tags { font-size: 0.8em; color: #666; margin-left: 10px; }
+        .no-results { color: #888; font-style: italic; display: none; }
+    </style>
+</head>
+<body>
+    <div class="tag-filters">
+        <h4>Filter by Tags</h4>
+        <div id="tag-container">            <div class="tag-filter">
+                <input type="checkbox" id="tag-taxon" class="tag-checkbox" value="taxon">
+                <label class="tag-label" for="tag-taxon">taxon</label>
+            </div>            <div class="tag-filter">
+                <input type="checkbox" id="tag-graph" class="tag-checkbox" value="graph">
+                <label class="tag-label" for="tag-graph">graph</label>
+            </div>            <div class="tag-filter">
+                <input type="checkbox" id="tag-biology" class="tag-checkbox" value="biology">
+                <label class="tag-label" for="tag-biology">biology</label>
+            </div>            <div class="tag-filter">
+                <input type="checkbox" id="tag-table" class="tag-checkbox" value="table">
+                <label class="tag-label" for="tag-table">table</label>
+            </div>            <div class="tag-filter">
+                <input type="checkbox" id="tag-gbif" class="tag-checkbox" value="gbif">
+                <label class="tag-label" for="tag-gbif">gbif</label>
+            </div>        </div>
+    </div>
+    <div id="item-container">        <div class="item" data-tags="taxon,graph,biology">
+            <a href="./biology/graph2d_Eukaryote_depth2.html">./biology/graph2d_Eukaryote_depth2.html</a>
+            <span class='item-tags'>(taxon, graph, biology)</span>
+        </div>        <div class="item" data-tags="taxon,graph,biology">
+            <a href="./biology/graph2d_Eukaryote_depth3.html">./biology/graph2d_Eukaryote_depth3.html</a>
+            <span class='item-tags'>(taxon, graph, biology)</span>
+        </div>        <div class="item" data-tags="taxon,graph,biology">
+            <a href="./biology/graph2d_Ursidae_taxons.html">./biology/graph2d_Ursidae_taxons.html</a>
+            <span class='item-tags'>(taxon, graph, biology)</span>
+        </div>        <div class="item" data-tags="taxon,graph,biology">
+            <a href="./biology/graph3d_Ursidae_taxons.html">./biology/graph3d_Ursidae_taxons.html</a>
+            <span class='item-tags'>(taxon, graph, biology)</span>
+        </div>        <div class="item" data-tags="biology">
+            <a href="./biology/index.html">./biology/</a>
+            <span class='item-tags'>(biology)</span>
+        </div>        <div class="item" data-tags="table,taxon,biology">
+            <a href="./biology/tableTaxonsKnown10k.html">./biology/tableTaxonsKnown10k.html</a>
+            <span class='item-tags'>(table, taxon, biology)</span>
+        </div>        <div class="item" data-tags="table,taxon,biology">
+            <a href="./biology/tableTaxonsKnown5000.html">./biology/tableTaxonsKnown5000.html</a>
+            <span class='item-tags'>(table, taxon, biology)</span>
+        </div>        <div class="item" data-tags="table,taxon,biology">
+            <a href="./biology/tableTaxonsPlantsKnown3k.html">./biology/tableTaxonsPlantsKnown3k.html</a>
+            <span class='item-tags'>(table, taxon, biology)</span>
+        </div>        <div class="item" data-tags="">
+            <a href="./librivox/index.html">./librivox/</a>
+            
+        </div>        <div class="item" data-tags="">
+            <a href="./librivox/schema.gv.svg">./librivox/schema.gv.svg</a>
+            
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableAllAuthors.html">./librivox/tableAllAuthors.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableAllBooks.html">./librivox/tableAllBooks.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableAllLanguages.html">./librivox/tableAllLanguages.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableAllSectionsRus.html">./librivox/tableAllSectionsRus.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableReadersLangsRus.html">./librivox/tableReadersLangsRus.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableReadersLangsSeconds.html">./librivox/tableReadersLangsSeconds.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableReadersOf2024.html">./librivox/tableReadersOf2024.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./librivox/tableReadersPolyglots.html">./librivox/tableReadersPolyglots.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="">
+            <a href="./other/Gallery_Romanovs_502.html">./other/Gallery_Romanovs_502.html</a>
+            
+        </div>        <div class="item" data-tags="graph">
+            <a href="./other/graph2d_Nicholas_I_descendants.html">./other/graph2d_Nicholas_I_descendants.html</a>
+            <span class='item-tags'>(graph)</span>
+        </div>        <div class="item" data-tags="graph">
+            <a href="./other/graph3d_Nicholas_I_descendants.html">./other/graph3d_Nicholas_I_descendants.html</a>
+            <span class='item-tags'>(graph)</span>
+        </div>        <div class="item" data-tags="">
+            <a href="./other/index.html">./other/</a>
+            
+        </div>        <div class="item" data-tags="table">
+            <a href="./other/table_Russian_Writers_4709.html">./other/table_Russian_Writers_4709.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="">
+            <a href="./wikimediaCommons/Gallery_Romanovs_OTMAA_all792.html">./wikimediaCommons/Gallery_Romanovs_OTMAA_all792.html</a>
+            
+        </div>        <div class="item" data-tags="">
+            <a href="./wikimediaCommons/index.html">./wikimediaCommons/</a>
+            
+        </div>        <div class="item" data-tags="table">
+            <a href="./wikimediaCommons/Nicholas_II_depicted.html">./wikimediaCommons/Nicholas_II_depicted.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./wikimediaCommons/Russian_writers_depicted.html">./wikimediaCommons/Russian_writers_depicted.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="">
+            <a href="./wikisource/index.html">./wikisource/</a>
+            
+        </div>        <div class="item" data-tags="table">
+            <a href="./wikisource/tableAllAuthors.html">./wikisource/tableAllAuthors.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./wikisource/tableAllIndices.html">./wikisource/tableAllIndices.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="table">
+            <a href="./wikisource/tableAllVersionsPages.html">./wikisource/tableAllVersionsPages.html</a>
+            <span class='item-tags'>(table)</span>
+        </div>        <div class="item" data-tags="">
+            <a href="./index.html">./</a>
+            
+        </div>        <div class="item" data-tags="">
+            <a href="./schema-movies.svg">./schema-movies.svg</a>
+            
+        </div>        <div class="item" data-tags="">
+            <a href="./schema-northwind.svg">./schema-northwind.svg</a>
+            
+        </div>        <div class="item" data-tags="">
+            <a href="./table-gbif-depth-counts.html">./table-gbif-depth-counts.html</a>
+            
+        </div>        <div class="item" data-tags="">
+            <a href="./table-gbif-depth-grouped-counts.html">./table-gbif-depth-grouped-counts.html</a>
+            
+        </div>        <div class="item" data-tags="table,biology,gbif">
+            <a href="./table-gbif-ranks.html">./table-gbif-ranks.html</a>
+            <span class='item-tags'>(table, biology, gbif)</span>
+        </div>        <div class="item" data-tags="table,biology,gbif">
+            <a href="./table-gbif-taxon-10k-byDescendants.html">./table-gbif-taxon-10k-byDescendants.html</a>
+            <span class='item-tags'>(table, biology, gbif)</span>
+        </div>        <div class="item" data-tags="table,biology,gbif">
+            <a href="./table-gbif-taxon-10k-byLinks.html">./table-gbif-taxon-10k-byLinks.html</a>
+            <span class='item-tags'>(table, biology, gbif)</span>
+        </div>        <div id="no-results" class="no-results">No items match the selected tags.</div>
+    </div>
+
+    <script>
+        const checkboxes = document.querySelectorAll('.tag-checkbox');
+        const items = document.querySelectorAll('.item');
+        const noResults = document.getElementById('no-results');
+        
+        function updateFilter() {
+            const selectedTags = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+            
+            let visibleCount = 0;
+            
+            items.forEach(item => {
+                const itemTags = item.dataset.tags.split(',');
+                const shouldShow = selectedTags.length === 0 || 
+                    selectedTags.every(tag => itemTags.includes(tag));
+                
+                item.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            noResults.style.display = visibleCount > 0 ? 'none' : 'block';
+        }
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateFilter);
+        });
+        
+        // Show all items initially
+        items.forEach(item => item.style.display = 'block');
+    </script>
+</body>
+</html>
