@@ -45,3 +45,6 @@
 ./table-gbif-taxon-10k-byLinks.html	gbif
 ./table-gbif-taxon-10k-byDescendants.html	gbif
 ./table-gbif-ranks.html	gbif
+./schema-gbif.svg	gbif
+./table-gbif-depth-counts.html	gbif
+./table-gbif-depth-grouped-counts.html	gbif
