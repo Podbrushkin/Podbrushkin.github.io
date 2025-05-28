@@ -48,3 +48,5 @@
 ./schema-gbif.svg	gbif
 ./table-gbif-depth-counts.html	gbif
 ./table-gbif-depth-grouped-counts.html	gbif
+./gbif-top100-tree-wLegend.svg	gbif
+./gbif-top200-tree-wLegend.svg	gbif
