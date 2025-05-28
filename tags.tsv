@@ -50,3 +50,6 @@
 ./table-gbif-depth-grouped-counts.html	gbif
 ./gbif-top100-tree-wLegend.svg	gbif
 ./gbif-top200-tree-wLegend.svg	gbif
+./gbif-tree-plantae-100.svg	gbif
+./gbif-top-tree-animal400.svg	gbif
+./gbif-top-tree-animal400-black-thin.svg	gbif
