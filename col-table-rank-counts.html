@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+<style>
+a {
+    text-decoration: none; /* Remove underline by default */
+}
+a:hover {
+    text-decoration: underline; /* Underline on hover */
+}
+a:visited {
+    text-decoration: underline; /* Underline for visited links */
+}
+</style>
+</head>
+<body>
+<details>
+<summary>Details</summary>
+<pre>MATCH (n)
+RETURN n.taxonRank AS rank, COUNT(n) AS count
+ORDER BY count</pre>
+</details>
+ <label for="fSearch">Search</label>
+<input type="text" id="fSearch" name="fSearch" >
+<label>2025-06-03</label>
+<div id="example-table" ></div>
+
+<script>
+var data = 
+//JSON_ARRAY_START[
+  {
+    "rank": "other",
+    "count": 1
+  },
+  {
+    "rank": "megaclass",
+    "count": 1
+  },
+  {
+    "rank": "parvphylum",
+    "count": 2
+  },
+  {
+    "rank": "subkingdom",
+    "count": 2
+  },
+  {
+    "rank": "subsection zoology",
+    "count": 2
+  },
+  {
+    "rank": "domain",
+    "count": 3
+  },
+  {
+    "rank": "nanorder",
+    "count": 4
+  },
+  {
+    "rank": "epifamily",
+    "count": 5
+  },
+  {
+    "rank": "infraphylum",
+    "count": 5
+  },
+  {
+    "rank": "superclass",
+    "count": 5
+  },
+  {
+    "rank": "realm",
+    "count": 6
+  },
+  {
+    "rank": "unranked",
+    "count": 8
+  },
+  {
+    "rank": "section botany",
+    "count": 11
+  },
+  {
+    "rank": "subterclass",
+    "count": 13
+  },
+  {
+    "rank": "section zoology",
+    "count": 18
+  },
+  {
+    "rank": "infraclass",
+    "count": 21
+  },
+  {
+    "rank": "supertribe",
+    "count": 21
+  },
+  {
+    "rank": "kingdom",
+    "count": 23
+  },
+  {
+    "rank": "subphylum",
+    "count": 29
+  },
+  {
+    "rank": "parvorder",
+    "count": 36
+  },
+  {
+    "rank": "superorder",
+    "count": 41
+  },
+  {
+    "rank": "infratribe",
+    "count": 56
+  },
+  {
+    "rank": "subclass",
+    "count": 104
+  },
+  {
+    "rank": "phylum",
+    "count": 142
+  },
+  {
+    "rank": "infraorder",
+    "count": 170
+  },
+  {
+    "rank": "suborder",
+    "count": 409
+  },
+  {
+    "rank": "class",
+    "count": 458
+  },
+  {
+    "rank": "subtribe",
+    "count": 784
+  },
+  {
+    "rank": "form",
+    "count": 1189
+  },
+  {
+    "rank": "superfamily",
+    "count": 1548
+  },
+  {
+    "rank": "order",
+    "count": 1867
+  },
+  {
+    "rank": "tribe",
+    "count": 3748
+  },
+  {
+    "rank": "subfamily",
+    "count": 6292
+  },
+  {
+    "rank": "subgenus",
+    "count": 13593
+  },
+  {
+    "rank": "family",
+    "count": 14741
+  },
+  {
+    "rank": "variety",
+    "count": 26347
+  },
+  {
+    "rank": "subspecies",
+    "count": 148679
+  },
+  {
+    "rank": "genus",
+    "count": 217151
+  },
+  {
+    "rank": "species",
+    "count": 2219474
+  }
+]
+//JSON_ARRAY_END
+;
+
+function matchAny(data, filterParams) {
+	  //data - the data for the row being filtered
+	  //filterParams - params object passed to the filter
+	  //RegExp - modifier "i" - case insensitve
+
+	var match = false;
+	const regex = RegExp(filterParams.value, 'i');
+
+	for (var key in data) {
+		if (regex.test(data[key]) == true) {
+			match = true;
+		}
+	}
+	return match;
+}
+const input = document.getElementById("fSearch");
+input.addEventListener("keyup", function() {
+	table.setFilter(matchAny, { value: input.value });
+	if (input.value == " ") {
+		table.clearFilter()
+	}
+});
+
+function urlFormatter(cell, formatterParams, onRendered){
+	return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+}
+function qidFormatter(cell, formatterParams, onRendered){
+	if (cell.getValue()) {
+		return "<a href='https://www.wikidata.org/wiki/" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+	} else {return null}
+}
+function urlQidFormatter(cell, formatterParams, onRendered){
+	if (cell.getValue() != null) {
+		return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue().substring(31) + "</a>";
+	} else {return null}
+}
+var rowPopupFormatter = function(e, row, onRendered){
+	var data = row.getData(),
+	container = document.createElement("pre"),
+	contents = JSON.stringify(data, null, '\t');
+	container.innerHTML = contents;
+	return container;
+}
+function htmlFormatter(cell, formatterParams, onRendered) {
+    // Render the cell value as HTML
+    return cell.getValue();
+}
+
+var table = new Tabulator("#example-table", {
+ height:"90vh",
+ layout:"fitColumns",
+ data: data,
+ autoColumns: "full",
+ });
+ 
+function applyColumnFormatters() {
+    let columns = table.getColumnDefinitions();
+    let dataTmp = table.getData();
+    console.log('dataTmp.length=' + dataTmp.length);
+    for (let i = 0; i < columns.length; i++) {
+        let columnName = columns[i].field;
+        if (columnName === "url") {
+            columns[i].formatter = urlFormatter;
+            continue;
+        }
+        const randomIndex = Math.floor(Math.random() * dataTmp.length);
+        let sampleVal = dataTmp.map(x => x[columnName]).find(val => val !== null && val !== undefined && val !== '');
+        //console.log(columnName + ':' + sampleVal);
+        if (typeof sampleVal === "string" && sampleVal.startsWith("http")) {
+            columns[i].formatter = urlFormatter;
+        }
+		if (typeof sampleVal === "string" && sampleVal.startsWith("<a href")) {
+            columns[i].formatter = htmlFormatter;
+        }
+    }
+    table.setColumns(columns);
+}
+
+table.on("tableBuilt", applyColumnFormatters);
+</script>
+</body>
+</html>
