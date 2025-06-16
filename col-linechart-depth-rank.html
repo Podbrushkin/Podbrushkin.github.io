@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Line Chart with Sliders</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chartContainer {
+            width: 80%;
+            margin: auto;
+            transition: height 0.3s ease;
+        }
+        .sliders {
+            margin-top: 20px;
+        }
+		.slider {
+			width: 80%;
+		}
+        .slider-container {
+            margin-bottom: 10px;
+        }
+        .slider-container label {
+            display: inline-block;
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+	<details>
+        <summary>Details</summary>
+        <pre>Invoke-CypherNeo4j @&#39;
+MATCH (n)
+RETURN n.depth AS depth, n.taxonRank AS rank, count(*) AS count
+ORDER BY depth, count DESC
+&#39;@ | Format-HtmlLineChart -XProperty depth -YProperty count -SeriesProperty rank -Description (gcb -Raw)</pre>
+    </details>
+    <div id="chartContainer">
+        <canvas id="lineChart"></canvas>
+    </div>
+
+    <div class="sliders">
+        <div class="slider-container">
+            <label for="minX">Min X:</label>
+            <input type="range" id="minX" min="0" max="100" value="0" class="slider">
+            <span id="minXValue">0</span>
+        </div>
+        <div class="slider-container">
+            <label for="maxX">Max X:</label>
+            <input type="range" id="maxX" min="0" max="100" value="100" class="slider">
+            <span id="maxXValue">100</span>
+        </div>
+        <div class="slider-container">
+            <label for="minY">Min Y:</label>
+            <input type="range" id="minY" min="0" max="100" value="0" class="slider">
+            <span id="minYValue">0</span>
+        </div>
+        <div class="slider-container">
+            <label for="maxY">Max Y:</label>
+            <input type="range" id="maxY" min="0" max="100" value="100" class="slider">
+            <span id="maxYValue">100</span>
+        </div>
+    </div>
+
+    <script>
+        // Parse the JSON data
+        const data = 
+		//DATA_JSON_START
+[{"Series":"domain","X":0,"Y":3},{"Series":"unranked","X":0,"Y":1},{"Series":"family","X":1,"Y":22},{"Series":"kingdom","X":1,"Y":13},{"Series":"realm","X":1,"Y":6},{"Series":"phylum","X":1,"Y":2},{"Series":"genus","X":1,"Y":2},{"Series":"class","X":1,"Y":1},{"Series":"phylum","X":2,"Y":117},{"Series":"genus","X":2,"Y":112},{"Series":"family","X":2,"Y":10},{"Series":"kingdom","X":2,"Y":10},{"Series":"class","X":2,"Y":7},{"Series":"subfamily","X":2,"Y":3},{"Series":"subkingdom","X":2,"Y":2},{"Series":"species","X":2,"Y":2},{"Series":"order","X":2,"Y":1},{"Series":"genus","X":3,"Y":2433},{"Series":"species","X":3,"Y":495},{"Series":"class","X":3,"Y":322},{"Series":"family","X":3,"Y":73},{"Series":"order","X":3,"Y":45},{"Series":"subphylum","X":3,"Y":27},{"Series":"phylum","X":3,"Y":23},{"Series":"superfamily","X":3,"Y":6},{"Series":"superclass","X":3,"Y":2},{"Series":"infraphylum","X":3,"Y":1},{"Series":"subclass","X":3,"Y":1},{"Series":"species","X":4,"Y":5974},{"Series":"genus","X":4,"Y":2853},{"Series":"order","X":4,"Y":964},{"Series":"family","X":4,"Y":409},{"Series":"class","X":4,"Y":107},{"Series":"subclass","X":4,"Y":55},{"Series":"superfamily","X":4,"Y":12},{"Series":"superorder","X":4,"Y":4},{"Series":"infraphylum","X":4,"Y":4},{"Series":"suborder","X":4,"Y":4},{"Series":"infraclass","X":4,"Y":3},{"Series":"subphylum","X":4,"Y":2},{"Series":"superclass","X":4,"Y":1},{"Series":"subgenus","X":4,"Y":1},{"Series":"species","X":5,"Y":6267},{"Series":"genus","X":5,"Y":4064},{"Series":"family","X":5,"Y":3697},{"Series":"order","X":5,"Y":463},{"Series":"superfamily","X":5,"Y":284},{"Series":"suborder","X":5,"Y":140},{"Series":"subfamily","X":5,"Y":89},{"Series":"subgenus","X":5,"Y":69},{"Series":"subclass","X":5,"Y":39},{"Series":"infraorder","X":5,"Y":15},{"Series":"variety","X":5,"Y":14},{"Series":"subspecies","X":5,"Y":11},{"Series":"superorder","X":5,"Y":9},{"Series":"class","X":5,"Y":9},{"Series":"infraclass","X":5,"Y":9},{"Series":"form","X":5,"Y":4},{"Series":"parvphylum","X":5,"Y":2},{"Series":"superclass","X":5,"Y":2},{"Series":"subterclass","X":5,"Y":1},{"Series":"genus","X":6,"Y":30548},{"Series":"species","X":6,"Y":26792},{"Series":"family","X":6,"Y":3106},{"Series":"subfamily","X":6,"Y":580},{"Series":"superfamily","X":6,"Y":321},{"Series":"order","X":6,"Y":158},{"Series":"suborder","X":6,"Y":154},{"Series":"infraorder","X":6,"Y":94},{"Series":"subspecies","X":6,"Y":50},{"Series":"tribe","X":6,"Y":32},{"Series":"subgenus","X":6,"Y":29},{"Series":"subterclass","X":6,"Y":9},{"Series":"class","X":6,"Y":9},{"Series":"infraclass","X":6,"Y":7},{"Series":"superorder","X":6,"Y":5},{"Series":"subtribe","X":6,"Y":5},{"Series":"parvorder","X":6,"Y":3},{"Series":"epifamily","X":6,"Y":2},{"Series":"variety","X":6,"Y":2},{"Series":"section zoology","X":6,"Y":1},{"Series":"other","X":6,"Y":1},{"Series":"megaclass","X":6,"Y":1},{"Series":"species","X":7,"Y":286449},{"Series":"genus","X":7,"Y":42734},{"Series":"family","X":7,"Y":2464},{"Series":"subfamily","X":7,"Y":1383},{"Series":"subgenus","X":7,"Y":708},{"Series":"tribe","X":7,"Y":425},{"Series":"superfamily","X":7,"Y":406},{"Series":"order","X":7,"Y":101},{"Series":"suborder","X":7,"Y":41},{"Series":"infraorder","X":7,"Y":35},{"Series":"parvorder","X":7,"Y":33},{"Series":"subspecies","X":7,"Y":23},{"Series":"superorder","X":7,"Y":22},{"Series":"section zoology","X":7,"Y":12},{"Series":"variety","X":7,"Y":7},{"Series":"subclass","X":7,"Y":7},{"Series":"class","X":7,"Y":3},{"Series":"subterclass","X":7,"Y":3},{"Series":"subtribe","X":7,"Y":2},{"Series":"section botany","X":7,"Y":1},{"Series":"species","X":8,"Y":505174},{"Series":"genus","X":8,"Y":39806},{"Series":"family","X":8,"Y":2332},{"Series":"subspecies","X":8,"Y":2074},{"Series":"subgenus","X":8,"Y":1819},{"Series":"tribe","X":8,"Y":1412},{"Series":"subfamily","X":8,"Y":1142},{"Series":"variety","X":8,"Y":892},{"Series":"form","X":8,"Y":407},{"Series":"superfamily","X":8,"Y":285},{"Series":"order","X":8,"Y":105},{"Series":"subtribe","X":8,"Y":56},{"Series":"supertribe","X":8,"Y":10},{"Series":"section botany","X":8,"Y":10},{"Series":"unranked","X":8,"Y":7},{"Series":"suborder","X":8,"Y":7},{"Series":"section zoology","X":8,"Y":5},{"Series":"nanorder","X":8,"Y":4},{"Series":"subclass","X":8,"Y":2},{"Series":"subsection zoology","X":8,"Y":2},{"Series":"superorder","X":8,"Y":1},{"Series":"epifamily","X":8,"Y":1},{"Series":"species","X":9,"Y":508562},{"Series":"genus","X":9,"Y":42034},{"Series":"subspecies","X":9,"Y":20788},{"Series":"variety","X":9,"Y":12556},{"Series":"subgenus","X":9,"Y":1990},{"Series":"family","X":9,"Y":1607},{"Series":"subfamily","X":9,"Y":1451},{"Series":"subtribe","X":9,"Y":436},{"Series":"tribe","X":9,"Y":273},{"Series":"form","X":9,"Y":266},{"Series":"superfamily","X":9,"Y":136},{"Series":"suborder","X":9,"Y":39},{"Series":"order","X":9,"Y":3},{"Series":"epifamily","X":9,"Y":2},{"Series":"infraorder","X":9,"Y":2},{"Series":"infraclass","X":9,"Y":2},{"Series":"species","X":10,"Y":391244},{"Series":"subspecies","X":10,"Y":32179},{"Series":"genus","X":10,"Y":23925},{"Series":"variety","X":10,"Y":10419},{"Series":"subgenus","X":10,"Y":3459},{"Series":"subfamily","X":10,"Y":830},{"Series":"tribe","X":10,"Y":782},{"Series":"family","X":10,"Y":505},{"Series":"form","X":10,"Y":325},{"Series":"superfamily","X":10,"Y":52},{"Series":"subtribe","X":10,"Y":35},{"Series":"order","X":10,"Y":27},{"Series":"infraorder","X":10,"Y":15},{"Series":"supertribe","X":10,"Y":11},{"Series":"infratribe","X":10,"Y":7},{"Series":"suborder","X":10,"Y":4},{"Series":"species","X":11,"Y":229754},{"Series":"subspecies","X":11,"Y":27876},{"Series":"genus","X":11,"Y":13454},{"Series":"subgenus","X":11,"Y":3104},{"Series":"variety","X":11,"Y":1878},{"Series":"tribe","X":11,"Y":448},{"Series":"subfamily","X":11,"Y":339},{"Series":"family","X":11,"Y":250},{"Series":"subtribe","X":11,"Y":132},{"Series":"form","X":11,"Y":107},{"Series":"superfamily","X":11,"Y":33},{"Series":"infratribe","X":11,"Y":27},{"Series":"suborder","X":11,"Y":20},{"Series":"infraorder","X":11,"Y":2},{"Series":"species","X":12,"Y":131114},{"Series":"subspecies","X":12,"Y":33573},{"Series":"genus","X":12,"Y":8489},{"Series":"subgenus","X":12,"Y":1316},{"Series":"variety","X":12,"Y":466},{"Series":"subfamily","X":12,"Y":197},{"Series":"family","X":12,"Y":192},{"Series":"subtribe","X":12,"Y":107},{"Series":"tribe","X":12,"Y":106},{"Series":"form","X":12,"Y":59},{"Series":"infratribe","X":12,"Y":22},{"Series":"superfamily","X":12,"Y":9},{"Series":"infraorder","X":12,"Y":7},{"Series":"species","X":13,"Y":69209},{"Series":"subspecies","X":13,"Y":15759},{"Series":"genus","X":13,"Y":3625},{"Series":"subgenus","X":13,"Y":779},{"Series":"subfamily","X":13,"Y":197},{"Series":"tribe","X":13,"Y":120},{"Series":"family","X":13,"Y":67},{"Series":"variety","X":13,"Y":51},{"Series":"form","X":13,"Y":6},{"Series":"superfamily","X":13,"Y":4},{"Series":"subtribe","X":13,"Y":2},{"Series":"species","X":14,"Y":33000},{"Series":"subspecies","X":14,"Y":3593},{"Series":"genus","X":14,"Y":1757},{"Series":"subgenus","X":14,"Y":169},{"Series":"tribe","X":14,"Y":121},{"Series":"subfamily","X":14,"Y":77},{"Series":"family","X":14,"Y":7},{"Series":"variety","X":14,"Y":6},{"Series":"form","X":14,"Y":4},{"Series":"species","X":15,"Y":16403},{"Series":"subspecies","X":15,"Y":4117},{"Series":"genus","X":15,"Y":1156},{"Series":"subgenus","X":15,"Y":38},{"Series":"variety","X":15,"Y":36},{"Series":"tribe","X":15,"Y":25},{"Series":"form","X":15,"Y":10},{"Series":"subfamily","X":15,"Y":4},{"Series":"species","X":16,"Y":7633},{"Series":"subspecies","X":16,"Y":4437},{"Series":"genus","X":16,"Y":107},{"Series":"subgenus","X":16,"Y":99},{"Series":"variety","X":16,"Y":17},{"Series":"subtribe","X":16,"Y":9},{"Series":"tribe","X":16,"Y":4},{"Series":"subspecies","X":17,"Y":3263},{"Series":"species","X":17,"Y":1100},{"Series":"genus","X":17,"Y":52},{"Series":"subgenus","X":17,"Y":9},{"Series":"variety","X":17,"Y":3},{"Series":"subspecies","X":18,"Y":674},{"Series":"species","X":18,"Y":276},{"Series":"subgenus","X":18,"Y":4},{"Series":"form","X":18,"Y":1},{"Series":"subspecies","X":19,"Y":237},{"Series":"species","X":19,"Y":26},{"Series":"subspecies","X":20,"Y":25}]
+		//DATA_JSON_END
+		;
+
+        // Group data by series
+        const groupedData = {};
+        data.forEach(item => {
+            const series = item.Series;
+            if (!groupedData[series]) {
+                groupedData[series] = [];
+            }
+            groupedData[series].push({
+                x: item.X,
+                y: item.Y
+            });
+        });
+
+        // Prepare datasets for Chart.js
+        const datasets = Object.keys(groupedData).map(series => {
+            return {
+                label: series,
+                data: groupedData[series],
+                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16), // Random color
+                fill: false
+            };
+        });
+
+        // Create the chart
+        const ctx = document.getElementById('lineChart').getContext('2d');
+        const lineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Year'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Value'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Get slider elements
+        const minXSlider = document.getElementById('minX');
+        const maxXSlider = document.getElementById('maxX');
+        const minYSlider = document.getElementById('minY');
+        const maxYSlider = document.getElementById('maxY');
+        const chartHeightSlider = document.getElementById('chartHeight');
+
+        // Get slider value display elements
+        const minXValue = document.getElementById('minXValue');
+        const maxXValue = document.getElementById('maxXValue');
+        const minYValue = document.getElementById('minYValue');
+        const maxYValue = document.getElementById('maxYValue');
+
+        // Initialize slider values based on data
+        const xValues = data.map(item => item.X);
+        const yValues = data.map(item => item.Y);
+        const minXData = Math.min(...xValues);
+        const maxXData = Math.max(...xValues);
+        const minYData = Math.min(...yValues);
+        const maxYData = Math.max(...yValues);
+
+        minXSlider.min = minXData;
+        minXSlider.max = maxXData;
+        minXSlider.value = minXData;
+        maxXSlider.min = minXData;
+        maxXSlider.max = maxXData;
+        maxXSlider.value = maxXData;
+        minYSlider.min = minYData;
+        minYSlider.max = maxYData;
+        minYSlider.value = minYData;
+        maxYSlider.min = minYData;
+        maxYSlider.max = maxYData;
+        maxYSlider.value = maxYData;
+
+        minXValue.textContent = minXData;
+        maxXValue.textContent = maxXData;
+        minYValue.textContent = minYData;
+        maxYValue.textContent = maxYData;
+
+        // Update chart scales when sliders change
+        minXSlider.addEventListener('input', () => {
+            lineChart.options.scales.x.min = Math.round(minXSlider.value);
+            lineChart.update();
+            minXValue.textContent = minXSlider.value;
+        });
+
+        maxXSlider.addEventListener('input', () => {
+            lineChart.options.scales.x.max = Math.round(maxXSlider.value);
+            lineChart.update();
+            maxXValue.textContent = maxXSlider.value;
+        });
+
+        minYSlider.addEventListener('input', () => {
+            lineChart.options.scales.y.min = Math.round(minYSlider.value);
+            lineChart.update();
+            minYValue.textContent = minYSlider.value;
+        });
+
+        maxYSlider.addEventListener('input', () => {
+            lineChart.options.scales.y.max = Math.round(maxYSlider.value);
+            lineChart.update();
+            maxYValue.textContent = maxYSlider.value;
+        });
+    </script>
+</body>
+</html>

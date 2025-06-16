@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Stacked Bar Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    
+    #chart-container {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+    }
+    
+    .chart-legend {
+      padding: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: all 0.2s;
+    }
+    
+    .legend-item:hover {
+      background: #f0f0f0;
+    }
+    
+    .legend-item.hidden {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+    
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+    <details>
+        <summary>Details</summary>
+        <pre>Invoke-CypherNeo4j @&#39;
+MATCH (n)
+RETURN n.depth AS depth, n.taxonRank AS rank, count(*) AS count
+ORDER BY depth, count DESC
+&#39;@ | Format-HtmlBarChart -XProperty depth -YProperty count -SeriesProperty rank -Description (gcb -Raw) -OutVariable html</pre>
+    </details>
+    
+  <div id="chart-container">
+    <canvas id="bar-chart"></canvas>
+  </div>
+  <div id="legend-container" class="chart-legend"></div>
+
+  <script>
+    // Hardcoded data
+    const inputData = [{"depth":0,"rank":"domain","count":3},{"depth":0,"rank":"unranked","count":1},{"depth":1,"rank":"family","count":22},{"depth":1,"rank":"kingdom","count":13},{"depth":1,"rank":"realm","count":6},{"depth":1,"rank":"phylum","count":2},{"depth":1,"rank":"genus","count":2},{"depth":1,"rank":"class","count":1},{"depth":2,"rank":"phylum","count":117},{"depth":2,"rank":"genus","count":112},{"depth":2,"rank":"family","count":10},{"depth":2,"rank":"kingdom","count":10},{"depth":2,"rank":"class","count":7},{"depth":2,"rank":"subfamily","count":3},{"depth":2,"rank":"subkingdom","count":2},{"depth":2,"rank":"species","count":2},{"depth":2,"rank":"order","count":1},{"depth":3,"rank":"genus","count":2433},{"depth":3,"rank":"species","count":495},{"depth":3,"rank":"class","count":322},{"depth":3,"rank":"family","count":73},{"depth":3,"rank":"order","count":45},{"depth":3,"rank":"subphylum","count":27},{"depth":3,"rank":"phylum","count":23},{"depth":3,"rank":"superfamily","count":6},{"depth":3,"rank":"superclass","count":2},{"depth":3,"rank":"infraphylum","count":1},{"depth":3,"rank":"subclass","count":1},{"depth":4,"rank":"species","count":5974},{"depth":4,"rank":"genus","count":2853},{"depth":4,"rank":"order","count":964},{"depth":4,"rank":"family","count":409},{"depth":4,"rank":"class","count":107},{"depth":4,"rank":"subclass","count":55},{"depth":4,"rank":"superfamily","count":12},{"depth":4,"rank":"superorder","count":4},{"depth":4,"rank":"infraphylum","count":4},{"depth":4,"rank":"suborder","count":4},{"depth":4,"rank":"infraclass","count":3},{"depth":4,"rank":"subphylum","count":2},{"depth":4,"rank":"superclass","count":1},{"depth":4,"rank":"subgenus","count":1},{"depth":5,"rank":"species","count":6267},{"depth":5,"rank":"genus","count":4064},{"depth":5,"rank":"family","count":3697},{"depth":5,"rank":"order","count":463},{"depth":5,"rank":"superfamily","count":284},{"depth":5,"rank":"suborder","count":140},{"depth":5,"rank":"subfamily","count":89},{"depth":5,"rank":"subgenus","count":69},{"depth":5,"rank":"subclass","count":39},{"depth":5,"rank":"infraorder","count":15},{"depth":5,"rank":"variety","count":14},{"depth":5,"rank":"subspecies","count":11},{"depth":5,"rank":"superorder","count":9},{"depth":5,"rank":"class","count":9},{"depth":5,"rank":"infraclass","count":9},{"depth":5,"rank":"form","count":4},{"depth":5,"rank":"parvphylum","count":2},{"depth":5,"rank":"superclass","count":2},{"depth":5,"rank":"subterclass","count":1},{"depth":6,"rank":"genus","count":30548},{"depth":6,"rank":"species","count":26792},{"depth":6,"rank":"family","count":3106},{"depth":6,"rank":"subfamily","count":580},{"depth":6,"rank":"superfamily","count":321},{"depth":6,"rank":"order","count":158},{"depth":6,"rank":"suborder","count":154},{"depth":6,"rank":"infraorder","count":94},{"depth":6,"rank":"subspecies","count":50},{"depth":6,"rank":"tribe","count":32},{"depth":6,"rank":"subgenus","count":29},{"depth":6,"rank":"subterclass","count":9},{"depth":6,"rank":"class","count":9},{"depth":6,"rank":"infraclass","count":7},{"depth":6,"rank":"superorder","count":5},{"depth":6,"rank":"subtribe","count":5},{"depth":6,"rank":"parvorder","count":3},{"depth":6,"rank":"epifamily","count":2},{"depth":6,"rank":"variety","count":2},{"depth":6,"rank":"section zoology","count":1},{"depth":6,"rank":"other","count":1},{"depth":6,"rank":"megaclass","count":1},{"depth":7,"rank":"species","count":286449},{"depth":7,"rank":"genus","count":42734},{"depth":7,"rank":"family","count":2464},{"depth":7,"rank":"subfamily","count":1383},{"depth":7,"rank":"subgenus","count":708},{"depth":7,"rank":"tribe","count":425},{"depth":7,"rank":"superfamily","count":406},{"depth":7,"rank":"order","count":101},{"depth":7,"rank":"suborder","count":41},{"depth":7,"rank":"infraorder","count":35},{"depth":7,"rank":"parvorder","count":33},{"depth":7,"rank":"subspecies","count":23},{"depth":7,"rank":"superorder","count":22},{"depth":7,"rank":"section zoology","count":12},{"depth":7,"rank":"variety","count":7},{"depth":7,"rank":"subclass","count":7},{"depth":7,"rank":"class","count":3},{"depth":7,"rank":"subterclass","count":3},{"depth":7,"rank":"subtribe","count":2},{"depth":7,"rank":"section botany","count":1},{"depth":8,"rank":"species","count":505174},{"depth":8,"rank":"genus","count":39806},{"depth":8,"rank":"family","count":2332},{"depth":8,"rank":"subspecies","count":2074},{"depth":8,"rank":"subgenus","count":1819},{"depth":8,"rank":"tribe","count":1412},{"depth":8,"rank":"subfamily","count":1142},{"depth":8,"rank":"variety","count":892},{"depth":8,"rank":"form","count":407},{"depth":8,"rank":"superfamily","count":285},{"depth":8,"rank":"order","count":105},{"depth":8,"rank":"subtribe","count":56},{"depth":8,"rank":"supertribe","count":10},{"depth":8,"rank":"section botany","count":10},{"depth":8,"rank":"unranked","count":7},{"depth":8,"rank":"suborder","count":7},{"depth":8,"rank":"section zoology","count":5},{"depth":8,"rank":"nanorder","count":4},{"depth":8,"rank":"subclass","count":2},{"depth":8,"rank":"subsection zoology","count":2},{"depth":8,"rank":"superorder","count":1},{"depth":8,"rank":"epifamily","count":1},{"depth":9,"rank":"species","count":508562},{"depth":9,"rank":"genus","count":42034},{"depth":9,"rank":"subspecies","count":20788},{"depth":9,"rank":"variety","count":12556},{"depth":9,"rank":"subgenus","count":1990},{"depth":9,"rank":"family","count":1607},{"depth":9,"rank":"subfamily","count":1451},{"depth":9,"rank":"subtribe","count":436},{"depth":9,"rank":"tribe","count":273},{"depth":9,"rank":"form","count":266},{"depth":9,"rank":"superfamily","count":136},{"depth":9,"rank":"suborder","count":39},{"depth":9,"rank":"order","count":3},{"depth":9,"rank":"epifamily","count":2},{"depth":9,"rank":"infraorder","count":2},{"depth":9,"rank":"infraclass","count":2},{"depth":10,"rank":"species","count":391244},{"depth":10,"rank":"subspecies","count":32179},{"depth":10,"rank":"genus","count":23925},{"depth":10,"rank":"variety","count":10419},{"depth":10,"rank":"subgenus","count":3459},{"depth":10,"rank":"subfamily","count":830},{"depth":10,"rank":"tribe","count":782},{"depth":10,"rank":"family","count":505},{"depth":10,"rank":"form","count":325},{"depth":10,"rank":"superfamily","count":52},{"depth":10,"rank":"subtribe","count":35},{"depth":10,"rank":"order","count":27},{"depth":10,"rank":"infraorder","count":15},{"depth":10,"rank":"supertribe","count":11},{"depth":10,"rank":"infratribe","count":7},{"depth":10,"rank":"suborder","count":4},{"depth":11,"rank":"species","count":229754},{"depth":11,"rank":"subspecies","count":27876},{"depth":11,"rank":"genus","count":13454},{"depth":11,"rank":"subgenus","count":3104},{"depth":11,"rank":"variety","count":1878},{"depth":11,"rank":"tribe","count":448},{"depth":11,"rank":"subfamily","count":339},{"depth":11,"rank":"family","count":250},{"depth":11,"rank":"subtribe","count":132},{"depth":11,"rank":"form","count":107},{"depth":11,"rank":"superfamily","count":33},{"depth":11,"rank":"infratribe","count":27},{"depth":11,"rank":"suborder","count":20},{"depth":11,"rank":"infraorder","count":2},{"depth":12,"rank":"species","count":131114},{"depth":12,"rank":"subspecies","count":33573},{"depth":12,"rank":"genus","count":8489},{"depth":12,"rank":"subgenus","count":1316},{"depth":12,"rank":"variety","count":466},{"depth":12,"rank":"subfamily","count":197},{"depth":12,"rank":"family","count":192},{"depth":12,"rank":"subtribe","count":107},{"depth":12,"rank":"tribe","count":106},{"depth":12,"rank":"form","count":59},{"depth":12,"rank":"infratribe","count":22},{"depth":12,"rank":"superfamily","count":9},{"depth":12,"rank":"infraorder","count":7},{"depth":13,"rank":"species","count":69209},{"depth":13,"rank":"subspecies","count":15759},{"depth":13,"rank":"genus","count":3625},{"depth":13,"rank":"subgenus","count":779},{"depth":13,"rank":"subfamily","count":197},{"depth":13,"rank":"tribe","count":120},{"depth":13,"rank":"family","count":67},{"depth":13,"rank":"variety","count":51},{"depth":13,"rank":"form","count":6},{"depth":13,"rank":"superfamily","count":4},{"depth":13,"rank":"subtribe","count":2},{"depth":14,"rank":"species","count":33000},{"depth":14,"rank":"subspecies","count":3593},{"depth":14,"rank":"genus","count":1757},{"depth":14,"rank":"subgenus","count":169},{"depth":14,"rank":"tribe","count":121},{"depth":14,"rank":"subfamily","count":77},{"depth":14,"rank":"family","count":7},{"depth":14,"rank":"variety","count":6},{"depth":14,"rank":"form","count":4},{"depth":15,"rank":"species","count":16403},{"depth":15,"rank":"subspecies","count":4117},{"depth":15,"rank":"genus","count":1156},{"depth":15,"rank":"subgenus","count":38},{"depth":15,"rank":"variety","count":36},{"depth":15,"rank":"tribe","count":25},{"depth":15,"rank":"form","count":10},{"depth":15,"rank":"subfamily","count":4},{"depth":16,"rank":"species","count":7633},{"depth":16,"rank":"subspecies","count":4437},{"depth":16,"rank":"genus","count":107},{"depth":16,"rank":"subgenus","count":99},{"depth":16,"rank":"variety","count":17},{"depth":16,"rank":"subtribe","count":9},{"depth":16,"rank":"tribe","count":4},{"depth":17,"rank":"subspecies","count":3263},{"depth":17,"rank":"species","count":1100},{"depth":17,"rank":"genus","count":52},{"depth":17,"rank":"subgenus","count":9},{"depth":17,"rank":"variety","count":3},{"depth":18,"rank":"subspecies","count":674},{"depth":18,"rank":"species","count":276},{"depth":18,"rank":"subgenus","count":4},{"depth":18,"rank":"form","count":1},{"depth":19,"rank":"subspecies","count":237},{"depth":19,"rank":"species","count":26},{"depth":20,"rank":"subspecies","count":25}];
+
+    // Property names
+    const propertyNames = {"series":"rank","y":"count","x":"depth"};
+
+    // Generate random colors
+    function getRandomColor() {
+      const hue = Math.floor(Math.random() * 360);
+      return `hsla(${hue}, 70%, 60%, 0.8)`;
+    }
+
+    // Generate the stacked bar chart
+    function createStackedBarChart(data, xProp, yProp, seriesProp) {
+      const ctx = document.getElementById('bar-chart').getContext('2d');
+      const legendContainer = document.getElementById('legend-container');
+      
+      // Get unique series groups and labels
+      const seriesGroups = [...new Set(data.map(item => item[seriesProp]))];
+      const labels = [...new Set(data.map(item => item[xProp]))];
+
+      // Prepare datasets with random colors
+      const datasets = seriesGroups.map((group, i) => {
+        return {
+          label: group,
+          data: labels.map(label => {
+            const item = data.find(d => d[xProp] === label && d[seriesProp] === group);
+            return item ? item[yProp] : 0;
+          }),
+          backgroundColor: getRandomColor(),
+          borderColor: 'rgba(0,0,0,0.2)',
+          borderWidth: 1,
+          hidden: false
+        };
+      });
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { 
+              stacked: true,
+              title: { display: true, text: xProp }
+            },
+            y: { 
+              stacked: true,
+              title: { display: true, text: yProp },
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+
+      // Create interactive legend
+      function updateLegend() {
+        legendContainer.innerHTML = datasets.map((dataset, i) => {
+          const isHidden = chart.getDatasetMeta(i).hidden;
+          return `
+            <div class="legend-item ${isHidden ? 'hidden' : ''}" 
+                 data-index="${i}" 
+                 style="background: ${isHidden ? '#f8f8f8' : 'transparent'}">
+              <div class="legend-color" style="background: ${dataset.backgroundColor}"></div>
+              <span>${dataset.label}</span>
+            </div>
+          `;
+        }).join('');
+
+        // Add click handlers
+        document.querySelectorAll('.legend-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const index = item.dataset.index;
+            const meta = chart.getDatasetMeta(index);
+            meta.hidden = !meta.hidden;
+            chart.update();
+            updateLegend();
+          });
+        });
+      }
+
+      // Initialize legend
+      updateLegend();
+      
+      // Handle window resize
+      window.addEventListener('resize', function() {
+        chart.resize();
+      });
+    }
+
+    // Initialize the chart
+    createStackedBarChart(inputData, propertyNames.x, propertyNames.y, propertyNames.series);
+  </script>
+</body>
+</html>
