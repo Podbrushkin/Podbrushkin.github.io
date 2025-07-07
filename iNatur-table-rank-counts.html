@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+<style>
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+a:visited {
+    text-decoration: underline;
+}
+.tag-filter-section {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.tag-filter-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.tag-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.tag-filter-option {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+.tag-filter-count {
+    margin-left: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+.tag-filter-select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.control-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.row-count {
+    margin-left: auto;
+    color: #666;
+    font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+<details>
+<summary>Details</summary>
+<pre>MATCH (n:Taxon) 
+RETURN n.rank AS rank, COUNT(*) AS taxonCount
+ORDER BY taxonCount DESC;</pre>
+</details>
+<div id="tagFiltersContainer"></div>
+<div class="control-bar">
+    <select id="tagFilterSelect" class="tag-filter-select">
+        <option value="">Tag & Filter</option>
+    </select>
+    <label for="fSearch">Search</label>
+    <input type="text" id="fSearch" name="fSearch">
+    <label>2025-07-04</label>
+    <div class="row-count" id="rowCount">0 rows</div>
+</div>
+<div id="example-table"></div>
+
+<script>
+// Columns to be interpreted as tags initially
+var initialTagColumns = [];
+
+var data = 
+//JSON_ARRAY_START[
+  {
+    "rank": "species",
+    "taxonCount": 1073856
+  },
+  {
+    "rank": "genus",
+    "taxonCount": 140125
+  },
+  {
+    "rank": "subspecies",
+    "taxonCount": 85045
+  },
+  {
+    "rank": "variety",
+    "taxonCount": 18178
+  },
+  {
+    "rank": "family",
+    "taxonCount": 10551
+  },
+  {
+    "rank": "subgenus",
+    "taxonCount": 6246
+  },
+  {
+    "rank": "tribe",
+    "taxonCount": 5870
+  },
+  {
+    "rank": "subfamily",
+    "taxonCount": 5409
+  },
+  {
+    "rank": "hybrid",
+    "taxonCount": 5357
+  },
+  {
+    "rank": "section",
+    "taxonCount": 4224
+  },
+  {
+    "rank": "complex",
+    "taxonCount": 2874
+  },
+  {
+    "rank": "subtribe",
+    "taxonCount": 1658
+  },
+  {
+    "rank": "order",
+    "taxonCount": 1610
+  },
+  {
+    "rank": "form",
+    "taxonCount": 1188
+  },
+  {
+    "rank": "superfamily",
+    "taxonCount": 1159
+  },
+  {
+    "rank": "subsection",
+    "taxonCount": 595
+  },
+  {
+    "rank": "suborder",
+    "taxonCount": 438
+  },
+  {
+    "rank": "class",
+    "taxonCount": 369
+  },
+  {
+    "rank": "genushybrid",
+    "taxonCount": 201
+  },
+  {
+    "rank": "subclass",
+    "taxonCount": 169
+  },
+  {
+    "rank": "infraorder",
+    "taxonCount": 161
+  },
+  {
+    "rank": "phylum",
+    "taxonCount": 137
+  },
+  {
+    "rank": "infrahybrid",
+    "taxonCount": 80
+  },
+  {
+    "rank": "superorder",
+    "taxonCount": 56
+  },
+  {
+    "rank": "parvorder",
+    "taxonCount": 55
+  },
+  {
+    "rank": "subphylum",
+    "taxonCount": 45
+  },
+  {
+    "rank": "supertribe",
+    "taxonCount": 28
+  },
+  {
+    "rank": "infraclass",
+    "taxonCount": 24
+  },
+  {
+    "rank": "epifamily",
+    "taxonCount": 18
+  },
+  {
+    "rank": "zoosection",
+    "taxonCount": 15
+  },
+  {
+    "rank": "subterclass",
+    "taxonCount": 13
+  },
+  {
+    "rank": "superclass",
+    "taxonCount": 12
+  },
+  {
+    "rank": "zoosubsection",
+    "taxonCount": 11
+  },
+  {
+    "rank": "kingdom",
+    "taxonCount": 9
+  },
+  {
+    "rank": "stateofmatter",
+    "taxonCount": 1
+  }
+]
+//JSON_ARRAY_END
+;
+
+// Track currently active tag filters
+var activeTagFilters = {};
+
+function matchAny(data, filterParams) {
+    const regex = RegExp(filterParams.value, 'i');
+    for (var key in data) {
+        if (regex.test(data[key])) return true;
+    }
+    return false;
+}
+
+function combinedFilter(data) {
+    // Apply search filter
+    const searchValue = document.getElementById("fSearch").value;
+    const searchMatch = searchValue ? matchAny(data, { value: searchValue }) : true;
+    
+    if (!searchMatch) return false;
+    
+    // Check tag filters - different groups use AND logic
+    for (const [column, selectedTags] of Object.entries(activeTagFilters)) {
+        if (selectedTags.size === 0) continue;
+        
+        const cellValue = data[column];
+        if (cellValue === undefined || cellValue === null) return false;
+        
+        const values = Array.isArray(cellValue) ? cellValue : [cellValue];
+        
+        // Within same group, use AND logic - all selected tags must be present
+        let allTagsMatch = true;
+        for (const tag of selectedTags) {
+            if (!values.some(v => String(v) === tag)) {
+                allTagsMatch = false;
+                break;
+            }
+        }
+        
+        if (!allTagsMatch) return false;
+    }
+    return true;
+}
+
+function updateRowCount() {
+    const visibleRows = table.getData(true).length;
+    const totalRows = table.getData().length;
+    document.getElementById("rowCount").textContent = `${visibleRows} of ${totalRows} rows`;
+}
+
+const input = document.getElementById("fSearch");
+input.addEventListener("keyup", function() {
+    table.setFilter(combinedFilter);
+});
+
+function urlFormatter(cell, formatterParams, onRendered){
+    if (cell.getValue()) {
+        return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+    } else {return }
+}
+
+function htmlFormatter(cell, formatterParams, onRendered) {
+    return cell.getValue();
+}
+
+var table = new Tabulator("#example-table", {
+    height:"90vh",
+    layout:"fitColumns",
+    data: data, // Start with empty data
+    autoColumns: true,
+});
+
+function applyColumnFormatters() {
+    let columns = table.getColumnDefinitions();
+    let dataTmp = table.getData();
+    for (let i = 0; i < columns.length; i++) {
+        let columnName = columns[i].field;
+        if (columnName === "url") {
+            columns[i].formatter = urlFormatter;
+            continue;
+        }
+        let sampleVal = dataTmp.map(x => x[columnName]).find(val => val !== null && val !== undefined && val !== '');
+        if (typeof sampleVal === "string" && sampleVal.startsWith("http")) {
+            columns[i].formatter = urlFormatter;
+        }
+        if (typeof sampleVal === "string" && sampleVal.startsWith("<a href")) {
+            columns[i].formatter = htmlFormatter;
+        }
+    }
+    table.setColumns(columns);
+}
+
+function createTagFilter(column) {
+    // Remove existing filter for this column if it exists
+    const existingFilter = document.getElementById(`tag-filter-${column}`);
+    if (existingFilter) {
+        existingFilter.remove();
+        delete activeTagFilters[column];
+        table.setFilter(combinedFilter);
+        return;
+    }
+    
+    // Get all unique values in the column
+    const uniqueValues = new Set();
+    const allData = table.getData();
+    
+    allData.forEach(row => {
+        const value = row[column];
+        if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+                value.forEach(v => uniqueValues.add(String(v)));
+            } else {
+                uniqueValues.add(String(value));
+            }
+        }
+    });
+    
+    // Create filter UI
+    const filterSection = document.createElement('div');
+    filterSection.className = 'tag-filter-section';
+    filterSection.id = `tag-filter-${column}`;
+    
+    const header = document.createElement('div');
+    header.className = 'tag-filter-header';
+    header.textContent = `Filter by ${column}:`;
+    filterSection.appendChild(header);
+    
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'tag-filter-options';
+    
+    const sortedValues = Array.from(uniqueValues).sort((a, b) => a.localeCompare(b));
+    
+    sortedValues.forEach(value => {
+        const option = document.createElement('div');
+        option.className = 'tag-filter-option';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = value;
+        checkbox.id = `tag-${column}-${value.replace(/\s+/g, '-')}`;
+        checkbox.addEventListener('change', () => {
+            if (!activeTagFilters[column]) {
+                activeTagFilters[column] = new Set();
+            }
+            
+            if (checkbox.checked) {
+                activeTagFilters[column].add(value);
+            } else {
+                activeTagFilters[column].delete(value);
+                if (activeTagFilters[column].size === 0) {
+                    delete activeTagFilters[column];
+                }
+            }
+            
+            table.setFilter(combinedFilter);
+        });
+        
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        
+        const labelText = document.createElement('span');
+        labelText.textContent = value;
+        
+        const count = document.createElement('span');
+        count.className = 'tag-filter-count';
+        // Static count - doesn't update with filtering
+        count.textContent = `(${allData.filter(row => {
+            const cellValue = row[column];
+            if (cellValue === undefined || cellValue === null) return false;
+            const values = Array.isArray(cellValue) ? cellValue : [cellValue];
+            return values.some(v => String(v) === value);
+        }).length})`;
+        
+        label.appendChild(labelText);
+        label.appendChild(count);
+        option.appendChild(checkbox);
+        option.appendChild(label);
+        optionsContainer.appendChild(option);
+    });
+    
+    filterSection.appendChild(optionsContainer);
+    document.getElementById('tagFiltersContainer').appendChild(filterSection);
+    
+    // Initialize empty filter for this column
+    activeTagFilters[column] = new Set();
+}
+
+// Initialize tag filter select
+function initTagFilterSelect() {
+    const select = document.getElementById('tagFilterSelect');
+    select.innerHTML = '<option value="">Tag & Filter</option>';
+    
+    const columns = table.getColumnDefinitions();
+    columns.forEach(col => {
+        if (col.field) {
+            const option = document.createElement('option');
+            option.value = col.field;
+            option.textContent = col.field;
+            select.appendChild(option);
+        }
+    });
+    
+    select.addEventListener('change', () => {
+        if (select.value) {
+            createTagFilter(select.value);
+            select.value = ""; // Reset the select
+        }
+    });
+}
+
+// Initialize table
+table.on("tableBuilt", function() {
+    applyColumnFormatters();
+    initTagFilterSelect();
+    initialTagColumns.forEach(column => {
+        if (table.getColumn(column)) {
+            createTagFilter(column);
+        }
+    });
+});
+
+// Update row count when data changes
+table.on("dataFiltered", function(filters, rows){
+    document.getElementById("rowCount").textContent = `${rows.length} of ${table.getData().length} rows`;
+});
+
+</script>
+</body>
+</html>

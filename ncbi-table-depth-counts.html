@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+<style>
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+a:visited {
+    text-decoration: underline;
+}
+.tag-filter-section {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.tag-filter-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.tag-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.tag-filter-option {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+.tag-filter-count {
+    margin-left: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+.tag-filter-select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.control-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.row-count {
+    margin-left: auto;
+    color: #666;
+    font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+<details>
+<summary>Details</summary>
+<pre>MATCH (n:Taxon) 
+RETURN n.depth AS depth, COUNT(*) AS taxonCount
+ORDER BY depth;</pre>
+</details>
+<div id="tagFiltersContainer"></div>
+<div class="control-bar">
+    <select id="tagFilterSelect" class="tag-filter-select">
+        <option value="">Tag & Filter</option>
+    </select>
+    <label for="fSearch">Search</label>
+    <input type="text" id="fSearch" name="fSearch">
+    <label>2025-07-07</label>
+    <div class="row-count" id="rowCount">0 rows</div>
+</div>
+<div id="example-table"></div>
+
+<script>
+// Columns to be interpreted as tags initially
+var initialTagColumns = [];
+
+var data = 
+//JSON_ARRAY_START[
+  {
+    "depth": 0,
+    "taxonCount": 1
+  },
+  {
+    "depth": 1,
+    "taxonCount": 4
+  },
+  {
+    "depth": 2,
+    "taxonCount": 19
+  },
+  {
+    "depth": 3,
+    "taxonCount": 7601
+  },
+  {
+    "depth": 4,
+    "taxonCount": 65588
+  },
+  {
+    "depth": 5,
+    "taxonCount": 23481
+  },
+  {
+    "depth": 6,
+    "taxonCount": 28783
+  },
+  {
+    "depth": 7,
+    "taxonCount": 35484
+  },
+  {
+    "depth": 8,
+    "taxonCount": 42086
+  },
+  {
+    "depth": 9,
+    "taxonCount": 85376
+  },
+  {
+    "depth": 10,
+    "taxonCount": 389834
+  },
+  {
+    "depth": 11,
+    "taxonCount": 106120
+  },
+  {
+    "depth": 12,
+    "taxonCount": 96856
+  },
+  {
+    "depth": 13,
+    "taxonCount": 177571
+  },
+  {
+    "depth": 14,
+    "taxonCount": 53264
+  },
+  {
+    "depth": 15,
+    "taxonCount": 50855
+  },
+  {
+    "depth": 16,
+    "taxonCount": 72063
+  },
+  {
+    "depth": 17,
+    "taxonCount": 87512
+  },
+  {
+    "depth": 18,
+    "taxonCount": 63666
+  },
+  {
+    "depth": 19,
+    "taxonCount": 51115
+  },
+  {
+    "depth": 20,
+    "taxonCount": 67256
+  },
+  {
+    "depth": 21,
+    "taxonCount": 120140
+  },
+  {
+    "depth": 22,
+    "taxonCount": 117773
+  },
+  {
+    "depth": 23,
+    "taxonCount": 55759
+  },
+  {
+    "depth": 24,
+    "taxonCount": 60660
+  },
+  {
+    "depth": 25,
+    "taxonCount": 195919
+  },
+  {
+    "depth": 26,
+    "taxonCount": 146873
+  },
+  {
+    "depth": 27,
+    "taxonCount": 117040
+  },
+  {
+    "depth": 28,
+    "taxonCount": 91146
+  },
+  {
+    "depth": 29,
+    "taxonCount": 61385
+  },
+  {
+    "depth": 30,
+    "taxonCount": 67474
+  },
+  {
+    "depth": 31,
+    "taxonCount": 76245
+  },
+  {
+    "depth": 32,
+    "taxonCount": 29387
+  },
+  {
+    "depth": 33,
+    "taxonCount": 15661
+  },
+  {
+    "depth": 34,
+    "taxonCount": 11653
+  },
+  {
+    "depth": 35,
+    "taxonCount": 7755
+  },
+  {
+    "depth": 36,
+    "taxonCount": 4806
+  },
+  {
+    "depth": 37,
+    "taxonCount": 288
+  },
+  {
+    "depth": 38,
+    "taxonCount": 51
+  }
+]
+//JSON_ARRAY_END
+;
+
+// Track currently active tag filters
+var activeTagFilters = {};
+
+function matchAny(data, filterParams) {
+    const regex = RegExp(filterParams.value, 'i');
+    for (var key in data) {
+        if (regex.test(data[key])) return true;
+    }
+    return false;
+}
+
+function combinedFilter(data) {
+    // Apply search filter
+    const searchValue = document.getElementById("fSearch").value;
+    const searchMatch = searchValue ? matchAny(data, { value: searchValue }) : true;
+    
+    if (!searchMatch) return false;
+    
+    // Check tag filters - different groups use AND logic
+    for (const [column, selectedTags] of Object.entries(activeTagFilters)) {
+        if (selectedTags.size === 0) continue;
+        
+        const cellValue = data[column];
+        if (cellValue === undefined || cellValue === null) return false;
+        
+        const values = Array.isArray(cellValue) ? cellValue : [cellValue];
+        
+        // Within same group, use AND logic - all selected tags must be present
+        let allTagsMatch = true;
+        for (const tag of selectedTags) {
+            if (!values.some(v => String(v) === tag)) {
+                allTagsMatch = false;
+                break;
+            }
+        }
+        
+        if (!allTagsMatch) return false;
+    }
+    return true;
+}
+
+function updateRowCount() {
+    const visibleRows = table.getData(true).length;
+    const totalRows = table.getData().length;
+    document.getElementById("rowCount").textContent = `${visibleRows} of ${totalRows} rows`;
+}
+
+const input = document.getElementById("fSearch");
+input.addEventListener("keyup", function() {
+    table.setFilter(combinedFilter);
+});
+
+function urlFormatter(cell, formatterParams, onRendered){
+    if (cell.getValue()) {
+        return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+    } else {return }
+}
+
+function htmlFormatter(cell, formatterParams, onRendered) {
+    return cell.getValue();
+}
+
+var table = new Tabulator("#example-table", {
+    height:"90vh",
+    layout:"fitColumns",
+    data: data, // Start with empty data
+    autoColumns: true,
+});
+
+function applyColumnFormatters() {
+    let columns = table.getColumnDefinitions();
+    let dataTmp = table.getData();
+    for (let i = 0; i < columns.length; i++) {
+        let columnName = columns[i].field;
+        if (columnName === "url") {
+            columns[i].formatter = urlFormatter;
+            continue;
+        }
+        let sampleVal = dataTmp.map(x => x[columnName]).find(val => val !== null && val !== undefined && val !== '');
+        if (typeof sampleVal === "string" && sampleVal.startsWith("http")) {
+            columns[i].formatter = urlFormatter;
+        }
+        if (typeof sampleVal === "string" && sampleVal.startsWith("<a href")) {
+            columns[i].formatter = htmlFormatter;
+        }
+    }
+    table.setColumns(columns);
+}
+
+function createTagFilter(column) {
+    // Remove existing filter for this column if it exists
+    const existingFilter = document.getElementById(`tag-filter-${column}`);
+    if (existingFilter) {
+        existingFilter.remove();
+        delete activeTagFilters[column];
+        table.setFilter(combinedFilter);
+        return;
+    }
+    
+    // Get all unique values in the column
+    const uniqueValues = new Set();
+    const allData = table.getData();
+    
+    allData.forEach(row => {
+        const value = row[column];
+        if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+                value.forEach(v => uniqueValues.add(String(v)));
+            } else {
+                uniqueValues.add(String(value));
+            }
+        }
+    });
+    
+    // Create filter UI
+    const filterSection = document.createElement('div');
+    filterSection.className = 'tag-filter-section';
+    filterSection.id = `tag-filter-${column}`;
+    
+    const header = document.createElement('div');
+    header.className = 'tag-filter-header';
+    header.textContent = `Filter by ${column}:`;
+    filterSection.appendChild(header);
+    
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'tag-filter-options';
+    
+    const sortedValues = Array.from(uniqueValues).sort((a, b) => a.localeCompare(b));
+    
+    sortedValues.forEach(value => {
+        const option = document.createElement('div');
+        option.className = 'tag-filter-option';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = value;
+        checkbox.id = `tag-${column}-${value.replace(/\s+/g, '-')}`;
+        checkbox.addEventListener('change', () => {
+            if (!activeTagFilters[column]) {
+                activeTagFilters[column] = new Set();
+            }
+            
+            if (checkbox.checked) {
+                activeTagFilters[column].add(value);
+            } else {
+                activeTagFilters[column].delete(value);
+                if (activeTagFilters[column].size === 0) {
+                    delete activeTagFilters[column];
+                }
+            }
+            
+            table.setFilter(combinedFilter);
+        });
+        
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        
+        const labelText = document.createElement('span');
+        labelText.textContent = value;
+        
+        const count = document.createElement('span');
+        count.className = 'tag-filter-count';
+        // Static count - doesn't update with filtering
+        count.textContent = `(${allData.filter(row => {
+            const cellValue = row[column];
+            if (cellValue === undefined || cellValue === null) return false;
+            const values = Array.isArray(cellValue) ? cellValue : [cellValue];
+            return values.some(v => String(v) === value);
+        }).length})`;
+        
+        label.appendChild(labelText);
+        label.appendChild(count);
+        option.appendChild(checkbox);
+        option.appendChild(label);
+        optionsContainer.appendChild(option);
+    });
+    
+    filterSection.appendChild(optionsContainer);
+    document.getElementById('tagFiltersContainer').appendChild(filterSection);
+    
+    // Initialize empty filter for this column
+    activeTagFilters[column] = new Set();
+}
+
+// Initialize tag filter select
+function initTagFilterSelect() {
+    const select = document.getElementById('tagFilterSelect');
+    select.innerHTML = '<option value="">Tag & Filter</option>';
+    
+    const columns = table.getColumnDefinitions();
+    columns.forEach(col => {
+        if (col.field) {
+            const option = document.createElement('option');
+            option.value = col.field;
+            option.textContent = col.field;
+            select.appendChild(option);
+        }
+    });
+    
+    select.addEventListener('change', () => {
+        if (select.value) {
+            createTagFilter(select.value);
+            select.value = ""; // Reset the select
+        }
+    });
+}
+
+// Initialize table
+table.on("tableBuilt", function() {
+    applyColumnFormatters();
+    initTagFilterSelect();
+    initialTagColumns.forEach(column => {
+        if (table.getColumn(column)) {
+            createTagFilter(column);
+        }
+    });
+});
+
+// Update row count when data changes
+table.on("dataFiltered", function(filters, rows){
+    document.getElementById("rowCount").textContent = `${rows.length} of ${table.getData().length} rows`;
+});
+
+</script>
+</body>
+</html>
