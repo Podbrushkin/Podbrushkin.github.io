@@ -73,6 +73,27 @@
   </head>
   <body>
     <div id="map" class="map"></div>
+    <details>
+        <summary>About</summary>
+        <!-- <pre></pre> -->
+        <ul>
+        <li>Taxa hierarchy is from <a href="https://www.gbif.org/">GBIF</a> - largest taxonomy database (~4.5M taxa). </li>
+        <li>En/ru labels, pictures and links to external resources are from <a href="https://www.wikidata.org/">Wikidata</a>.</li>
+        <li>Click enWiki external resource to open Wikipedia.</li>
+        <li>Click wcImages to view images of chosen taxon.</li>
+        <li>Click LifeMap url to explore more detailed close-up view of chosen taxon hierarchy!</li>
+        <li>On mouse hover, a line from parent taxon appears.</li>
+        <li>Edges are curved clockwise: imagine clock arrow moving through it, 
+            that's would be a direction of an edge.
+            E.g. edges bent like letter 'C' point from bottom to top.</li>
+        <li>Control level of visual clutter with checkboxes at topright corner.</li>
+        <li>Rely on "Scientific" labeling strategy to avoid GBIF-Wikidata mapping errors.</li>
+        <li>Missing external url? Add it to Wikidata, probably it will appear straght away.</li>
+        <li>Use Shift+Alt+Drag to rotate.</li>
+        <li>Ctrl+F5 can help in resolving performance issues.</li>
+        </ul>
+        
+    </details>
     <script src="https://cdn.jsdelivr.net/npm/proj4@2.8.0/dist/proj4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ol@v10.6.1/dist/ol.js"></script>
     <!-- This is for thumbnail url patterenn -->
@@ -1094,6 +1115,20 @@ async function fetchWikidataResources(gbifId) {
                 wd:P3151 wdt:P1630 ?formatter.
                 BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
                 BIND("iNatur" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P9157 ?id.
+                wd:P9157 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("OTT" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P9157 ?id.
+                wd:P9157 wdt:P1630 ?formatter.
+                BIND (URI(CONCAT("https://www.onezoom.org/life/@=", ?id, "?vis=polytomy")) AS ?url)
+                BIND("OneZoom" AS ?name)
               }
               UNION
               {
