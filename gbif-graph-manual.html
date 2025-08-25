@@ -1,0 +1,6625 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Vis Network | Data | Dynamic filtering</title>
+	
+
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style type="text/css">
+		
+      #mynetwork {
+        width: 100%;
+        height: 95vh;
+        border: 1px solid lightgray;
+		background-color: #242424;
+		resize: both;
+		overflow: auto;
+      }
+	  #configuration {
+		//background-color: #FFFFFF;
+		color: #242424;
+	  }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+		color: #ffffff;
+		background-color: #1e1e1e;
+      }
+      code {
+        font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+          monospace;
+      }
+	  .labels-container {
+			display: flex;
+		}
+
+		.labels-container > label {
+		  margin-right: 20px; /* Adjust spacing as needed */
+		}
+    </style>
+  </head>
+  <body>
+    <!-- <h1>Dynamic filtering</h1> -->
+    <details>
+		<summary>Details</summary>
+		<pre>MATCH path = ()-[:HAS_CHILD*]-&gt;(n)
+WHERE n.qid IN [&#39;Q46729&#39;, &#39;Q236001&#39;, &#39;Q131027&#39;, &#39;Q240433&#39;, &#39;Q541987&#39;, &#39;Q155630&#39;, &#39;Q131273&#39;, &#39;Q473809&#39;, &#39;Q134863&#39;, &#39;Q524818&#39;, &#39;Q4963539&#39;, &#39;Q864648&#39;, &#39;Q1002125&#39;, &#39;Q2104475&#39;, &#39;Q3087307&#39;, &#39;Q1349723&#39;, &#39;Q2524330&#39;, &#39;Q1319026&#39;, &#39;Q1054781&#39;, &#39;Q1055166&#39;, &#39;Q5113&#39;, &#39;Q780&#39;, &#39;Q430&#39;, &#39;Q25222&#39;, &#39;Q10856&#39;, &#39;Q223044&#39;, &#39;Q29564928&#39;, &#39;Q15879&#39;, &#39;Q17592&#39;, &#39;Q9147&#39;, &#39;Q25419&#39;, &#39;Q93315&#39;, &#39;Q160649&#39;, &#39;Q180556&#39;, &#39;Q199695&#39;, &#39;Q153875&#39;, &#39;Q150839&#39;, &#39;Q190161&#39;, &#39;Q188121&#39;, &#39;Q212032&#39;, &#39;Q53636&#39;, &#39;Q53663&#39;, &#39;Q22718&#39;, &#39;Q55372&#39;, &#39;Q26395&#39;, &#39;Q146375&#39;, &#39;Q6408&#39;, &#39;Q4758&#39;, &#39;Q72738&#39;, &#39;Q27465&#39;, &#39;Q159715&#39;, &#39;Q212798&#39;, &#39;Q207547&#39;, &#39;Q334149&#39;, &#39;Q565708&#39;, &#39;Q575927&#39;, &#39;Q773607&#39;, &#39;Q630200&#39;, &#39;Q1457418&#39;, &#39;Q669922&#39;, &#39;Q123141&#39;, &#39;Q81110&#39;, &#39;Q74363&#39;, &#39;Q128685&#39;, &#39;Q165278&#39;, &#39;Q159323&#39;, &#39;Q164327&#39;, &#39;Q26387&#39;, &#39;Q183686&#39;, &#39;Q127595&#39;, &#39;Q178202&#39;, &#39;Q2857311&#39;, &#39;Q76280&#39;, &#39;Q144534&#39;, &#39;Q188879&#39;, &#39;Q59576&#39;, &#39;Q166812&#39;, &#39;Q185215&#39;, &#39;Q35047&#39;, &#39;Q144700&#39;, &#39;Q1357&#39;, &#39;Q19125&#39;, &#39;Q10304508&#39;, &#39;Q19137&#39;, &#39;Q213383&#39;, &#39;Q19116&#39;, &#39;Q19126&#39;, &#39;Q19119&#39;, &#39;Q337509&#39;, &#39;Q11687&#39;, &#39;Q7386&#39;, &#39;Q7367&#39;, &#39;Q7391&#39;, &#39;Q28319&#39;, &#39;Q22671&#39;, &#39;Q25420&#39;, &#39;Q388162&#39;, &#39;Q546583&#39;, &#39;Q25312&#39;, &#39;Q25375&#39;, &#39;Q1725788&#39;, &#39;Q25327&#39;, &#39;Q80066&#39;, &#39;Q25407&#39;, &#39;Q47328&#39;, &#39;Q25309&#39;, &#39;Q131250&#39;, &#39;Q30034&#39;, &#39;Q6481228&#39;, &#39;Q134747&#39;, &#39;Q21445600&#39;, &#39;Q21447190&#39;, &#39;Q21447013&#39;, &#39;Q21446739&#39;, &#39;Q21446208&#39;, &#39;Q106882396&#39;, &#39;Q1055316&#39;, &#39;Q310748&#39;, &#39;Q180597&#39;, &#39;Q754755&#39;, &#39;Q865061&#39;, &#39;Q8221361&#39;, &#39;Q1204264&#39;, &#39;Q1415896&#39;, &#39;Q1093337&#39;, &#39;Q278392&#39;, &#39;Q40152&#39;, &#39;Q4867740&#39;, &#39;Q81900&#39;, &#39;Q25368&#39;, &#39;Q128257&#39;, &#39;Q184479&#39;, &#39;Q228002&#39;, &#39;Q107411&#39;, &#39;Q188906&#39;, &#39;Q245314&#39;, &#39;Q40802&#39;, &#39;Q4610&#39;, &#39;Q1038113&#39;, &#39;Q80117&#39;, &#39;Q29498&#39;, &#39;Q206338&#39;, &#39;Q182978&#39;, &#39;Q188360&#39;, &#39;Q273291&#39;, &#39;Q220457&#39;, &#39;Q7372&#39;, &#39;Q129026&#39;, &#39;Q80378&#39;, &#39;Q6495741&#39;, &#39;Q163873&#39;, &#39;Q188212&#39;, &#39;Q26337&#39;, &#39;Q208490&#39;, &#39;Q190736&#39;, &#39;Q185260&#39;, &#39;Q147256&#39;, &#39;Q28524&#39;, &#39;Q181989&#39;, &#39;Q192290&#39;, &#39;Q272388&#39;, &#39;Q26864&#39;, &#39;Q202526&#39;, &#39;Q273179&#39;, &#39;Q310432&#39;, &#39;Q522939&#39;, &#39;Q43012&#39;, &#39;Q124378&#39;, &#39;Q18952&#39;, &#39;Q30041&#39;, &#39;Q64119&#39;, &#39;Q30092&#39;, &#39;Q193006&#39;, &#39;Q839350&#39;, &#39;Q809618&#39;, &#39;Q2925555&#39;, &#39;Q140&#39;, &#39;Q19939&#39;, &#39;Q7377&#39;, &#39;Q18498&#39;, &#39;Q11788&#39;, &#39;Q787&#39;, &#39;Q2934&#39;, &#39;Q7375&#39;, &#39;Q31431&#39;, &#39;Q43365&#39;, &#39;Q14683&#39;, &#39;Q25357&#39;, &#39;Q468771&#39;, &#39;Q91703&#39;, &#39;Q730937&#39;, &#39;Q763856&#39;, &#39;Q1253087&#39;, &#39;Q134669&#39;, &#39;Q1154414&#39;, &#39;Q311109&#39;, &#39;Q17157&#39;, &#39;Q1502531&#39;, &#39;Q28425&#39;, &#39;Q34706&#39;, &#39;Q19707&#39;, &#39;Q23390&#39;, &#39;Q58697&#39;, &#39;Q32789&#39;, &#39;Q33609&#39;, &#39;Q8332&#39;, &#39;Q9482&#39;, &#39;Q34718&#39;, &#39;Q7380&#39;, &#39;Q10850&#39;, &#39;Q23907&#39;, &#39;Q11575&#39;, &#39;Q23501&#39;, &#39;Q23485&#39;, &#39;Q10998&#39;, &#39;Q23400&#39;, &#39;Q34687&#39;, &#39;Q500&#39;, &#39;Q23425&#39;, &#39;Q11577&#39;, &#39;Q17507129&#39;, &#39;Q131227&#39;, &#39;Q19740&#39;, &#39;Q174698&#39;, &#39;Q188749&#39;, &#39;Q188643&#39;, &#39;Q174726&#39;, &#39;Q227690&#39;, &#39;Q390456&#39;, &#39;Q186451&#39;, &#39;Q719725&#39;, &#39;Q82069695&#39;, &#39;Q57751738&#39;, &#39;Q202864&#39;, &#39;Q189308&#39;, &#39;Q1134583&#39;, &#39;Q193447&#39;, &#39;Q1142751&#39;, &#39;Q164778&#39;, &#39;Q209917&#39;, &#39;Q10538943&#39;, &#39;Q2706492&#39;, &#39;Q13921258&#39;, &#39;Q25577567&#39;, &#39;Q310495&#39;, &#39;Q133008&#39;, &#39;Q133017&#39;, &#39;Q226127&#39;, &#39;Q148710&#39;, &#39;Q1544166&#39;, &#39;Q30019&#39;, &#39;Q322994&#39;, &#39;Q213548&#39;, &#39;Q635586&#39;, &#39;Q466426&#39;, &#39;Q107592&#39;, &#39;Q310801&#39;, &#39;Q843136&#39;, &#39;Q594740&#39;, &#39;Q6445454&#39;, &#39;Q229814&#39;, &#39;Q1130524&#39;, &#39;Q1755354&#39;, &#39;Q6502673&#39;, &#39;Q3112410&#39;, &#39;Q21053&#39;, &#39;Q1425115&#39;, &#39;Q772012&#39;, &#39;Q611843&#39;, &#39;Q168745&#39;, &#39;Q193327&#39;, &#39;Q46360&#39;, &#39;Q142985&#39;, &#39;Q199458&#39;, &#39;Q15872&#39;, &#39;Q37686&#39;, &#39;Q4504&#39;, &#39;Q215376&#39;, &#39;Q170713&#39;, &#39;Q192056&#39;, &#39;Q48186&#39;, &#39;Q188690&#39;, &#39;Q14384&#39;, &#39;Q131484&#39;, &#39;Q131050&#39;, &#39;Q130980&#39;, &#39;Q14403&#39;, &#39;Q100196&#39;, &#39;Q15978631&#39;, &#39;Q15343&#39;, &#39;Q15083&#39;, &#39;Q159918&#39;]
+RETURN DISTINCT path
+
+$nodes = $graph.nodes | % {
+[pscustomobject]@{
+label = $_.labelRu ?? $_.scientificName
+id = $_.id
+url = $_.qid ? &quot;https://www.wikidata.org/wiki/&quot;+$_.qid : $null
+group = $_.kingdom
+}
+}</pre>
+	</details>
+	<div class="labels-container">
+    <label>
+      Filter nodes
+	  <!-- FILTER_NODES_CHECKBOXES_START -->
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="животные" checked />
+        животные
+    </label>
+</div>
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="растения" checked />
+        растения
+    </label>
+</div>
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="грибы" checked />
+        грибы
+    </label>
+</div>
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="бактерии" checked />
+        бактерии
+    </label>
+</div>
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="вирусы" checked />
+        вирусы
+    </label>
+</div>
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="хромисты" checked />
+        хромисты
+    </label>
+</div>
+<div>
+    <label>
+        <input type="checkbox" name="nodesFilter" value="простейшие" checked />
+        простейшие
+    </label>
+</div>
+	  <!-- END -->
+    </label>
+    <br />
+    <br />
+    <label>
+      Filter edges
+	  <!-- FILTER_EDGES_CHECKBOXES_START -->
+<div>
+    <label>
+        <input type="checkbox" name="edgesFilter" value="" checked />
+        
+    </label>
+</div>
+	  <!-- END -->
+    </label>
+	</div>
+    <br />
+    <div id="mynetwork"></div>
+    <div id="configuration"></div>
+	<button onclick="toggleShape()">Toggle Shape</button>
+	<button onclick="changeLabelColor()">Change Label Color</button>
+	
+    <script type="text/javascript">
+	
+	
+	
+      
+      const edgeFilters = document.getElementsByName("edgesFilter");
+      const nodeFilters = document.getElementsByName("nodesFilter");
+	  let network = null;
+
+      function startNetwork(data) {
+        const container = document.getElementById("mynetwork");
+        const options = {
+			physics:{
+				stabilization: false	// fast but shaky startup
+		   },
+		   nodes: {
+		   font: {color: 'white'},
+		   shape: 'dot',
+			scaling: {
+				min: 10,
+				max: 30,
+				label: {
+					enabled: true,
+					min: 14,
+					max: 30,
+				},
+			},
+		   },
+			edges: {
+				arrows: {
+				  to: {
+					enabled: true,
+				  }
+				},
+				arrowStrikethrough: true,
+			  },
+			configure: {
+				filter: function (option, path) {
+				  return path.indexOf('physics') !== -1;
+				},
+				container: document.getElementById('configuration'),
+			}
+		};
+        network = new vis.Network(container, data, options);
+      }
+
+      /**
+       * In this example we do not mutate nodes or edges source data.
+       */
+      const nodes = new vis.DataSet(
+	  //NODES_START
+[
+  {
+    "label": "головоногие",
+    "id": 4063294,
+    "url": "https://www.wikidata.org/wiki/Q128257",
+    "group": "животные"
+  },
+  {
+    "label": "сольпуги",
+    "id": 652297,
+    "url": "https://www.wikidata.org/wiki/Q19126",
+    "group": "животные"
+  },
+  {
+    "label": "Ixodida",
+    "id": 356358,
+    "url": "https://www.wikidata.org/wiki/Q10304508",
+    "group": "животные"
+  },
+  {
+    "label": "Лещи",
+    "id": 3079210,
+    "url": "https://www.wikidata.org/wiki/Q282584",
+    "group": "животные"
+  },
+  {
+    "label": "Nidovirales",
+    "id": 468994,
+    "url": "https://www.wikidata.org/wiki/Q963408",
+    "group": "вирусы"
+  },
+  {
+    "label": "Хондрус курчавый",
+    "id": 147461,
+    "url": "https://www.wikidata.org/wiki/Q4963539",
+    "group": "растения"
+  },
+  {
+    "label": "поясковые черви",
+    "id": 157704,
+    "url": "https://www.wikidata.org/wiki/Q839350",
+    "group": "животные"
+  },
+  {
+    "label": "Lota Oken, 1817",
+    "id": 3948592,
+    "url": "https://www.wikidata.org/wiki/Q15278263",
+    "group": "животные"
+  },
+  {
+    "label": "Нильский крокодил",
+    "id": 3781685,
+    "url": "https://www.wikidata.org/wiki/Q168745",
+    "group": "животные"
+  },
+  {
+    "label": "Trichinellida",
+    "id": 712709,
+    "url": "https://www.wikidata.org/wiki/Q61593831",
+    "group": "животные"
+  },
+  {
+    "label": "Bacillales",
+    "id": 79886,
+    "url": "https://www.wikidata.org/wiki/Q149088",
+    "group": "бактерии"
+  },
+  {
+    "label": "Мукоровые",
+    "id": 446484,
+    "url": "https://www.wikidata.org/wiki/Q141280",
+    "group": "грибы"
+  },
+  {
+    "label": "Dracunculidae",
+    "id": 2427958,
+    "url": "https://www.wikidata.org/wiki/Q2367224",
+    "group": "животные"
+  },
+  {
+    "label": "Mucoraceae",
+    "id": 446483,
+    "url": "https://www.wikidata.org/wiki/Q3268436",
+    "group": "грибы"
+  },
+  {
+    "label": "курообразные",
+    "id": 288787,
+    "url": "https://www.wikidata.org/wiki/Q21659",
+    "group": "животные"
+  },
+  {
+    "label": "дискомедузы",
+    "id": 3293227,
+    "url": "https://www.wikidata.org/wiki/Q908486",
+    "group": "животные"
+  },
+  {
+    "label": "энтеробактерии",
+    "id": 246809,
+    "url": "https://www.wikidata.org/wiki/Q380136",
+    "group": "бактерии"
+  },
+  {
+    "label": "бациллы",
+    "id": 79898,
+    "url": "https://www.wikidata.org/wiki/Q149128",
+    "group": "бактерии"
+  },
+  {
+    "label": "Enterobius vermicularis (Linnaeus, 1758)",
+    "id": 246814,
+    "url": "https://www.wikidata.org/wiki/Q1253087",
+    "group": "животные"
+  },
+  {
+    "label": "Lobosa",
+    "id": 396312,
+    "url": "https://www.wikidata.org/wiki/Q14593729",
+    "group": "простейшие"
+  },
+  {
+    "label": "Острицы",
+    "id": 246819,
+    "url": "https://www.wikidata.org/wiki/Q213912",
+    "group": "животные"
+  },
+  {
+    "label": "Фукус",
+    "id": 2976783,
+    "url": "https://www.wikidata.org/wiki/Q180597",
+    "group": "хромисты"
+  },
+  {
+    "label": "вирусы",
+    "id": 2394114,
+    "url": "https://www.wikidata.org/wiki/Q808",
+    "group": "вирусы"
+  },
+  {
+    "label": "Flasuviricetes",
+    "id": 1526847,
+    "url": "https://www.wikidata.org/wiki/Q92197029",
+    "group": "вирусы"
+  },
+  {
+    "label": "Настоящие крокодилы",
+    "id": 183342,
+    "url": "https://www.wikidata.org/wiki/Q43169",
+    "group": "животные"
+  },
+  {
+    "label": "Kitrinoviricota",
+    "id": 1526841,
+    "url": "https://www.wikidata.org/wiki/Q92194673",
+    "group": "вирусы"
+  },
+  {
+    "label": "пизонивирицеты",
+    "id": 1526823,
+    "url": "https://www.wikidata.org/wiki/Q92612037",
+    "group": "вирусы"
+  },
+  {
+    "label": "Caenorhabditis elegans (Maupas, 1899) Dougherty, 1953",
+    "id": 1670186,
+    "url": "https://www.wikidata.org/wiki/Q91703",
+    "group": "животные"
+  },
+  {
+    "label": "Pisuviricota",
+    "id": 1526819,
+    "url": "https://www.wikidata.org/wiki/Q92194811",
+    "group": "вирусы"
+  },
+  {
+    "label": "Bombyx Linnaeus, 1758",
+    "id": 3364870,
+    "url": "https://www.wikidata.org/wiki/Q1314183",
+    "group": "животные"
+  },
+  {
+    "label": "Revtraviricetes",
+    "id": 1526817,
+    "url": "https://www.wikidata.org/wiki/Q92197387",
+    "group": "вирусы"
+  },
+  {
+    "label": "Artverviricota",
+    "id": 1526816,
+    "url": "https://www.wikidata.org/wiki/Q92194888",
+    "group": "вирусы"
+  },
+  {
+    "label": "Светляки",
+    "id": 368703,
+    "url": "https://www.wikidata.org/wiki/Q25420",
+    "group": "животные"
+  },
+  {
+    "label": "Schistosomatidae",
+    "id": 3698690,
+    "url": "https://www.wikidata.org/wiki/Q2095142",
+    "group": "животные"
+  },
+  {
+    "label": "Lycopodiales",
+    "id": 3536911,
+    "url": "https://www.wikidata.org/wiki/Q2577942",
+    "group": "растения"
+  },
+  {
+    "label": "базидиомицеты",
+    "id": 85050,
+    "url": "https://www.wikidata.org/wiki/Q174698",
+    "group": "грибы"
+  },
+  {
+    "label": "Ужеобразные",
+    "id": 2553882,
+    "url": "https://www.wikidata.org/wiki/Q182751",
+    "group": "животные"
+  },
+  {
+    "label": "Cyclophyllidea",
+    "id": 193597,
+    "url": "https://www.wikidata.org/wiki/Q134393",
+    "group": "животные"
+  },
+  {
+    "label": "Крестовики",
+    "id": 3902587,
+    "url": "https://www.wikidata.org/wiki/Q1413947",
+    "group": "животные"
+  },
+  {
+    "label": "грацилария",
+    "id": 3935356,
+    "url": "https://www.wikidata.org/wiki/Q3087307",
+    "group": "растения"
+  },
+  {
+    "label": "агарикомицеты",
+    "id": 16456,
+    "url": "https://www.wikidata.org/wiki/Q27720",
+    "group": "грибы"
+  },
+  {
+    "label": "панцирные моллюски",
+    "id": 566337,
+    "url": "https://www.wikidata.org/wiki/Q188906",
+    "group": "животные"
+  },
+  {
+    "label": "сальвиниевые",
+    "id": 627779,
+    "url": "https://www.wikidata.org/wiki/Q867194",
+    "group": "растения"
+  },
+  {
+    "label": "млекопитающие",
+    "id": 410698,
+    "url": "https://www.wikidata.org/wiki/Q7377",
+    "group": "животные"
+  },
+  {
+    "label": "Ламинария",
+    "id": 2913377,
+    "url": "https://www.wikidata.org/wiki/Q310748",
+    "group": "хромисты"
+  },
+  {
+    "label": "обыкновенная игуана",
+    "id": 3258495,
+    "url": "https://www.wikidata.org/wiki/Q215376",
+    "group": "животные"
+  },
+  {
+    "label": "Resentoviricetes",
+    "id": 1526855,
+    "url": "https://www.wikidata.org/wiki/Q92611761",
+    "group": "вирусы"
+  },
+  {
+    "label": "Спорынья",
+    "id": 754779,
+    "url": "https://www.wikidata.org/wiki/Q6445454",
+    "group": "грибы"
+  },
+  {
+    "label": "Helix Linnaeus, 1758",
+    "id": 2571383,
+    "url": "https://www.wikidata.org/wiki/Q1937315",
+    "group": "животные"
+  },
+  {
+    "label": "cомовые",
+    "id": 646235,
+    "url": "https://www.wikidata.org/wiki/Q6577802",
+    "group": "животные"
+  },
+  {
+    "label": "Duplornaviricota",
+    "id": 1526851,
+    "url": "https://www.wikidata.org/wiki/Q92194594",
+    "group": "вирусы"
+  },
+  {
+    "label": "сомообразные",
+    "id": 646237,
+    "url": "https://www.wikidata.org/wiki/Q59576",
+    "group": "животные"
+  },
+  {
+    "label": "совообразные",
+    "id": 672862,
+    "url": "https://www.wikidata.org/wiki/Q25222",
+    "group": "животные"
+  },
+  {
+    "label": "Банкивская джунглевая курица",
+    "id": 288848,
+    "url": "https://www.wikidata.org/wiki/Q184774",
+    "group": "животные"
+  },
+  {
+    "label": "непарнокопытные",
+    "id": 530526,
+    "url": "https://www.wikidata.org/wiki/Q25374",
+    "group": "животные"
+  },
+  {
+    "label": "Amarillovirales",
+    "id": 1526848,
+    "url": "https://www.wikidata.org/wiki/Q92199599",
+    "group": "вирусы"
+  },
+  {
+    "label": "Clavicipitaceae",
+    "id": 155739,
+    "url": "https://www.wikidata.org/wiki/Q672560",
+    "group": "грибы"
+  },
+  {
+    "label": "вороны",
+    "id": 2691184,
+    "url": "https://www.wikidata.org/wiki/Q43365",
+    "group": "животные"
+  },
+  {
+    "label": "Magnoliopsida",
+    "id": 408668,
+    "url": "https://www.wikidata.org/wiki/Q1307404",
+    "group": "растения"
+  },
+  {
+    "label": "ворон",
+    "id": 2691189,
+    "url": "https://www.wikidata.org/wiki/Q25357",
+    "group": "животные"
+  },
+  {
+    "label": "Джунглевые куры",
+    "id": 3523688,
+    "url": "https://www.wikidata.org/wiki/Q222951",
+    "group": "животные"
+  },
+  {
+    "label": "Амбистомы",
+    "id": 30814,
+    "url": "https://www.wikidata.org/wiki/Q2513619",
+    "group": "животные"
+  },
+  {
+    "label": "Reovirales",
+    "id": 1526856,
+    "url": "https://www.wikidata.org/wiki/Q92614140",
+    "group": "вирусы"
+  },
+  {
+    "label": "кровососущие комары",
+    "id": 189538,
+    "url": "https://www.wikidata.org/wiki/Q7367",
+    "group": "животные"
+  },
+  {
+    "label": "домовый воробей",
+    "id": 3685464,
+    "url": "https://www.wikidata.org/wiki/Q14683",
+    "group": "животные"
+  },
+  {
+    "label": "Dirofilaria Railliet & Henry, 1911",
+    "id": 4073567,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "Hirudinidae",
+    "id": 4355107,
+    "url": "https://www.wikidata.org/wiki/Q5166500",
+    "group": "животные"
+  },
+  {
+    "label": "Кинетопластиды",
+    "id": 361572,
+    "url": "https://www.wikidata.org/wiki/Q131630",
+    "group": "простейшие"
+  },
+  {
+    "label": "морские черепахи",
+    "id": 141414,
+    "url": "https://www.wikidata.org/wiki/Q30143",
+    "group": "животные"
+  },
+  {
+    "label": "пауки",
+    "id": 57457,
+    "url": "https://www.wikidata.org/wiki/Q1357",
+    "group": "животные"
+  },
+  {
+    "label": "Олигохименофоры",
+    "id": 485500,
+    "url": "https://www.wikidata.org/wiki/Q3113733",
+    "group": "хромисты"
+  },
+  {
+    "label": "арбуз обыкновенный",
+    "id": 3778628,
+    "url": "https://www.wikidata.org/wiki/Q17507129",
+    "group": "растения"
+  },
+  {
+    "label": "цератопсиды",
+    "id": 132221,
+    "url": "https://www.wikidata.org/wiki/Q263925",
+    "group": "животные"
+  },
+  {
+    "label": "Ланцетовидная двуустка",
+    "id": 2302114,
+    "url": "https://www.wikidata.org/wiki/Q21053",
+    "group": "животные"
+  },
+  {
+    "label": "муравьи",
+    "id": 3793072,
+    "url": "https://www.wikidata.org/wiki/Q7386",
+    "group": "животные"
+  },
+  {
+    "label": "Реовирусы",
+    "id": 608388,
+    "url": "https://www.wikidata.org/wiki/Q910576",
+    "group": "вирусы"
+  },
+  {
+    "label": "врановые",
+    "id": 175247,
+    "url": "https://www.wikidata.org/wiki/Q25565",
+    "group": "животные"
+  },
+  {
+    "label": "белый медведь",
+    "id": 3993778,
+    "url": "https://www.wikidata.org/wiki/Q33609",
+    "group": "животные"
+  },
+  {
+    "label": "Плауновые",
+    "id": 402569,
+    "url": "https://www.wikidata.org/wiki/Q1149748",
+    "group": "растения"
+  },
+  {
+    "label": "трематоды",
+    "id": 710810,
+    "url": "https://www.wikidata.org/wiki/Q207547",
+    "group": "животные"
+  },
+  {
+    "label": "окуневые",
+    "id": 528536,
+    "url": "https://www.wikidata.org/wiki/Q746136",
+    "group": "животные"
+  },
+  {
+    "label": "Окунеобразные",
+    "id": 528538,
+    "url": "https://www.wikidata.org/wiki/Q127595",
+    "group": "животные"
+  },
+  {
+    "label": "Амбистомовые",
+    "id": 3899567,
+    "url": "https://www.wikidata.org/wiki/Q764529",
+    "group": "животные"
+  },
+  {
+    "label": "рабдитиды",
+    "id": 609439,
+    "url": "https://www.wikidata.org/wiki/Q17164",
+    "group": "животные"
+  },
+  {
+    "label": "приматы",
+    "id": 572574,
+    "url": "https://www.wikidata.org/wiki/Q7380",
+    "group": "животные"
+  },
+  {
+    "label": "Красноухая черепаха",
+    "id": 708764,
+    "url": "https://www.wikidata.org/wiki/Q142985",
+    "group": "животные"
+  },
+  {
+    "label": "Трутовик настоящий",
+    "id": 955542,
+    "url": "https://www.wikidata.org/wiki/Q229814",
+    "group": "грибы"
+  },
+  {
+    "label": "Виноградная улитка",
+    "id": 2571396,
+    "url": "https://www.wikidata.org/wiki/Q245314",
+    "group": "животные"
+  },
+  {
+    "label": "таракановые",
+    "id": 93348,
+    "url": "https://www.wikidata.org/wiki/Q25309",
+    "group": "животные"
+  },
+  {
+    "label": "настоящие саламандры",
+    "id": 4121750,
+    "url": "https://www.wikidata.org/wiki/Q319469",
+    "group": "животные"
+  },
+  {
+    "label": "карповые",
+    "id": 197801,
+    "url": "https://www.wikidata.org/wiki/Q35047",
+    "group": "животные"
+  },
+  {
+    "label": "Спаржецветные",
+    "id": 66731,
+    "url": "https://www.wikidata.org/wiki/Q26229",
+    "group": "растения"
+  },
+  {
+    "label": "стрептококки",
+    "id": 4395241,
+    "url": "https://www.wikidata.org/wiki/Q190161",
+    "group": "бактерии"
+  },
+  {
+    "label": "сосудистые растения",
+    "id": 708769,
+    "url": "https://www.wikidata.org/wiki/Q27133",
+    "group": "растения"
+  },
+  {
+    "label": "стебельчатоглазые",
+    "id": 674977,
+    "url": "https://www.wikidata.org/wiki/Q972302",
+    "group": "животные"
+  },
+  {
+    "label": "эхинококк",
+    "id": 3926160,
+    "url": "https://www.wikidata.org/wiki/Q344662",
+    "group": "животные"
+  },
+  {
+    "label": "Шампиньон двуспоровый",
+    "id": 2502795,
+    "url": "https://www.wikidata.org/wiki/Q227690",
+    "group": "грибы"
+  },
+  {
+    "label": "карпообразные",
+    "id": 197804,
+    "url": "https://www.wikidata.org/wiki/Q177879",
+    "group": "животные"
+  },
+  {
+    "label": "ресничные черви",
+    "id": 723108,
+    "url": "https://www.wikidata.org/wiki/Q212798",
+    "group": "животные"
+  },
+  {
+    "label": "Хлорелла",
+    "id": 145586,
+    "url": "https://www.wikidata.org/wiki/Q133017",
+    "group": "растения"
+  },
+  {
+    "label": "псовые",
+    "id": 2415764,
+    "url": "https://www.wikidata.org/wiki/Q25324",
+    "group": "животные"
+  },
+  {
+    "label": "Bangiaceae",
+    "id": 83123,
+    "url": "https://www.wikidata.org/wiki/Q2717889",
+    "group": "растения"
+  },
+  {
+    "label": "томат",
+    "id": 4393200,
+    "url": "https://www.wikidata.org/wiki/Q23501",
+    "group": "растения"
+  },
+  {
+    "label": "Бангиевые",
+    "id": 83125,
+    "url": "https://www.wikidata.org/wiki/Q1349723",
+    "group": "растения"
+  },
+  {
+    "label": "пауки-кругопряды",
+    "id": 57525,
+    "url": "https://www.wikidata.org/wiki/Q5883",
+    "group": "животные"
+  },
+  {
+    "label": "Bangiales",
+    "id": 83124,
+    "url": "https://www.wikidata.org/wiki/Q2715035",
+    "group": "растения"
+  },
+  {
+    "label": "ленточные черви",
+    "id": 135349,
+    "url": "https://www.wikidata.org/wiki/Q159715",
+    "group": "животные"
+  },
+  {
+    "label": "Аксолотль",
+    "id": 30904,
+    "url": "https://www.wikidata.org/wiki/Q22718",
+    "group": "животные"
+  },
+  {
+    "label": "рабдитидовые",
+    "id": 609456,
+    "url": "https://www.wikidata.org/wiki/Q2665477",
+    "group": "животные"
+  },
+  {
+    "label": "Карпозубообразные",
+    "id": 197818,
+    "url": "https://www.wikidata.org/wiki/Q143748",
+    "group": "животные"
+  },
+  {
+    "label": "щукообразные",
+    "id": 259257,
+    "url": "https://www.wikidata.org/wiki/Q379768",
+    "group": "животные"
+  },
+  {
+    "label": "щуковые",
+    "id": 259256,
+    "url": "https://www.wikidata.org/wiki/Q1987393",
+    "group": "животные"
+  },
+  {
+    "label": "беличьи",
+    "id": 4391166,
+    "url": "https://www.wikidata.org/wiki/Q9482",
+    "group": "животные"
+  },
+  {
+    "label": "Enterobacterales",
+    "id": 755915,
+    "url": null,
+    "group": "бактерии"
+  },
+  {
+    "label": "Staphylococcaceae",
+    "id": 661704,
+    "url": "https://www.wikidata.org/wiki/Q149116",
+    "group": "бактерии"
+  },
+  {
+    "label": "Crassiclitellata",
+    "id": 3099882,
+    "url": "https://www.wikidata.org/wiki/Q5154131",
+    "group": "животные"
+  },
+  {
+    "label": "морские коньки",
+    "id": 4087035,
+    "url": "https://www.wikidata.org/wiki/Q74363",
+    "group": "животные"
+  },
+  {
+    "label": "Rhincodon Smith, 1829",
+    "id": 4119803,
+    "url": "https://www.wikidata.org/wiki/Q17284129",
+    "group": "животные"
+  },
+  {
+    "label": "Хлорофициевые",
+    "id": 146629,
+    "url": "https://www.wikidata.org/wiki/Q132609",
+    "group": "растения"
+  },
+  {
+    "label": "стрекающие",
+    "id": 159944,
+    "url": "https://www.wikidata.org/wiki/Q25441",
+    "group": "животные"
+  },
+  {
+    "label": "Крестовик обыкновенный",
+    "id": 57547,
+    "url": "https://www.wikidata.org/wiki/Q337509",
+    "group": "животные"
+  },
+  {
+    "label": "парнокопытные",
+    "id": 64717,
+    "url": "https://www.wikidata.org/wiki/Q25329",
+    "group": "животные"
+  },
+  {
+    "label": "Молотоголовые акулы",
+    "id": 657626,
+    "url": "https://www.wikidata.org/wiki/Q208490",
+    "group": "животные"
+  },
+  {
+    "label": "многоножковые",
+    "id": 3971304,
+    "url": "https://www.wikidata.org/wiki/Q834805",
+    "group": "растения"
+  },
+  {
+    "label": "мухомор красный",
+    "id": 4051176,
+    "url": "https://www.wikidata.org/wiki/Q131227",
+    "group": "грибы"
+  },
+  {
+    "label": "Parameciidae",
+    "id": 3414250,
+    "url": "https://www.wikidata.org/wiki/Q7135167",
+    "group": "хромисты"
+  },
+  {
+    "label": "инфузории",
+    "id": 151779,
+    "url": "https://www.wikidata.org/wiki/Q106345",
+    "group": "хромисты"
+  },
+  {
+    "label": "ламинариевые",
+    "id": 367841,
+    "url": "https://www.wikidata.org/wiki/Q1055316",
+    "group": "хромисты"
+  },
+  {
+    "label": "многощетинковые черви",
+    "id": 3420368,
+    "url": "https://www.wikidata.org/wiki/Q18952",
+    "group": "животные"
+  },
+  {
+    "label": "ушастая аурелия",
+    "id": 4192475,
+    "url": "https://www.wikidata.org/wiki/Q26864",
+    "group": "животные"
+  },
+  {
+    "label": "ламинариевые",
+    "id": 367840,
+    "url": "https://www.wikidata.org/wiki/Q2561624",
+    "group": "хромисты"
+  },
+  {
+    "label": "Aurelia Lamarck, 1816",
+    "id": 4192474,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "осьминоги",
+    "id": 480481,
+    "url": "https://www.wikidata.org/wiki/Q40152",
+    "group": "животные"
+  },
+  {
+    "label": "Трицератопсы",
+    "id": 3301588,
+    "url": "https://www.wikidata.org/wiki/Q14384",
+    "group": "животные"
+  },
+  {
+    "label": "носороговые",
+    "id": 4254887,
+    "url": "https://www.wikidata.org/wiki/Q34718",
+    "group": "животные"
+  },
+  {
+    "label": "осьминог",
+    "id": 2589901,
+    "url": "https://www.wikidata.org/wiki/Q611843",
+    "group": "животные"
+  },
+  {
+    "label": "Дромеозавриды",
+    "id": 230633,
+    "url": "https://www.wikidata.org/wiki/Q130995",
+    "group": "животные"
+  },
+  {
+    "label": "Щитовниковые",
+    "id": 2561227,
+    "url": "https://www.wikidata.org/wiki/Q656683",
+    "group": "растения"
+  },
+  {
+    "label": "Helicobacter Goodwin et al., 1989",
+    "id": 4160722,
+    "url": "https://www.wikidata.org/wiki/Q134684",
+    "group": "бактерии"
+  },
+  {
+    "label": "богомоловые",
+    "id": 3401926,
+    "url": "https://www.wikidata.org/wiki/Q131250",
+    "group": "животные"
+  },
+  {
+    "label": "сердечные черви",
+    "id": 2306265,
+    "url": "https://www.wikidata.org/wiki/Q134669",
+    "group": "животные"
+  },
+  {
+    "label": "аскомицеты",
+    "id": 65786,
+    "url": "https://www.wikidata.org/wiki/Q174726",
+    "group": "грибы"
+  },
+  {
+    "label": "пластиножаберные",
+    "id": 240892,
+    "url": "https://www.wikidata.org/wiki/Q194257",
+    "group": "животные"
+  },
+  {
+    "label": "Galeocerdo Müller & Henle, 1837",
+    "id": 2434266,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "Хлорелловые",
+    "id": 145666,
+    "url": "https://www.wikidata.org/wiki/Q4498192",
+    "group": "растения"
+  },
+  {
+    "label": "Хлорелловые",
+    "id": 145667,
+    "url": "https://www.wikidata.org/wiki/Q1058217",
+    "group": "растения"
+  },
+  {
+    "label": "Naegleria Alexeieff, 1912",
+    "id": 2453799,
+    "url": "https://www.wikidata.org/wiki/Q2032451",
+    "group": "простейшие"
+  },
+  {
+    "label": "рукокрылые",
+    "id": 144641,
+    "url": "https://www.wikidata.org/wiki/Q28425",
+    "group": "животные"
+  },
+  {
+    "label": "попугаеобразные",
+    "id": 594186,
+    "url": "https://www.wikidata.org/wiki/Q31431",
+    "group": "животные"
+  },
+  {
+    "label": "Гелоциевые",
+    "id": 319747,
+    "url": "https://www.wikidata.org/wiki/Q134490",
+    "group": "грибы"
+  },
+  {
+    "label": "Печёночная двуустка",
+    "id": 2566443,
+    "url": "https://www.wikidata.org/wiki/Q334149",
+    "group": "животные"
+  },
+  {
+    "label": "шиповник",
+    "id": 3978544,
+    "url": "https://www.wikidata.org/wiki/Q34687",
+    "group": "растения"
+  },
+  {
+    "label": "Fasciola Linnaeus, 1758",
+    "id": 2566442,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "Coronaviridae",
+    "id": 174349,
+    "url": "https://www.wikidata.org/wiki/Q1134583",
+    "group": "вирусы"
+  },
+  {
+    "label": "Taenia Linnaeus, 1758",
+    "id": 2614568,
+    "url": "https://www.wikidata.org/wiki/Q310997",
+    "group": "животные"
+  },
+  {
+    "label": "Орляк обыкновенный",
+    "id": 4253007,
+    "url": "https://www.wikidata.org/wiki/Q213548",
+    "group": "растения"
+  },
+  {
+    "label": "Laminaria digitata (Huds.) J.V.Lamour.",
+    "id": 367893,
+    "url": "https://www.wikidata.org/wiki/Q1093337",
+    "group": "хромисты"
+  },
+  {
+    "label": "Helicobacter pylori_A",
+    "id": 4167982,
+    "url": "https://www.wikidata.org/wiki/Q180556",
+    "group": "бактерии"
+  },
+  {
+    "label": "Cyanea Péron & Lesueur, 1810",
+    "id": 191765,
+    "url": "https://www.wikidata.org/wiki/Q2706712",
+    "group": "животные"
+  },
+  {
+    "label": "прямокрылые",
+    "id": 2729264,
+    "url": "https://www.wikidata.org/wiki/Q167810",
+    "group": "животные"
+  },
+  {
+    "label": "амариллисовые",
+    "id": 4051239,
+    "url": "https://www.wikidata.org/wiki/Q155848",
+    "group": "растения"
+  },
+  {
+    "label": "перепончатокрылые",
+    "id": 341272,
+    "url": "https://www.wikidata.org/wiki/Q22651",
+    "group": "животные"
+  },
+  {
+    "label": "Aspergillaceae",
+    "id": 66847,
+    "url": "https://www.wikidata.org/wiki/Q33373960",
+    "group": "грибы"
+  },
+  {
+    "label": "хордовые",
+    "id": 147741,
+    "url": "https://www.wikidata.org/wiki/Q10915",
+    "group": "животные"
+  },
+  {
+    "label": "аспиды",
+    "id": 240924,
+    "url": "https://www.wikidata.org/wiki/Q186554",
+    "group": "животные"
+  },
+  {
+    "label": "чешуйчатые",
+    "id": 1790267,
+    "url": "https://www.wikidata.org/wiki/Q122422",
+    "group": "животные"
+  },
+  {
+    "label": "растения",
+    "id": 2391301,
+    "url": "https://www.wikidata.org/wiki/Q756",
+    "group": "растения"
+  },
+  {
+    "label": "Testudines",
+    "id": 1790266,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "розовые",
+    "id": 3696922,
+    "url": "https://www.wikidata.org/wiki/Q46299",
+    "group": "растения"
+  },
+  {
+    "label": "Crocodylia",
+    "id": 1790268,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "фазановые",
+    "id": 535840,
+    "url": "https://www.wikidata.org/wiki/Q26375",
+    "group": "животные"
+  },
+  {
+    "label": "Аскофиллум узловатый",
+    "id": 65832,
+    "url": "https://www.wikidata.org/wiki/Q1415896",
+    "group": "хромисты"
+  },
+  {
+    "label": "волки",
+    "id": 2685185,
+    "url": "https://www.wikidata.org/wiki/Q149892",
+    "group": "животные"
+  },
+  {
+    "label": "пилорылообразные",
+    "id": 757031,
+    "url": "https://www.wikidata.org/wiki/Q25366201",
+    "group": "животные"
+  },
+  {
+    "label": "налим",
+    "id": 2717959,
+    "url": "https://www.wikidata.org/wiki/Q144700",
+    "group": "животные"
+  },
+  {
+    "label": "хамелеоны",
+    "id": 138547,
+    "url": "https://www.wikidata.org/wiki/Q37686",
+    "group": "животные"
+  },
+  {
+    "label": "бактерии",
+    "id": 2389270,
+    "url": "https://www.wikidata.org/wiki/Q10876",
+    "group": "бактерии"
+  },
+  {
+    "label": "Ужи",
+    "id": 3543300,
+    "url": "https://www.wikidata.org/wiki/Q955683",
+    "group": "животные"
+  },
+  {
+    "label": "страусы",
+    "id": 3160323,
+    "url": "https://www.wikidata.org/wiki/Q2576337",
+    "group": "животные"
+  },
+  {
+    "label": "Taeniidae",
+    "id": 684350,
+    "url": "https://www.wikidata.org/wiki/Q141694",
+    "group": "животные"
+  },
+  {
+    "label": "страус",
+    "id": 3160324,
+    "url": "https://www.wikidata.org/wiki/Q17592",
+    "group": "животные"
+  },
+  {
+    "label": "тыквенные",
+    "id": 3375373,
+    "url": "https://www.wikidata.org/wiki/Q8314",
+    "group": "растения"
+  },
+  {
+    "label": "Триклады",
+    "id": 715083,
+    "url": "https://www.wikidata.org/wiki/Q534535",
+    "group": "животные"
+  },
+  {
+    "label": "Вёшенка",
+    "id": 973135,
+    "url": "https://www.wikidata.org/wiki/Q852065",
+    "group": "грибы"
+  },
+  {
+    "label": "Мечерылые",
+    "id": 742730,
+    "url": "https://www.wikidata.org/wiki/Q567749",
+    "group": "животные"
+  },
+  {
+    "label": "кошачьи",
+    "id": 2433383,
+    "url": "https://www.wikidata.org/wiki/Q25265",
+    "group": "животные"
+  },
+  {
+    "label": "Tinca Cuvier, 1816",
+    "id": 4131194,
+    "url": "https://www.wikidata.org/wiki/Q15963609",
+    "group": "животные"
+  },
+  {
+    "label": "головнёвые грибы",
+    "id": 730444,
+    "url": "https://www.wikidata.org/wiki/Q594740",
+    "group": "грибы"
+  },
+  {
+    "label": "Аллигаторовые",
+    "id": 2537838,
+    "url": "https://www.wikidata.org/wiki/Q6184764",
+    "group": "животные"
+  },
+  {
+    "label": "Разнокрылые стрекозы",
+    "id": 42317,
+    "url": "https://www.wikidata.org/wiki/Q80066",
+    "group": "животные"
+  },
+  {
+    "label": "сенокосцы",
+    "id": 490839,
+    "url": "https://www.wikidata.org/wiki/Q19116",
+    "group": "животные"
+  },
+  {
+    "label": "Нитчатка Банкрофта",
+    "id": 739675,
+    "url": "https://www.wikidata.org/wiki/Q311109",
+    "group": "животные"
+  },
+  {
+    "label": "жираф",
+    "id": 4082030,
+    "url": "https://www.wikidata.org/wiki/Q15083",
+    "group": "животные"
+  },
+  {
+    "label": "Prionace Cantor, 1849",
+    "id": 3827048,
+    "url": "https://www.wikidata.org/wiki/Q15695051",
+    "group": "животные"
+  },
+  {
+    "label": "Giraffa Brisson, 1762",
+    "id": 4082028,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "сфагновые мхи",
+    "id": 2611572,
+    "url": "https://www.wikidata.org/wiki/Q1422487",
+    "group": "растения"
+  },
+  {
+    "label": "сфагновые",
+    "id": 2611569,
+    "url": "https://www.wikidata.org/wiki/Q5878611",
+    "group": "растения"
+  },
+  {
+    "label": "медвежьи",
+    "id": 2485618,
+    "url": "https://www.wikidata.org/wiki/Q11788",
+    "group": "животные"
+  },
+  {
+    "label": "мухомор",
+    "id": 1527104,
+    "url": "https://www.wikidata.org/wiki/Q213938",
+    "group": "грибы"
+  },
+  {
+    "label": "жесткокрылые",
+    "id": 164187,
+    "url": "https://www.wikidata.org/wiki/Q22671",
+    "group": "животные"
+  },
+  {
+    "label": "Устомицеты",
+    "id": 730449,
+    "url": "https://www.wikidata.org/wiki/Q132763",
+    "group": "грибы"
+  },
+  {
+    "label": "ламнообразные",
+    "id": 367966,
+    "url": "https://www.wikidata.org/wiki/Q224470",
+    "group": "животные"
+  },
+  {
+    "label": "сельдевые акулы",
+    "id": 367961,
+    "url": "https://www.wikidata.org/wiki/Q136902",
+    "group": "животные"
+  },
+  {
+    "label": "сальмонеллы",
+    "id": 2473336,
+    "url": "https://www.wikidata.org/wiki/Q150839",
+    "group": "бактерии"
+  },
+  {
+    "label": "Красные водоросли",
+    "id": 614763,
+    "url": "https://www.wikidata.org/wiki/Q103169",
+    "group": "растения"
+  },
+  {
+    "label": "гадюковые",
+    "id": 735599,
+    "url": "https://www.wikidata.org/wiki/Q163656",
+    "group": "животные"
+  },
+  {
+    "label": "настоящие лягушки",
+    "id": 606585,
+    "url": "https://www.wikidata.org/wiki/Q6408",
+    "group": "животные"
+  },
+  {
+    "label": "Гигантские акулы",
+    "id": 3776841,
+    "url": "https://www.wikidata.org/wiki/Q2947096",
+    "group": "животные"
+  },
+  {
+    "label": "пилорылые скаты",
+    "id": 573817,
+    "url": "https://www.wikidata.org/wiki/Q190736",
+    "group": "животные"
+  },
+  {
+    "label": "Physalia Lamarck, 1801",
+    "id": 3968330,
+    "url": "https://www.wikidata.org/wiki/Q2704401",
+    "group": "животные"
+  },
+  {
+    "label": "Gigartinaceae",
+    "id": 294268,
+    "url": "https://www.wikidata.org/wiki/Q5560247",
+    "group": "растения"
+  },
+  {
+    "label": "Wuchereria Silva Araujo, 1877",
+    "id": 4445499,
+    "url": "https://www.wikidata.org/wiki/Q2616101",
+    "group": "животные"
+  },
+  {
+    "label": "белые носороги",
+    "id": 3369291,
+    "url": "https://www.wikidata.org/wiki/Q5762446",
+    "group": "животные"
+  },
+  {
+    "label": "Gigartinales",
+    "id": 294269,
+    "url": "https://www.wikidata.org/wiki/Q584651",
+    "group": "растения"
+  },
+  {
+    "label": "цианобактерии",
+    "id": 191871,
+    "url": "https://www.wikidata.org/wiki/Q93315",
+    "group": "бактерии"
+  },
+  {
+    "label": "папоротниковые",
+    "id": 566645,
+    "url": "https://www.wikidata.org/wiki/Q373615",
+    "group": "растения"
+  },
+  {
+    "label": "Обыкновенный дождевой червь",
+    "id": 2580826,
+    "url": "https://www.wikidata.org/wiki/Q30092",
+    "group": "животные"
+  },
+  {
+    "label": "Lumbricus Linnaeus, 1758",
+    "id": 2580825,
+    "url": "https://www.wikidata.org/wiki/Q135413",
+    "group": "животные"
+  },
+  {
+    "label": "речные угри",
+    "id": 4188480,
+    "url": "https://www.wikidata.org/wiki/Q9154612",
+    "group": "животные"
+  },
+  {
+    "label": "воробьинообразные",
+    "id": 522631,
+    "url": "https://www.wikidata.org/wiki/Q25341",
+    "group": "животные"
+  },
+  {
+    "label": "Carassius Jarocki, 1822",
+    "id": 2823594,
+    "url": null,
+    "group": "животные"
+  },
+  {
+    "label": "воробьиные",
+    "id": 522630,
+    "url": "https://www.wikidata.org/wiki/Q28922",
+    "group": "животные"
+  },
+  {
+    "label": "лейшмании",
+    "id": 4153788,
+    "url": "https://www.wikidata.org/wiki/Q524818",
+    "group": "простейшие"
+  },
+  {
+    "label": "пингвиновые",
+    "id": 656782,
+    "url": "https://www.wikidata.org/wiki/Q9147",
+    "group": "животные"
+  },
+  {
+    "label": "Вараны",
+    "id": 3303863,
+    "url": "https://www.wikidata.org/wiki/Q81228",
+    "group": "животные"
+  },
+  {
+    "label": "медоносные пчёлы",
+    "id": 53639,
+    "url": "https://www.wikidata.org/wiki/Q102857",
+    "group": "животные"
+  },
+  {
+    "label": "Бычий цепень",
+    "id": 3024295,
+    "url": "https://www.wikidata.org/wiki/Q773607",
+    "group": "животные"
+  },
+  {
+    "label": "ценорабдитес",
+    "id": 4060592,
+    "url": "https://www.wikidata.org/wiki/Q1904768",
+    "group": "животные"
+  },
+  {
+    "label": "Plagiorchiida",
+    "id": 552326,
+    "url": "https://www.wikidata.org/wiki/Q2760783",
+    "group": "животные"
+  },
+  {
+    "label": "Trichuridae",
+    "id": 715162,
+    "url": "https://www.wikidata.org/wiki/Q1809412",
+    "group": "животные"
+  },
+  {
+    "label": "Настоящие игуаны",
+    "id": 2441652,
+    "url": "https://www.wikidata.org/wiki/Q205531",
+    "group": "животные"
+  },
+  {
+    "label": "лук",
+    "id": 4319696,
+    "url": "https://www.wikidata.org/wiki/Q49391",
+    "group": "растения"
+  },
+  {
+    "label": "Серые акулы",
+    "id": 2823614,
+    "url": "https://www.wikidata.org/wiki/Q48191",
+    "group": "животные"
+  },
+  {
+    "label": "протеобактерии",
+    "id": 579997,
+    "url": "https://www.wikidata.org/wiki/Q130999",
+    "group": "бактерии"
+  },
+  {
+    "label": "Lactobacillales",
+    "id": 365968,
+    "url": "https://www.wikidata.org/wiki/Q868430",
+    "group": "бактерии"
+  },
+  {
+    "label": "утконосы",
+    "id": 2458034,
+    "url": "https://www.wikidata.org/wiki/Q3745848",
+    "group": "животные"
+  },
+  {
+    "label": "Хламидомонада",
+    "id": 4064678,
+    "url": "https://www.wikidata.org/wiki/Q133008",
+    "group": "растения"
+  },
+  {
+    "label": "пингвинообразные",
+    "id": 656784,
+    "url": "https://www.wikidata.org/wiki/Q12198609",
+    "group": "животные"
+  },
+  {
+    "label": "Эризифовые",
+    "id": 258456,
+    "url": "https://www.wikidata.org/wiki/Q1755354",
+    "group": "грибы"
+  },
+  {
+    "label": "настоящие дождевые черви",
+    "id": 3671459,
+    "url": "https://www.wikidata.org/wiki/Q2925555",
+    "group": "животные"
+  },
+  {
+    "label": "Flaviviridae",
+    "id": 283033,
+    "url": "https://www.wikidata.org/wiki/Q1331256",
+    "group": "вирусы"
+  },
+  {
+    "label": "Flavivirus",
+    "id": 283034,
+    "url": "https://www.wikidata.org/wiki/Q1165479",
+    "group": "вирусы"
+  },
+  {
+    "label": "грибы",
+    "id": 2390407,
+    "url": "https://www.wikidata.org/wiki/Q764",
+    "group": "грибы"
+  },
+  {
+    "label": "репчатый лук",
+    "id": 4319714,
+    "url": "https://www.wikidata.org/wiki/Q23485",
+    "group": "растения"
+  },
+  {
+    "label": "оленевые",
+    "id": 3094915,
+    "url": "https://www.wikidata.org/wiki/Q23390",
+    "group": "животные"
+  },
+  {
+    "label": "картофель",
+    "id": 3701142,
+    "url": "https://www.wikidata.org/wiki/Q10998",
+    "group": "растения"
+  },
+  {
+    "label": "кубомедузы",
+    "id": 188850,
+    "url": "https://www.wikidata.org/wiki/Q273179",
+    "group": "животные"
+  },
+  {
+    "label": "Страусовые",
+    "id": 674239,
+    "url": "https://www.wikidata.org/wiki/Q1569770",
+    "group": "животные"
+  },
+  {
+    "label": "Diplostomida",
+    "id": 222644,
+    "url": "https://www.wikidata.org/wiki/Q18693228",
+    "group": "животные"
+  },
+  {
+    "label": "кишечная палочка",
+    "id": 2431389,
+    "url": "https://www.wikidata.org/wiki/Q25419",
+    "group": "бактерии"
+  },
+  {
+    "label": "злаки",
+    "id": 3555726,
+    "url": "https://www.wikidata.org/wiki/Q43238",
+    "group": "растения"
+  },
+  {
+    "label": "злакоцветные",
+    "id": 560561,
+    "url": "https://www.wikidata.org/wiki/Q28502",
+    "group": "растения"
+  },
+  {
+    "label": "Libellulidae",
+    "id": 387519,
+    "url": "https://www.wikidata.org/wiki/Q507694",
+    "group": "животные"
+  },
+  {
+    "label": "паукообразные",
+    "id": 56762,
+    "url": "https://www.wikidata.org/wiki/Q1358",
+    "group": "животные"
+  },
+  {
+    "label": "Макроцистис",
+    "id": 405948,
+    "url": "https://www.wikidata.org/wiki/Q2304985",
+    "group": "хромисты"
+  },
+  {
+    "label": "розоцветные",
+    "id": 3153290,
+    "url": "https://www.wikidata.org/wiki/Q21895",
+    "group": "растения"
+  },
+  {
+    "label": "медоносная пчела",
+    "id": 53691,
+    "url": "https://www.wikidata.org/wiki/Q30034",
+    "group": "животные"
+  },
+  {
+    "label": "охрофитовые водоросли",
+    "id": 479675,
+    "url": "https://www.wikidata.org/wiki/Q1048772",
+    "group": "хромисты"
+  },
+  {
+    "label": "Dicrocoeliidae",
+    "id": 3515784,
+    "url": "https://www.wikidata.org/wiki/Q5021403",
+    "group": "животные"
+  },
+  {
+    "label": "Синяя акула",
+    "id": 572855,
+    "url": "https://www.wikidata.org/wiki/Q26337",
+    "group": "животные"
+  },
+  {
+    "label": "Сальвиния плавающая",
+    "id": 2473445,
+    "url": "https://www.wikidata.org/wiki/Q635586",
+    "group": "растения"
+  },
+  {
+    "label": "безногие земноводные",
+    "id": 307653,
+    "url": "https://www.wikidata.org/wiki/Q4758",
+    "group": "животные"
+  },
+  {
+    "label": "Порфира",
+    "id": 569802,
+    "url": "https://www.wikidata.org/wiki/Q2104475",
+    "group": "растения"
+  },
+  {
+    "label": "шампиньон",
+    "id": 2945514,
+    "url": "https://www.wikidata.org/wiki/Q390456",
+    "group": "грибы"
+  },
+  {
+    "label": "утконос",
+    "id": 3961339,
+    "url": "https://www.wikidata.org/wiki/Q15343",
+    "group": "животные"
+  },
+  {
+    "label": "парамеции",
+    "id": 2639330,
+    "url": "https://www.wikidata.org/wiki/Q199456",
+    "group": "хромисты"
+  },
+  {
+    "label": "Страусообразные",
+    "id": 674241,
+    "url": "https://www.wikidata.org/wiki/Q840849",
+    "group": "животные"
+  },
+  {
+    "label": "обыкновенная лисица",
+    "id": 2486760,
+    "url": "https://www.wikidata.org/wiki/Q8332",
+    "group": "животные"
+  },
+  {
+    "label": "Шистосомы",
+    "id": 3428859,
+    "url": "https://www.wikidata.org/wiki/Q1457418",
+    "group": "животные"
+  },
+  {
+    "label": "хромисты",
+    "id": 2389494,
+    "url": "https://www.wikidata.org/wiki/Q862296",
+    "group": "хромисты"
+  },
+  {
+    "label": "насекомые",
+    "id": 3258850,
+    "url": "https://www.wikidata.org/wiki/Q1390",
+    "group": "животные"
+  },
+  {
+    "label": "Вольвоксовые",
+    "id": 736735,
+    "url": "https://www.wikidata.org/wiki/Q654492",
+    "group": "растения"
+  },
+  {
+    "label": "Власоглав",
+    "id": 715231,
+    "url": "https://www.wikidata.org/wiki/Q1154414",
+    "group": "животные"
+  },
+  {
+    "label": "Fomes (Fr.) Fr., 1849",
+    "id": 752093,
+    "url": "https://www.wikidata.org/wiki/Q2524023",
+    "group": "грибы"
+  },
+  {
+    "label": "миссисипский аллигатор",
+    "id": 3081720,
+    "url": "https://www.wikidata.org/wiki/Q193327",
+    "group": "животные"
+  },
+  {
+    "label": "Ulmaridae",
+    "id": 3709410,
+    "url": "https://www.wikidata.org/wiki/Q2400989",
+    "group": "животные"
+  },
+  {
+    "label": "ячмень обыкновенный",
+    "id": 2983374,
+    "url": "https://www.wikidata.org/wiki/Q11577",
+    "group": "растения"
+  },
+  {
+    "label": "ячмень",
+    "id": 2983369,
+    "url": "https://www.wikidata.org/wiki/Q518044",
+    "group": "растения"
+  },
+  {
+    "label": "гигантские акулы",
+    "id": 135653,
+    "url": "https://www.wikidata.org/wiki/Q16542604",
+    "group": "животные"
+  },
+  {
+    "label": "Eurotiales",
+    "id": 272878,
+    "url": "https://www.wikidata.org/wiki/Q135266",
+    "group": "грибы"
+  },
+  {
+    "label": "Volvocales",
+    "id": 736737,
+    "url": "https://www.wikidata.org/wiki/Q1067225",
+    "group": "растения"
+  },
+  {
+    "label": "Огурец",
+    "id": 2556360,
+    "url": "https://www.wikidata.org/wiki/Q148758",
+    "group": "растения"
+  },
+  {
+    "label": "волк",
+    "id": 3911115,
+    "url": "https://www.wikidata.org/wiki/Q18498",
+    "group": "животные"
+  },
+  {
+    "label": "паслён",
+    "id": 3567047,
+    "url": "https://www.wikidata.org/wiki/Q146555",
+    "group": "растения"
+  },
+  {
+    "label": "Ришта",
+    "id": 229873,
+    "url": "https://www.wikidata.org/wiki/Q1502531",
+    "group": "животные"
+  },
+  {
+    "label": "Энтамёбы",
+    "id": 3108317,
+    "url": "https://www.wikidata.org/wiki/Q518891",
+    "group": "простейшие"
+  },
+  {
+    "label": "Эуроциомицеты",
+    "id": 272880,
+    "url": "https://www.wikidata.org/wiki/Q132180",
+    "group": "грибы"
+  },
+  {
+    "label": "речной угорь",
+    "id": 41462,
+    "url": "https://www.wikidata.org/wiki/Q26387",
+    "group": "животные"
+  },
+  {
+    "label": "обыкновенный уж",
+    "id": 3271114,
+    "url": "https://www.wikidata.org/wiki/Q170713",
+    "group": "животные"
+  },
+  {
+    "label": "шмели",
+    "id": 3636684,
+    "url": "https://www.wikidata.org/wiki/Q25407",
+    "group": "животные"
+  },
+  {
+    "label": "Трипаносоматиды",
+    "id": 721397,
+    "url": "https://www.wikidata.org/wiki/Q132954",
+    "group": "простейшие"
+  },
+  {
+    "label": "тигровая акула",
+    "id": 288251,
+    "url": "https://www.wikidata.org/wiki/Q188212",
+    "group": "животные"
+  },
+  {
+    "label": "Вольвокс",
+    "id": 736756,
+    "url": "https://www.wikidata.org/wiki/Q310495",
+    "group": "растения"
+  },
+  {
+    "label": "Trypanosomatida",
+    "id": 721396,
+    "url": "https://www.wikidata.org/wiki/Q19273846",
+    "group": "простейшие"
+  },
+  {
+    "label": "божьи коровки",
+    "id": 160259,
+    "url": "https://www.wikidata.org/wiki/Q25327",
+    "group": "животные"
+  },
+  {
+    "label": "сомы",
+    "id": 2747947,
+    "url": "https://www.wikidata.org/wiki/Q150645",
+    "group": "животные"
+  },
+  {
+    "label": "Угрёвые",
+    "id": 41476,
+    "url": "https://www.wikidata.org/wiki/Q212239",
+    "group": "животные"
+  },
+  {
+    "label": "угреобразные",
+    "id": 41478,
+    "url": "https://www.wikidata.org/wiki/Q128685",
+    "group": "животные"
+  },
+  {
+    "label": "Королевская кобра",
+    "id": 2728480,
+    "url": "https://www.wikidata.org/wiki/Q48186",
+    "group": "животные"
+  },
+  {
+    "label": "золотая рыбка",
+    "id": 2685474,
+    "url": "https://www.wikidata.org/wiki/Q123141",
+    "group": "животные"
+  },
+  {
+    "label": "Hirudo Linnaeus, 1758",
+    "id": 2710051,
+    "url": "https://www.wikidata.org/wiki/Q15455059",
+    "group": "животные"
+  },
+  {
+    "label": "чешуекрылые",
+    "id": 3262010,
+    "url": "https://www.wikidata.org/wiki/Q28319",
+    "group": "животные"
+  },
+  {
+    "label": "Медицинская пиявка",
+    "id": 2710052,
+    "url": "https://www.wikidata.org/wiki/Q30041",
+    "group": "животные"
+  },
+  {
+    "label": "Португальский кораблик",
+    "id": 545307,
+    "url": "https://www.wikidata.org/wiki/Q202526",
+    "group": "животные"
+  },
+  {
+    "label": "обыкновенный сом",
+    "id": 2747953,
+    "url": "https://www.wikidata.org/wiki/Q159323",
+    "group": "животные"
+  },
+  {
+    "label": "пецилии",
+    "id": 561681,
+    "url": "https://www.wikidata.org/wiki/Q310951",
+    "group": "животные"
+  },
+  {
+    "label": "паслёновые",
+    "id": 3983910,
+    "url": "https://www.wikidata.org/wiki/Q134172",
+    "group": "растения"
+  },
+  {
+    "label": "американские пресноводные черепахи",
+    "id": 244248,
+    "url": "https://www.wikidata.org/wiki/Q390835",
+    "group": "животные"
+  },
+  {
+    "label": "равноногие",
+    "id": 2575932,
+    "url": "https://www.wikidata.org/wiki/Q206338",
+    "group": "животные"
+  },
+  {
+    "label": "мукор",
+    "id": 2861623,
+    "url": "https://www.wikidata.org/wiki/Q310801",
+    "group": "грибы"
+  },
+  {
+    "label": "Gammaproteobacteria",
+    "id": 289305,
+    "url": "https://www.wikidata.org/wiki/Q134668",
+    "group": "бактерии"
+  },
+  {
+    "label": "Вёшенковые",
+    "id": 558633,
+    "url": "https://www.wikidata.org/wiki/Q7319414",
+    "group": "грибы"
+  },
+  {
+    "label": "Полипоровые",
+    "id": 566830,
+    "url": "https://www.wikidata.org/wiki/Q658831",
+    "group": "грибы"
+  },
+  {
+    "label": "земноводные",
+    "id": 33320,
+    "url": "https://www.wikidata.org/wiki/Q10908",
+    "group": "животные"
+  },
+  {
+    "label": "Sabellida",
+    "id": 625187,
+    "url": "https://www.wikidata.org/wiki/Q782159",
+    "group": "животные"
+  },
+  {
+    "label": "Streptococcaceae",
+    "id": 672288,
+    "url": "https://www.wikidata.org/wiki/Q140018",
+    "group": "бактерии"
+  },
+  {
+    "label": "Euglenozoa",
+    "id": 2701849,
+    "url": "https://www.wikidata.org/wiki/Q25834462",
+    "group": "простейшие"
+  },
+  {
+    "label": "меч-рыба",
+    "id": 2759194,
+    "url": "https://www.wikidata.org/wiki/Q164327",
+    "group": "животные"
+  },
+  {
+    "label": "Меч-рыбы",
+    "id": 2759193,
+    "url": "https://www.wikidata.org/wiki/Q14182864",
+    "group": "животные"
+  },
+  {
+    "label": "ротавирус",
+    "id": 623167,
+    "url": "https://www.wikidata.org/wiki/Q164778",
+    "group": "вирусы"
+  },
+  {
+    "label": "Королевские кобры",
+    "id": 2728479,
+    "url": "https://www.wikidata.org/wiki/Q14564444",
+    "group": "животные"
+  },
+  {
+    "label": "Сальвиниевые",
+    "id": 3154439,
+    "url": "https://www.wikidata.org/wiki/Q7175204",
+    "group": "растения"
+  },
+  {
+    "label": "Эвглена зелёная",
+    "id": 954934,
+    "url": "https://www.wikidata.org/wiki/Q13921258",
+    "group": "простейшие"
+  },
+  {
+    "label": "настоящие воробьи",
+    "id": 3004948,
+    "url": "https://www.wikidata.org/wiki/Q28753",
+    "group": "животные"
+  },
+  {
+    "label": "Physaliidae",
+    "id": 545330,
+    "url": "https://www.wikidata.org/wiki/Q10349281",
+    "group": "животные"
+  },
+  {
+    "label": "полипоровые",
+    "id": 566834,
+    "url": "https://www.wikidata.org/wiki/Q1343309",
+    "group": "грибы"
+  },
+  {
+    "label": "плаун булавовидный",
+    "id": 3949063,
+    "url": "https://www.wikidata.org/wiki/Q466426",
+    "group": "растения"
+  },
+  {
+    "label": "лилиопсиды",
+    "id": 388664,
+    "url": "https://www.wikidata.org/wiki/Q1147601",
+    "group": "растения"
+  },
+  {
+    "label": "плауновые",
+    "id": 2581018,
+    "url": "https://www.wikidata.org/wiki/Q739565",
+    "group": "растения"
+  },
+  {
+    "label": "гипокрейные",
+    "id": 343610,
+    "url": "https://www.wikidata.org/wiki/Q132255",
+    "group": "грибы"
+  },
+  {
+    "label": "Macrocystis pyrifera (L.) C.Agardh",
+    "id": 1017392,
+    "url": "https://www.wikidata.org/wiki/Q278392",
+    "group": "хромисты"
+  },
+  {
+    "label": "ежовиковые",
+    "id": 336442,
+    "url": "https://www.wikidata.org/wiki/Q2466809",
+    "group": "грибы"
+  },
+  {
+    "label": "Челюстные пиявки",
+    "id": 62019,
+    "url": "https://www.wikidata.org/wiki/Q1393249",
+    "group": "животные"
+  },
+  {
+    "label": "птицы",
+    "id": 78407,
+    "url": "https://www.wikidata.org/wiki/Q5113",
+    "group": "животные"
+  },
+  {
+    "label": "иглообразные",
+    "id": 680524,
+    "url": "https://www.wikidata.org/wiki/Q650692",
+    "group": "животные"
+  },
+  {
+    "label": "Escherichia Castellani & Chalmers, 1919",
+    "id": 4214282,
+    "url": "https://www.wikidata.org/wiki/Q311055",
+    "group": "бактерии"
+  },
+  {
+    "label": "Игловые",
+    "id": 680512,
+    "url": "https://www.wikidata.org/wiki/Q213534",
+    "group": "животные"
+  },
+  {
+    "label": "Mucoromycota",
+    "id": 755264,
+    "url": null,
+    "group": "грибы"
+  },
+  {
+    "label": "пантеры",
+    "id": 3413631,
+    "url": "https://www.wikidata.org/wiki/Q127960",
+    "group": "животные"
+  },
+  {
+    "label": "Euglena Ehrenberg, 1830",
+    "id": 3521124,
+    "url": null,
+    "group": "простейшие"
+  },
+  {
+    "label": "брюхоногие",
+    "id": 4081259,
+    "url": "https://www.wikidata.org/wiki/Q4867740",
+    "group": "животные"
+  },
+  {
+    "label": "плаун",
+    "id": 3671661,
+    "url": "https://www.wikidata.org/wiki/Q624488",
+    "group": "растения"
+  },
+  {
+    "label": "Euglenaceae",
+    "id": 264787,
+    "url": "https://www.wikidata.org/wiki/Q2132226",
+    "group": "простейшие"
+  },
+  {
+    "label": "Fasciolidae",
+    "id": 3931746,
+    "url": "https://www.wikidata.org/wiki/Q141809",
+    "group": "животные"
+  },
+  {
+    "label": "Леоциомицеты",
+    "id": 377432,
+    "url": "https://www.wikidata.org/wiki/Q133551",
+    "group": "грибы"
+  },
+  {
+    "label": "Iguanodontidae",
+    "id": 348760,
+    "url": "https://www.wikidata.org/wiki/Q2569164",
+    "group": "животные"
+  },
+  {
+    "label": "лососёвые",
+    "id": 627305,
+    "url": "https://www.wikidata.org/wiki/Q184238",
+    "group": "животные"
+  },
+  {
+    "label": "сухопутные черепахи",
+    "id": 692840,
+    "url": "https://www.wikidata.org/wiki/Q46360",
+    "group": "животные"
+  },
+  {
+    "label": "Обыкновенная жаба",
+    "id": 2683466,
+    "url": "https://www.wikidata.org/wiki/Q146375",
+    "group": "животные"
+  },
+  {
+    "label": "Зигнемовые",
+    "id": 751215,
+    "url": "https://www.wikidata.org/wiki/Q497866",
+    "group": "растения"
+  },
+  {
+    "label": "лососеобразные",
+    "id": 627308,
+    "url": "https://www.wikidata.org/wiki/Q9394365",
+    "group": "животные"
+  },
+  {
+    "label": "кумжа",
+    "id": 2744908,
+    "url": "https://www.wikidata.org/wiki/Q2857311",
+    "group": "животные"
+  },
+  {
+    "label": "игуановые",
+    "id": 348771,
+    "url": "https://www.wikidata.org/wiki/Q235589",
+    "group": "животные"
+  },
+  {
+    "label": "Зелёная черепаха",
+    "id": 3234390,
+    "url": "https://www.wikidata.org/wiki/Q199458",
+    "group": "животные"
+  },
+  {
+    "label": "Euglenida",
+    "id": 264814,
+    "url": null,
+    "group": "простейшие"
+  },
+  {
+    "label": "Пецилиевые",
+    "id": 561763,
+    "url": "https://www.wikidata.org/wiki/Q463057",
+    "group": "животные"
+  },
+  {
+    "label": "гепард",
+    "id": 4317738,
+    "url": "https://www.wikidata.org/wiki/Q23907",
+    "group": "животные"
+  },
+  {
+    "label": "сёмга",
+    "id": 2744903,
+    "url": "https://www.wikidata.org/wiki/Q188879",
+    "group": "животные"
+  },
+  {
+    "label": "Лососи",
+    "id": 2744902,
+    "url": "https://www.wikidata.org/wiki/Q310436",
+    "group": "животные"
+  },
+  {
+    "label": "эвгленовые",
+    "id": 264820,
+    "url": "https://www.wikidata.org/wiki/Q134863",
+    "group": "простейшие"
+  },
+  {
+    "label": "Конъюгаты",
+    "id": 751217,
+    "url": "https://www.wikidata.org/wiki/Q1151744",
+    "group": "растения"
+  },
+  {
+    "label": "Зигнемовые",
+    "id": 751216,
+    "url": "https://www.wikidata.org/wiki/Q497859",
+    "group": "растения"
+  },
+  {
+    "label": "Staphylococcales",
+    "id": 1543787,
+    "url": null,
+    "group": "бактерии"
+  },
+  {
+    "label": "Свиной цепень",
+    "id": 3988034,
+    "url": "https://www.wikidata.org/wiki/Q565708",
+    "group": "животные"
+  },
+  {
+    "label": "Болетовые",
+    "id": 94850,
+    "url": "https://www.wikidata.org/wiki/Q899266",
+    "group": "грибы"
+  },
+  {
+    "label": "Echinococcus multilocularis (Leuckart, 1863)",
+    "id": 3483314,
+    "url": "https://www.wikidata.org/wiki/Q669922",
+    "group": "животные"
+  },
+  {
+    "label": "Trichuris Roederer, 1761",
+    "id": 2483887,
+    "url": "https://www.wikidata.org/wiki/Q738375",
+    "group": "животные"
+  },
+  {
+    "label": "фирмикуты",
+    "id": 282248,
+    "url": "https://www.wikidata.org/wiki/Q149075",
+    "group": "бактерии"
+  },
+  {
+    "label": "волосистая цианея",
+    "id": 4206285,
+    "url": "https://www.wikidata.org/wiki/Q522939",
+    "group": "животные"
+  },
+  {
+    "label": "Болетовые",
+    "id": 94870,
+    "url": "https://www.wikidata.org/wiki/Q659629",
+    "group": "грибы"
+  },
+  {
+    "label": "высшие раки",
+    "id": 409247,
+    "url": "https://www.wikidata.org/wiki/Q182978",
+    "group": "животные"
+  },
+  {
+    "label": "Vulpes Frisch, 1775",
+    "id": 3995302,
+    "url": "https://www.wikidata.org/wiki/Q122828538",
+    "group": "животные"
+  },
+  {
+    "label": "Аманитовые",
+    "id": 28318,
+    "url": "https://www.wikidata.org/wiki/Q734651",
+    "group": "грибы"
+  },
+  {
+    "label": "Гекконы",
+    "id": 291492,
+    "url": "https://www.wikidata.org/wiki/Q15872",
+    "group": "животные"
+  },
+  {
+    "label": "Карпы",
+    "id": 2693769,
+    "url": "https://www.wikidata.org/wiki/Q134653",
+    "group": "животные"
+  },
+  {
+    "label": "пикорнавирусы",
+    "id": 547497,
+    "url": "https://www.wikidata.org/wiki/Q6553",
+    "group": "вирусы"
+  },
+  {
+    "label": "сазан",
+    "id": 2693770,
+    "url": "https://www.wikidata.org/wiki/Q81110",
+    "group": "животные"
+  },
+  {
+    "label": "Белые акулы",
+    "id": 119461,
+    "url": "https://www.wikidata.org/wiki/Q2938003",
+    "group": "животные"
+  },
+  {
+    "label": "Прудовики",
+    "id": 2448013,
+    "url": "https://www.wikidata.org/wiki/Q1425115",
+    "group": "животные"
+  },
+  {
+    "label": "Compsopogonophyceae",
+    "id": 167598,
+    "url": "https://www.wikidata.org/wiki/Q1054781",
+    "group": "растения"
+  },
+  {
+    "label": "Блохи",
+    "id": 648869,
+    "url": "https://www.wikidata.org/wiki/Q388162",
+    "group": "животные"
+  },
+  {
+    "label": "Гигантская акула",
+    "id": 3640986,
+    "url": "https://www.wikidata.org/wiki/Q185260",
+    "group": "животные"
+  },
+  {
+    "label": "Щитовник мужской",
+    "id": 3925653,
+    "url": "https://www.wikidata.org/wiki/Q322994",
+    "group": "растения"
+  },
+  {
+    "label": "гоминиды",
+    "id": 3529370,
+    "url": "https://www.wikidata.org/wiki/Q635162",
+    "group": "животные"
+  },
+  {
+    "label": "Стрекозы",
+    "id": 480950,
+    "url": "https://www.wikidata.org/wiki/Q25375",
+    "group": "животные"
+  },
+  {
+    "label": "Белая акула",
+    "id": 119474,
+    "url": "https://www.wikidata.org/wiki/Q129026",
+    "group": "животные"
+  },
+  {
+    "label": "флоридеевые водоросли",
+    "id": 283313,
+    "url": "https://www.wikidata.org/wiki/Q1002125",
+    "group": "растения"
+  },
+  {
+    "label": "Polytrichopsida",
+    "id": 3420813,
+    "url": null,
+    "group": "растения"
+  },
+  {
+    "label": "аденовирусы",
+    "id": 11963,
+    "url": "https://www.wikidata.org/wiki/Q193447",
+    "group": "вирусы"
+  },
+  {
+    "label": "Citrullus Schrad. ex Eckl. & Zeyh.",
+    "id": 3508878,
+    "url": null,
+    "group": "растения"
+  },
+  {
+    "label": "жирафовые",
+    "id": 3251852,
+    "url": "https://www.wikidata.org/wiki/Q186154",
+    "group": "животные"
+  },
+  {
+    "label": "членистоногие",
+    "id": 4190975,
+    "url": "https://www.wikidata.org/wiki/Q1360",
+    "group": "животные"
+  },
+  {
+    "label": "Salamandra Garsault, 1764",
+    "id": 626380,
+    "url": "https://www.wikidata.org/wiki/Q62181",
+    "group": "животные"
+  },
+  {
+    "label": "бациллы",
+    "id": 2680559,
+    "url": "https://www.wikidata.org/wiki/Q212032",
+    "group": "бактерии"
+  },
+  {
+    "label": "курица",
+    "id": 845508,
+    "url": "https://www.wikidata.org/wiki/Q780",
+    "group": "животные"
+  },
+  {
+    "label": "Моногенеи",
+    "id": 443087,
+    "url": "https://www.wikidata.org/wiki/Q575927",
+    "group": "животные"
+  },
+  {
+    "label": "боровик",
+    "id": 94920,
+    "url": "https://www.wikidata.org/wiki/Q19744",
+    "group": "грибы"
+  },
+  {
+    "label": "двукрылые",
+    "id": 222927,
+    "url": "https://www.wikidata.org/wiki/Q25312",
+    "group": "животные"
+  },
+  {
+    "label": "сфагновые",
+    "id": 2749157,
+    "url": "https://www.wikidata.org/wiki/Q1138673",
+    "group": "растения"
+  },
+  {
+    "label": "тыквоцветные",
+    "id": 2831078,
+    "url": "https://www.wikidata.org/wiki/Q21875",
+    "group": "растения"
+  },
+  {
+    "label": "однопроходные",
+    "id": 444107,
+    "url": "https://www.wikidata.org/wiki/Q21790",
+    "group": "животные"
+  },
+  {
+    "label": "Fucales",
+    "id": 286421,
+    "url": "https://www.wikidata.org/wiki/Q8221361",
+    "group": "хромисты"
+  },
+  {
+    "label": "омары",
+    "id": 2455287,
+    "url": "https://www.wikidata.org/wiki/Q1038113",
+    "group": "животные"
+  },
+  {
+    "label": "огненная саламандра",
+    "id": 626394,
+    "url": "https://www.wikidata.org/wiki/Q26395",
+    "group": "животные"
+  },
+  {
+    "label": "голубеобразные",
+    "id": 166614,
+    "url": "https://www.wikidata.org/wiki/Q28078",
+    "group": "животные"
+  },
+  {
+    "label": "Огурец обыкновенный",
+    "id": 4338327,
+    "url": "https://www.wikidata.org/wiki/Q23425",
+    "group": "растения"
+  },
+  {
+    "label": "Cyanidiophyceae",
+    "id": 2556657,
+    "url": "https://www.wikidata.org/wiki/Q1319026",
+    "group": "растения"
+  },
+  {
+    "label": "Fucaceae",
+    "id": 286419,
+    "url": "https://www.wikidata.org/wiki/Q2537809",
+    "group": "хромисты"
+  },
+  {
+    "label": "голубиные",
+    "id": 166613,
+    "url": "https://www.wikidata.org/wiki/Q10856",
+    "group": "животные"
+  },
+  {
+    "label": "Серые жабы",
+    "id": 104150,
+    "url": "https://www.wikidata.org/wiki/Q639022",
+    "group": "животные"
+  },
+  {
+    "label": "жаброногие",
+    "id": 101081,
+    "url": "https://www.wikidata.org/wiki/Q188360",
+    "group": "животные"
+  },
+  {
+    "label": "пеницилл",
+    "id": 527061,
+    "url": "https://www.wikidata.org/wiki/Q843136",
+    "group": "грибы"
+  },
+  {
+    "label": "белый гриб",
+    "id": 3772121,
+    "url": "https://www.wikidata.org/wiki/Q19740",
+    "group": "грибы"
+  },
+  {
+    "label": "Palmaria Stackhouse, 1802",
+    "id": 3003081,
+    "url": null,
+    "group": "растения"
+  },
+  {
+    "label": "эвфаузиевые",
+    "id": 269036,
+    "url": "https://www.wikidata.org/wiki/Q29498",
+    "group": "животные"
+  },
+  {
+    "label": "Dicrocoelium Dujardin, 1845",
+    "id": 2834114,
+    "url": "https://www.wikidata.org/wiki/Q3026681",
+    "group": "животные"
+  },
+  {
+    "label": "Salvinia Ség.",
+    "id": 2745026,
+    "url": null,
+    "group": "растения"
+  },
+  {
+    "label": "Настоящие гадюки",
+    "id": 3576536,
+    "url": "https://www.wikidata.org/wiki/Q662672",
+    "group": "животные"
+  },
+  {
+    "label": "пауки-скакуны",
+    "id": 627448,
+    "url": "https://www.wikidata.org/wiki/Q11687",
+    "group": "животные"
+  },
+  {
+    "label": "настоящие шелкопряды",
+    "id": 4328119,
+    "url": "https://www.wikidata.org/wiki/Q30576",
+    "group": "животные"
+  },
+  {
+    "label": "норовирусы",
+    "id": 472816,
+    "url": "https://www.wikidata.org/wiki/Q1142751",
+    "group": "вирусы"
+  },
+  {
+    "label": "Пауки-птицееды",
+    "id": 699120,
+    "url": "https://www.wikidata.org/wiki/Q213383",
+    "group": "животные"
+  },
+  {
+    "label": "комодский варан",
+    "id": 2485982,
+    "url": "https://www.wikidata.org/wiki/Q4504",
+    "group": "животные"
+  },
+  {
+    "label": "Fucus vesiculosus L.",
+    "id": 286456,
+    "url": "https://www.wikidata.org/wiki/Q754755",
+    "group": "хромисты"
+  },
+  {
+    "label": "Polytrichaceae",
+    "id": 2600667,
+    "url": "https://www.wikidata.org/wiki/Q133627",
+    "group": "растения"
+  },
+  {
+    "label": "Саргассовые водоросли",
+    "id": 629516,
+    "url": "https://www.wikidata.org/wiki/Q3023946",
+    "group": "хромисты"
+  },
+  {
+    "label": "Жабы",
+    "id": 104199,
+    "url": "https://www.wikidata.org/wiki/Q55372",
+    "group": "животные"
+  },
+  {
+    "label": "кольчатые черви",
+    "id": 42758,
+    "url": "https://www.wikidata.org/wiki/Q25522",
+    "group": "животные"
+  },
+  {
+    "label": "настоящие сверчки",
+    "id": 4219720,
+    "url": "https://www.wikidata.org/wiki/Q47328",
+    "group": "животные"
+  },
+  {
+    "label": "Palmariales",
+    "id": 506637,
+    "url": "https://www.wikidata.org/wiki/Q3361562",
+    "group": "растения"
+  },
+  {
+    "label": "Palmariaceae",
+    "id": 506636,
+    "url": "https://www.wikidata.org/wiki/Q16034784",
+    "group": "растения"
+  },
+  {
+    "label": "Чумная палочка",
+    "id": 2759457,
+    "url": "https://www.wikidata.org/wiki/Q153875",
+    "group": "бактерии"
+  },
+  {
+    "label": "Иерсинии",
+    "id": 2759462,
+    "url": "https://www.wikidata.org/wiki/Q132231",
+    "group": "бактерии"
+  },
+  {
+    "label": "Peniculida",
+    "id": 527108,
+    "url": "https://www.wikidata.org/wiki/Q7162878",
+    "group": "хромисты"
+  },
+  {
+    "label": "Palmaria palmata (L.) F.Weber & D.Mohr",
+    "id": 506634,
+    "url": "https://www.wikidata.org/wiki/Q864648",
+    "group": "растения"
+  },
+  {
+    "label": "Geoplanidae",
+    "id": 292629,
+    "url": "https://www.wikidata.org/wiki/Q3112410",
+    "group": "животные"
+  },
+  {
+    "label": "Pucciniomycetes",
+    "id": 599835,
+    "url": "https://www.wikidata.org/wiki/Q132006",
+    "group": "грибы"
+  },
+  {
+    "label": "Hydridae",
+    "id": 2983737,
+    "url": "https://www.wikidata.org/wiki/Q1168821",
+    "group": "животные"
+  },
+  {
+    "label": "хищные",
+    "id": 121620,
+    "url": "https://www.wikidata.org/wiki/Q25306",
+    "group": "животные"
+  },
+  {
+    "label": "белый носорог",
+    "id": 3233577,
+    "url": "https://www.wikidata.org/wiki/Q159918",
+    "group": "животные"
+  },
+  {
+    "label": "Oxyuridae",
+    "id": 501532,
+    "url": "https://www.wikidata.org/wiki/Q2628603",
+    "group": "животные"
+  },
+  {
+    "label": "Саргассум",
+    "id": 629524,
+    "url": "https://www.wikidata.org/wiki/Q865061",
+    "group": "хромисты"
+  },
+  {
+    "label": "коралловые полипы",
+    "id": 47903,
+    "url": "https://www.wikidata.org/wiki/Q28524",
+    "group": "животные"
+  },
+  {
+    "label": "кабаны",
+    "id": 2751241,
+    "url": "https://www.wikidata.org/wiki/Q10798",
+    "group": "животные"
+  },
+  {
+    "label": "плоские черви",
+    "id": 554793,
+    "url": "https://www.wikidata.org/wiki/Q124900",
+    "group": "животные"
+  },
+  {
+    "label": "Anthoathecata",
+    "id": 2948877,
+    "url": "https://www.wikidata.org/wiki/Q14556976",
+    "group": "животные"
+  },
+  {
+    "label": "пчёлы настоящие",
+    "id": 3085066,
+    "url": "https://www.wikidata.org/wiki/Q756082",
+    "group": "животные"
+  },
+  {
+    "label": "Гуппи",
+    "id": 4114203,
+    "url": "https://www.wikidata.org/wiki/Q178202",
+    "group": "животные"
+  },
+  {
+    "label": "Орляк",
+    "id": 3829535,
+    "url": "https://www.wikidata.org/wiki/Q258034",
+    "group": "растения"
+  },
+  {
+    "label": "Требуксиофициевые",
+    "id": 710444,
+    "url": "https://www.wikidata.org/wiki/Q144474",
+    "group": "растения"
+  },
+  {
+    "label": "медведи",
+    "id": 2757388,
+    "url": "https://www.wikidata.org/wiki/Q243359",
+    "group": "животные"
+  },
+  {
+    "label": "кабан",
+    "id": 2751246,
+    "url": "https://www.wikidata.org/wiki/Q58697",
+    "group": "животные"
+  },
+  {
+    "label": "варановые",
+    "id": 731937,
+    "url": "https://www.wikidata.org/wiki/Q3082684",
+    "group": "животные"
+  },
+  {
+    "label": "человеческая аскарида",
+    "id": 2542348,
+    "url": "https://www.wikidata.org/wiki/Q468771",
+    "group": "животные"
+  },
+  {
+    "label": "Ascaris Linnaeus, 1758",
+    "id": 2542347,
+    "url": "https://www.wikidata.org/wiki/Q310838",
+    "group": "животные"
+  },
+  {
+    "label": "Sargassum fusiforme (Harvey) Setchell, 1931",
+    "id": 629543,
+    "url": "https://www.wikidata.org/wiki/Q1204264",
+    "group": "хромисты"
+  },
+  {
+    "label": "верблюды",
+    "id": 2415380,
+    "url": "https://www.wikidata.org/wiki/Q7375",
+    "group": "животные"
+  },
+  {
+    "label": "Caliciviridae",
+    "id": 109363,
+    "url": "https://www.wikidata.org/wiki/Q1026758",
+    "group": "вирусы"
+  },
+  {
+    "label": "кархаринообразные",
+    "id": 119602,
+    "url": "https://www.wikidata.org/wiki/Q48178",
+    "group": "животные"
+  },
+  {
+    "label": "гидра",
+    "id": 2574111,
+    "url": "https://www.wikidata.org/wiki/Q192290",
+    "group": "животные"
+  },
+  {
+    "label": "хвостатые земноводные",
+    "id": 125752,
+    "url": "https://www.wikidata.org/wiki/Q53663",
+    "group": "животные"
+  },
+  {
+    "label": "Хондрус",
+    "id": 3642229,
+    "url": "https://www.wikidata.org/wiki/Q14759694",
+    "group": "растения"
+  },
+  {
+    "label": "Гелициды",
+    "id": 317249,
+    "url": "https://www.wikidata.org/wiki/Q1418257",
+    "group": "животные"
+  },
+  {
+    "label": "Окуни",
+    "id": 2732911,
+    "url": "https://www.wikidata.org/wiki/Q600262",
+    "group": "животные"
+  },
+  {
+    "label": "лев",
+    "id": 4243206,
+    "url": "https://www.wikidata.org/wiki/Q140",
+    "group": "животные"
+  },
+  {
+    "label": "амёба",
+    "id": 32584,
+    "url": "https://www.wikidata.org/wiki/Q46729",
+    "group": "животные"
+  },
+  {
+    "label": "Cyaneidae",
+    "id": 3239801,
+    "url": "https://www.wikidata.org/wiki/Q2743664",
+    "group": "животные"
+  },
+  {
+    "label": "леопард",
+    "id": 4243209,
+    "url": "https://www.wikidata.org/wiki/Q34706",
+    "group": "животные"
+  },
+  {
+    "label": "скорпионы",
+    "id": 637763,
+    "url": "https://www.wikidata.org/wiki/Q19125",
+    "group": "животные"
+  },
+  {
+    "label": "Campylobacterales",
+    "id": 116555,
+    "url": "https://www.wikidata.org/wiki/Q138238",
+    "group": "бактерии"
+  },
+  {
+    "label": "тигр",
+    "id": 4243210,
+    "url": "https://www.wikidata.org/wiki/Q19939",
+    "group": "животные"
+  },
+  {
+    "label": "Аскариды",
+    "id": 65358,
+    "url": "https://www.wikidata.org/wiki/Q763856",
+    "group": "животные"
+  },
+  {
+    "label": "аллигаторы",
+    "id": 24398,
+    "url": "https://www.wikidata.org/wiki/Q530397",
+    "group": "животные"
+  },
+  {
+    "label": "Helicobacteraceae",
+    "id": 317259,
+    "url": "https://www.wikidata.org/wiki/Q1602475",
+    "group": "бактерии"
+  },
+  {
+    "label": "трескообразные",
+    "id": 287572,
+    "url": "https://www.wikidata.org/wiki/Q216241",
+    "group": "животные"
+  },
+  {
+    "label": "люди",
+    "id": 2710396,
+    "url": "https://www.wikidata.org/wiki/Q171283",
+    "group": "животные"
+  },
+  {
+    "label": "человек разумный",
+    "id": 2710398,
+    "url": "https://www.wikidata.org/wiki/Q15978631",
+    "group": "животные"
+  },
+  {
+    "label": "Mucoromycetes",
+    "id": 962393,
+    "url": "https://www.wikidata.org/wiki/Q28805588",
+    "group": "грибы"
+  },
+  {
+    "label": "Saccharomyces Meyen ex E.C.Hansen, 1838",
+    "id": 961366,
+    "url": "https://www.wikidata.org/wiki/Q1146293",
+    "group": "грибы"
+  },
+  {
+    "label": "речной окунь",
+    "id": 2732913,
+    "url": "https://www.wikidata.org/wiki/Q166812",
+    "group": "животные"
+  },
+  {
+    "label": "Пукциниевые",
+    "id": 599888,
+    "url": "https://www.wikidata.org/wiki/Q1130524",
+    "group": "грибы"
+  },
+  {
+    "label": "Saccharomyces cerevisiae Meyen ex E.C.Hansen, 1883",
+    "id": 961367,
+    "url": "https://www.wikidata.org/wiki/Q719725",
+    "group": "грибы"
+  },
+  {
+    "label": "инфузория-туфелька",
+    "id": 4108135,
+    "url": "https://www.wikidata.org/wiki/Q2706492",
+    "group": "хромисты"
+  },
+  {
+    "label": "Dracunculus Reichard, 1759",
+    "id": 3517294,
+    "url": "https://www.wikidata.org/wiki/Q2341780",
+    "group": "животные"
+  },
+  {
+    "label": "дизентерийная амёба",
+    "id": 246622,
+    "url": "https://www.wikidata.org/wiki/Q131027",
+    "group": "простейшие"
+  },
+  {
+    "label": "грызуны",
+    "id": 621396,
+    "url": "https://www.wikidata.org/wiki/Q10850",
+    "group": "животные"
+  },
+  {
+    "label": "лещ",
+    "id": 2671479,
+    "url": "https://www.wikidata.org/wiki/Q144534",
+    "group": "животные"
+  },
+  {
+    "label": "Chlamydomonadaceae",
+    "id": 145248,
+    "url": "https://www.wikidata.org/wiki/Q860868",
+    "group": "растения"
+  },
+  {
+    "label": "бурые водоросли",
+    "id": 534380,
+    "url": "https://www.wikidata.org/wiki/Q184573",
+    "group": "хромисты"
+  },
+  {
+    "label": "Entamoebidae",
+    "id": 246631,
+    "url": "https://www.wikidata.org/wiki/Q113942",
+    "group": "простейшие"
+  },
+  {
+    "label": "кукуруза",
+    "id": 4404006,
+    "url": "https://www.wikidata.org/wiki/Q542456",
+    "group": "растения"
+  },
+  {
+    "label": "чеснок",
+    "id": 3764048,
+    "url": "https://www.wikidata.org/wiki/Q23400",
+    "group": "растения"
+  },
+  {
+    "label": "кукуруза сахарная",
+    "id": 4404010,
+    "url": "https://www.wikidata.org/wiki/Q11575",
+    "group": "растения"
+  },
+  {
+    "label": "вирус Зика",
+    "id": 749415,
+    "url": "https://www.wikidata.org/wiki/Q202864",
+    "group": "вирусы"
+  },
+  {
+    "label": "Летучие рыбы",
+    "id": 278378,
+    "url": "https://www.wikidata.org/wiki/Q183686",
+    "group": "животные"
+  },
+  {
+    "label": "Гепарды",
+    "id": 3896148,
+    "url": "https://www.wikidata.org/wiki/Q481907",
+    "group": "животные"
+  },
+  {
+    "label": "животные",
+    "id": 2321233,
+    "url": "https://www.wikidata.org/wiki/Q729",
+    "group": "животные"
+  },
+  {
+    "label": "Amoebida",
+    "id": 32626,
+    "url": "https://www.wikidata.org/wiki/Q1993675",
+    "group": "простейшие"
+  },
+  {
+    "label": "бесхвостые земноводные",
+    "id": 50035,
+    "url": "https://www.wikidata.org/wiki/Q53636",
+    "group": "животные"
+  },
+  {
+    "label": "сфагнум",
+    "id": 4393776,
+    "url": "https://www.wikidata.org/wiki/Q30019",
+    "group": "растения"
+  },
+  {
+    "label": "мхи",
+    "id": 3091285,
+    "url": "https://www.wikidata.org/wiki/Q25347",
+    "group": "растения"
+  },
+  {
+    "label": "актинии",
+    "id": 10107,
+    "url": "https://www.wikidata.org/wiki/Q147256",
+    "group": "животные"
+  },
+  {
+    "label": "велоцираптор",
+    "id": 2620321,
+    "url": "https://www.wikidata.org/wiki/Q14403",
+    "group": "животные"
+  },
+  {
+    "label": "линь",
+    "id": 2754466,
+    "url": "https://www.wikidata.org/wiki/Q76280",
+    "group": "животные"
+  },
+  {
+    "label": "Trachemys Agassiz, 1857",
+    "id": 4131765,
+    "url": "https://www.wikidata.org/wiki/Q385417",
+    "group": "животные"
+  },
+  {
+    "label": "сифонофоры",
+    "id": 2748322,
+    "url": "https://www.wikidata.org/wiki/Q1134438",
+    "group": "животные"
+  },
+  {
+    "label": "Naegleria fowleri R.F.Carter, 1970",
+    "id": 1008512,
+    "url": "https://www.wikidata.org/wiki/Q131273",
+    "group": "простейшие"
+  },
+  {
+    "label": "утконосовые",
+    "id": 2591670,
+    "url": "https://www.wikidata.org/wiki/Q21811",
+    "group": "животные"
+  },
+  {
+    "label": "Политрихум",
+    "id": 3010495,
+    "url": "https://www.wikidata.org/wiki/Q1544166",
+    "group": "растения"
+  },
+  {
+    "label": "бурые лягушки",
+    "id": 2742205,
+    "url": "https://www.wikidata.org/wiki/Q72738",
+    "group": "животные"
+  },
+  {
+    "label": "Corallinales",
+    "id": 172951,
+    "url": "https://www.wikidata.org/wiki/Q2524330",
+    "group": "растения"
+  },
+  {
+    "label": "Gracilariaceae",
+    "id": 302993,
+    "url": "https://www.wikidata.org/wiki/Q16034679",
+    "group": "растения"
+  },
+  {
+    "label": "Gracilariales",
+    "id": 302994,
+    "url": "https://www.wikidata.org/wiki/Q3022196",
+    "group": "растения"
+  },
+  {
+    "label": "травяная лягушка",
+    "id": 2742206,
+    "url": "https://www.wikidata.org/wiki/Q27465",
+    "group": "животные"
+  },
+  {
+    "label": "Chromadorea",
+    "id": 148382,
+    "url": "https://www.wikidata.org/wiki/Q1934949",
+    "group": "животные"
+  },
+  {
+    "label": "Chironex Southcott, 1956",
+    "id": 4333534,
+    "url": "https://www.wikidata.org/wiki/Q5101971",
+    "group": "животные"
+  },
+  {
+    "label": "гидроидные",
+    "id": 2983857,
+    "url": "https://www.wikidata.org/wiki/Q181989",
+    "group": "животные"
+  },
+  {
+    "label": "Харофиты",
+    "id": 140191,
+    "url": "https://www.wikidata.org/wiki/Q133219",
+    "group": "растения"
+  },
+  {
+    "label": "Погонофоры",
+    "id": 645014,
+    "url": "https://www.wikidata.org/wiki/Q809618",
+    "group": "животные"
+  },
+  {
+    "label": "Polytrichales",
+    "id": 3010482,
+    "url": "https://www.wikidata.org/wiki/Q2546461",
+    "group": "растения"
+  },
+  {
+    "label": "воббегонгообразные",
+    "id": 492454,
+    "url": "https://www.wikidata.org/wiki/Q260031",
+    "group": "животные"
+  },
+  {
+    "label": "лисичковые",
+    "id": 117669,
+    "url": "https://www.wikidata.org/wiki/Q1424338",
+    "group": "грибы"
+  },
+  {
+    "label": "Chirodropida",
+    "id": 144292,
+    "url": "https://www.wikidata.org/wiki/Q2963928",
+    "group": "животные"
+  },
+  {
+    "label": "Octopodidae",
+    "id": 3273623,
+    "url": "https://www.wikidata.org/wiki/Q1202874",
+    "group": "животные"
+  },
+  {
+    "label": "Amoebozoa",
+    "id": 32679,
+    "url": "https://www.wikidata.org/wiki/Q473809",
+    "group": "простейшие"
+  },
+  {
+    "label": "Chirodropidae",
+    "id": 144293,
+    "url": "https://www.wikidata.org/wiki/Q2963921",
+    "group": "животные"
+  },
+  {
+    "label": "Налимовые",
+    "id": 399279,
+    "url": "https://www.wikidata.org/wiki/Q283148",
+    "group": "животные"
+  },
+  {
+    "label": "Saccharomycetales",
+    "id": 625573,
+    "url": "https://www.wikidata.org/wiki/Q5147886",
+    "group": "грибы"
+  },
+  {
+    "label": "Saccharomycetaceae",
+    "id": 625572,
+    "url": "https://www.wikidata.org/wiki/Q1187217",
+    "group": "грибы"
+  },
+  {
+    "label": "Ortervirales",
+    "id": 965536,
+    "url": "https://www.wikidata.org/wiki/Q51526792",
+    "group": "вирусы"
+  },
+  {
+    "label": "сахаромицеты",
+    "id": 625575,
+    "url": "https://www.wikidata.org/wiki/Q1069627",
+    "group": "грибы"
+  },
+  {
+    "label": "Chelonia Brongniart, 1800",
+    "id": 2826117,
+    "url": "https://www.wikidata.org/wiki/Q14566112",
+    "group": "животные"
+  },
+  {
+    "label": "паслёноцветные",
+    "id": 3157890,
+    "url": "https://www.wikidata.org/wiki/Q21723",
+    "group": "растения"
+  },
+  {
+    "label": "сордариомицеты",
+    "id": 653242,
+    "url": "https://www.wikidata.org/wiki/Q133607",
+    "group": "грибы"
+  },
+  {
+    "label": "Китовая акула",
+    "id": 4387835,
+    "url": "https://www.wikidata.org/wiki/Q80378",
+    "group": "животные"
+  },
+  {
+    "label": "Onchocercidae",
+    "id": 487354,
+    "url": "https://www.wikidata.org/wiki/Q3088441",
+    "group": "животные"
+  },
+  {
+    "label": "Rhincodontidae",
+    "id": 4387836,
+    "url": "https://www.wikidata.org/wiki/Q2803916",
+    "group": "животные"
+  },
+  {
+    "label": "сцифоидные",
+    "id": 2609048,
+    "url": "https://www.wikidata.org/wiki/Q272388",
+    "group": "животные"
+  },
+  {
+    "label": "Бледная поганка",
+    "id": 3082218,
+    "url": "https://www.wikidata.org/wiki/Q188643",
+    "group": "грибы"
+  },
+  {
+    "label": "Rhodellophyceae",
+    "id": 614339,
+    "url": "https://www.wikidata.org/wiki/Q1055166",
+    "group": "растения"
+  },
+  {
+    "label": "тутовый шелкопряд",
+    "id": 3364862,
+    "url": "https://www.wikidata.org/wiki/Q134747",
+    "group": "животные"
+  },
+  {
+    "label": "свиные",
+    "id": 4262798,
+    "url": "https://www.wikidata.org/wiki/Q166898",
+    "group": "животные"
+  },
+  {
+    "label": "Chironex fleckeri Southcott, 1956",
+    "id": 144339,
+    "url": "https://www.wikidata.org/wiki/Q310432",
+    "group": "животные"
+  },
+  {
+    "label": "тираннозавриды",
+    "id": 725983,
+    "url": "https://www.wikidata.org/wiki/Q131050",
+    "group": "животные"
+  },
+  {
+    "label": "Обыкновенная гадюка",
+    "id": 3304426,
+    "url": "https://www.wikidata.org/wiki/Q192056",
+    "group": "животные"
+  },
+  {
+    "label": "нематоды",
+    "id": 458719,
+    "url": "https://www.wikidata.org/wiki/Q5185",
+    "group": "животные"
+  },
+  {
+    "label": "Сарганообразные",
+    "id": 88027,
+    "url": "https://www.wikidata.org/wiki/Q329667",
+    "group": "животные"
+  },
+  {
+    "label": "Деннштедтиевые",
+    "id": 3241964,
+    "url": "https://www.wikidata.org/wiki/Q358326",
+    "group": "растения"
+  },
+  {
+    "label": "Игуанодон",
+    "id": 3394540,
+    "url": "https://www.wikidata.org/wiki/Q130980",
+    "group": "животные"
+  },
+  {
+    "label": "Rowavirales",
+    "id": 1526775,
+    "url": "https://www.wikidata.org/wiki/Q92200167",
+    "group": "вирусы"
+  },
+  {
+    "label": "щука",
+    "id": 2701259,
+    "url": "https://www.wikidata.org/wiki/Q165278",
+    "group": "животные"
+  },
+  {
+    "label": "Campylobacteria",
+    "id": 1544181,
+    "url": null,
+    "group": "бактерии"
+  },
+  {
+    "label": "моллюски",
+    "id": 441317,
+    "url": "https://www.wikidata.org/wiki/Q25326",
+    "group": "животные"
+  },
+  {
+    "label": "Tectiliviricetes",
+    "id": 1526770,
+    "url": "https://www.wikidata.org/wiki/Q92197497",
+    "group": "вирусы"
+  },
+  {
+    "label": "Каракатицы",
+    "id": 642028,
+    "url": "https://www.wikidata.org/wiki/Q184479",
+    "group": "животные"
+  },
+  {
+    "label": "Preplasmiviricota",
+    "id": 1526769,
+    "url": "https://www.wikidata.org/wiki/Q92195021",
+    "group": "вирусы"
+  },
+  {
+    "label": "десятиногие ракообразные",
+    "id": 204772,
+    "url": "https://www.wikidata.org/wiki/Q4610",
+    "group": "животные"
+  },
+  {
+    "label": "лисичка обыкновенная",
+    "id": 3639248,
+    "url": "https://www.wikidata.org/wiki/Q188749",
+    "group": "грибы"
+  },
+  {
+    "label": "Vahlkampfidae",
+    "id": 731107,
+    "url": null,
+    "group": "простейшие"
+  },
+  {
+    "label": "двустворчатые",
+    "id": 2545614,
+    "url": "https://www.wikidata.org/wiki/Q25368",
+    "group": "животные"
+  },
+  {
+    "label": "Зелёные водоросли",
+    "id": 146408,
+    "url": "https://www.wikidata.org/wiki/Q264543",
+    "group": "растения"
+  },
+  {
+    "label": "Спирогира",
+    "id": 659424,
+    "url": "https://www.wikidata.org/wiki/Q148710",
+    "group": "растения"
+  },
+  {
+    "label": "щуки",
+    "id": 2701251,
+    "url": "https://www.wikidata.org/wiki/Q191674",
+    "group": "животные"
+  },
+  {
+    "label": "шампиньоновые",
+    "id": 16363,
+    "url": "https://www.wikidata.org/wiki/Q913614",
+    "group": "грибы"
+  },
+  {
+    "label": "простейшие",
+    "id": 2394057,
+    "url": "https://www.wikidata.org/wiki/Q101274",
+    "group": "простейшие"
+  },
+  {
+    "label": "Ретровирусы",
+    "id": 609252,
+    "url": "https://www.wikidata.org/wiki/Q189308",
+    "group": "вирусы"
+  },
+  {
+    "label": "Щитовник",
+    "id": 2970563,
+    "url": "https://www.wikidata.org/wiki/Q1335106",
+    "group": "растения"
+  },
+  {
+    "label": "ложноскорпионы",
+    "id": 591866,
+    "url": "https://www.wikidata.org/wiki/Q19119",
+    "group": "животные"
+  },
+  {
+    "label": "Верблюдовые",
+    "id": 3231685,
+    "url": "https://www.wikidata.org/wiki/Q135022",
+    "group": "животные"
+  },
+  {
+    "label": "Staphylococcus Rosenbach, 1884",
+    "id": 3021786,
+    "url": null,
+    "group": "бактерии"
+  },
+  {
+    "label": "стафилококк золотистый",
+    "id": 3021787,
+    "url": "https://www.wikidata.org/wiki/Q188121",
+    "group": "бактерии"
+  },
+  {
+    "label": "Campylobacterota",
+    "id": 1544172,
+    "url": null,
+    "group": "бактерии"
+  },
+  {
+    "label": "Bacillaceae",
+    "id": 79869,
+    "url": "https://www.wikidata.org/wiki/Q149098",
+    "group": "бактерии"
+  },
+  {
+    "label": "Настоящие крокодилы",
+    "id": 3512264,
+    "url": "https://www.wikidata.org/wiki/Q309495",
+    "group": "животные"
+  },
+  {
+    "label": "Аскофиллум",
+    "id": 3633097,
+    "url": "https://www.wikidata.org/wiki/Q16034614",
+    "group": "хромисты"
+  },
+  {
+    "label": "лисичка",
+    "id": 3720134,
+    "url": "https://www.wikidata.org/wiki/Q922335",
+    "group": "грибы"
+  },
+  {
+    "label": "Вёшенка обыкновенная",
+    "id": 559095,
+    "url": "https://www.wikidata.org/wiki/Q186451",
+    "group": "грибы"
+  },
+  {
+    "label": "агариковые",
+    "id": 16383,
+    "url": "https://www.wikidata.org/wiki/Q221448",
+    "group": "грибы"
+  }
+]
+	  //NODES_END
+	  );
+
+      const edges = new vis.DataSet(
+	  //EDGES_START
+[
+  {
+    "type": "HAS_CHILD",
+    "from": 56762,
+    "to": 652297
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3508878,
+    "to": 3778628
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 56762,
+    "to": 356358
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526823,
+    "to": 468994
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3642229,
+    "to": 147461
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 609439,
+    "to": 2427958
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 42758,
+    "to": 157704
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 441317,
+    "to": 4063294
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 458719,
+    "to": 712709
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 197801,
+    "to": 3079210
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 79898,
+    "to": 79886
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2609048,
+    "to": 3293227
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 962393,
+    "to": 446484
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 446484,
+    "to": 446483
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3512264,
+    "to": 3781685
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 288787
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 755915,
+    "to": 246809
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 282248,
+    "to": 79898
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 399279,
+    "to": 3948592
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 246819,
+    "to": 246814
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 32679,
+    "to": 396312
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 501532,
+    "to": 246819
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526841,
+    "to": 1526847
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 286419,
+    "to": 2976783
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790268,
+    "to": 183342
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394114,
+    "to": 1526841
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526819,
+    "to": 1526823
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4060592,
+    "to": 1670186
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 402569,
+    "to": 3536911
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394114,
+    "to": 1526819
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526816,
+    "to": 1526817
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394114,
+    "to": 1526816
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 2553882
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 164187,
+    "to": 368703
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2390407,
+    "to": 85050
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 135349,
+    "to": 193597
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2691184,
+    "to": 2691189
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2441652,
+    "to": 3258495
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 85050,
+    "to": 16456
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 57525,
+    "to": 3902587
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 441317,
+    "to": 566337
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 317249,
+    "to": 2571383
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3154439,
+    "to": 627779
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 410698
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 175247,
+    "to": 2691184
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 302993,
+    "to": 3935356
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526851,
+    "to": 1526855
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 155739,
+    "to": 754779
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 646237,
+    "to": 646235
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394114,
+    "to": 1526851
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 646237
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 672862
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3523688,
+    "to": 288848
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 530526
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526847,
+    "to": 1526848
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 62019,
+    "to": 4355107
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 343610,
+    "to": 155739
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 708769,
+    "to": 408668
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2571383,
+    "to": 2571396
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3899567,
+    "to": 30814
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526855,
+    "to": 1526856
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 222927,
+    "to": 189538
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2701849,
+    "to": 361572
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790266,
+    "to": 141414
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 487354,
+    "to": 4073567
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 535840,
+    "to": 3523688
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 56762,
+    "to": 57457
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 367840,
+    "to": 2913377
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3004948,
+    "to": 3685464
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 151779,
+    "to": 485500
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 132221
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2834114,
+    "to": 2302114
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526856,
+    "to": 608388
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 522631,
+    "to": 175247
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 3401926
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 708769,
+    "to": 402569
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 554793,
+    "to": 710810
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 528538,
+    "to": 528536
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 528538
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2757388,
+    "to": 3993778
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 148382,
+    "to": 609439
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 572574
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4131765,
+    "to": 708764
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 752093,
+    "to": 955542
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 125752,
+    "to": 3899567
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 341272,
+    "to": 3793072
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 672288,
+    "to": 4395241
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2945514,
+    "to": 2502795
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3567047,
+    "to": 4393200
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 93348
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 197804,
+    "to": 197801
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 388664,
+    "to": 66731
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2391301,
+    "to": 708769
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4081259,
+    "to": 674977
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 197804
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 554793,
+    "to": 723108
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 121620,
+    "to": 2415764
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 145666,
+    "to": 145586
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 83124,
+    "to": 83123
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 125752,
+    "to": 4121750
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 614763,
+    "to": 83125
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 57457,
+    "to": 57525
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 83125,
+    "to": 83124
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 621396,
+    "to": 4391166
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 554793,
+    "to": 135349
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 30814,
+    "to": 30904
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 609439,
+    "to": 609456
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 197818
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 259257
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 259257,
+    "to": 259256
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 684350,
+    "to": 3926160
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 289305,
+    "to": 755915
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1543787,
+    "to": 661704
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 146408,
+    "to": 146629
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 159944
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 674239,
+    "to": 3160323
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3902587,
+    "to": 57547
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3160323,
+    "to": 3160324
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 680512,
+    "to": 4087035
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4387836,
+    "to": 4119803
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 64717
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2553882,
+    "to": 3543300
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 157704,
+    "to": 3099882
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 119602,
+    "to": 657626
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2415764,
+    "to": 2685185
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 527108,
+    "to": 3414250
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3948592,
+    "to": 2717959
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 530526,
+    "to": 4254887
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2389494,
+    "to": 151779
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1527104,
+    "to": 4051176
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3273623,
+    "to": 2589901
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 566645,
+    "to": 3971304
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 534380,
+    "to": 367841
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 367841,
+    "to": 367840
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3971304,
+    "to": 2561227
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4063294,
+    "to": 480481
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 230633
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4192474,
+    "to": 4192475
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3709410,
+    "to": 4192474
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 42758,
+    "to": 3420368
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2823614,
+    "to": 2434266
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 317259,
+    "to": 4160722
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 132221,
+    "to": 3301588
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4073567,
+    "to": 2306265
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2390407,
+    "to": 65786
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 240892
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 145667,
+    "to": 145666
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 710444,
+    "to": 145667
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 144641
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 594186
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2566442,
+    "to": 2566443
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3931746,
+    "to": 2566442
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3829535,
+    "to": 4253007
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 377432,
+    "to": 319747
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 41476,
+    "to": 4188480
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 2729264
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 468994,
+    "to": 174349
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2913377,
+    "to": 367893
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3239801,
+    "to": 191765
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4160722,
+    "to": 4167982
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3696922,
+    "to": 3978544
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 341272
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 272878,
+    "to": 66847
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 147741
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 240924
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 1790267
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 1790266
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 66731,
+    "to": 4051239
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 1790268
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 288787,
+    "to": 535840
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3633097,
+    "to": 65832
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3153290,
+    "to": 3696922
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 240892,
+    "to": 757031
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 138547
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 193597,
+    "to": 684350
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2831078,
+    "to": 3375373
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 684350,
+    "to": 2614568
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 731107,
+    "to": 2453799
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 554793,
+    "to": 715083
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 558633,
+    "to": 973135
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 528538,
+    "to": 742730
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790268,
+    "to": 2537838
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 730449,
+    "to": 730444
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 552326,
+    "to": 3515784
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 246809,
+    "to": 2473336
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 121620,
+    "to": 2485618
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3091285,
+    "to": 2611572
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 387519,
+    "to": 42317
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 197801,
+    "to": 4131194
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2749157,
+    "to": 2611569
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 56762,
+    "to": 490839
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4445499,
+    "to": 739675
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 64717,
+    "to": 3094915
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 28318,
+    "to": 1527104
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 164187
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 85050,
+    "to": 730449
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 240892,
+    "to": 367966
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4082028,
+    "to": 4082030
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 367966,
+    "to": 367961
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3251852,
+    "to": 4082028
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2391301,
+    "to": 614763
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 735599
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2823614,
+    "to": 3827048
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 50035,
+    "to": 606585
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 757031,
+    "to": 573817
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 487354,
+    "to": 4445499
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4254887,
+    "to": 3369291
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2580825,
+    "to": 2580826
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3671459,
+    "to": 2580825
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 294269,
+    "to": 294268
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 283313,
+    "to": 294269
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 135653,
+    "to": 3776841
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 121620,
+    "to": 2433383
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2389270,
+    "to": 191871
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 545330,
+    "to": 3968330
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 708769,
+    "to": 566645
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 522631
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 522631,
+    "to": 522630
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 656784,
+    "to": 656782
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4051239,
+    "to": 4319696
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3085066,
+    "to": 53639
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3983910,
+    "to": 3567047
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 197801,
+    "to": 2823594
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2591670,
+    "to": 2458034
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 721397,
+    "to": 4153788
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 710810,
+    "to": 552326
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 348771,
+    "to": 2441652
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 712709,
+    "to": 715162
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2389270,
+    "to": 579997
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 79898,
+    "to": 365968
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4319696,
+    "to": 4319714
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3375373,
+    "to": 2556360
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 656784
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 609456,
+    "to": 4060592
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 319747,
+    "to": 258456
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 731937,
+    "to": 3303863
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526848,
+    "to": 283033
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 119602,
+    "to": 2823614
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 283033,
+    "to": 283034
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3099882,
+    "to": 3671459
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 145248,
+    "to": 4064678
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 159944,
+    "to": 188850
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2614568,
+    "to": 3024295
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4214282,
+    "to": 2431389
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 408668,
+    "to": 3153290
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 560561,
+    "to": 3555726
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 674241,
+    "to": 674239
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3567047,
+    "to": 3701142
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 710810,
+    "to": 222644
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 388664,
+    "to": 560561
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 480950,
+    "to": 387519
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4190975,
+    "to": 56762
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 367840,
+    "to": 405948
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 53639,
+    "to": 53691
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2389494,
+    "to": 479675
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3827048,
+    "to": 572855
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 24398,
+    "to": 3081720
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 33320,
+    "to": 307653
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 83123,
+    "to": 569802
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3671661,
+    "to": 3949063
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3698690,
+    "to": 3428859
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 674241
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16363,
+    "to": 2945514
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 566645,
+    "to": 3154439
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2458034,
+    "to": 3961339
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 736737,
+    "to": 736735
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2483887,
+    "to": 715231
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 566830,
+    "to": 752093
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3293227,
+    "to": 3709410
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 367966,
+    "to": 135653
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4190975,
+    "to": 3258850
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2983369,
+    "to": 2983374
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 272880,
+    "to": 272878
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 146629,
+    "to": 736737
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3555726,
+    "to": 2983369
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3543300,
+    "to": 3271114
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3414250,
+    "to": 2639330
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3517294,
+    "to": 229873
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 65786,
+    "to": 272880
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3085066,
+    "to": 3636684
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4188480,
+    "to": 41462
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2745026,
+    "to": 2473445
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2685185,
+    "to": 3911115
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3995302,
+    "to": 2486760
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 246631,
+    "to": 3108317
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 721396,
+    "to": 721397
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2434266,
+    "to": 288251
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 736735,
+    "to": 736756
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 361572,
+    "to": 721396
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 3262010
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 164187,
+    "to": 160259
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2747947,
+    "to": 2747953
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 41478,
+    "to": 41476
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 446483,
+    "to": 2861623
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2614568,
+    "to": 3988034
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 41478
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 646235,
+    "to": 2747947
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3968330,
+    "to": 545307
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 409247,
+    "to": 2575932
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 627305,
+    "to": 2744902
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2744902,
+    "to": 2744903
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 561763,
+    "to": 561681
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790266,
+    "to": 244248
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 579997,
+    "to": 289305
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16383,
+    "to": 558633
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3157890,
+    "to": 3983910
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 566834,
+    "to": 566830
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 522630,
+    "to": 3004948
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 33320
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3420368,
+    "to": 625187
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 365968,
+    "to": 672288
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2823594,
+    "to": 2685474
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2710051,
+    "to": 2710052
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4355107,
+    "to": 2710051
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 608388,
+    "to": 623167
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3536911,
+    "to": 2581018
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3521124,
+    "to": 954934
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394057,
+    "to": 2701849
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2748322,
+    "to": 545330
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16456,
+    "to": 566834
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 742730,
+    "to": 2759193
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2759193,
+    "to": 2759194
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 708769,
+    "to": 388664
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2728479,
+    "to": 2728480
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 653242,
+    "to": 343610
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 405948,
+    "to": 1017392
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 240924,
+    "to": 2728479
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 117669,
+    "to": 336442
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 246809,
+    "to": 4214282
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2433383,
+    "to": 3413631
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 157704,
+    "to": 62019
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 78407
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 680524
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 680524,
+    "to": 680512
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2390407,
+    "to": 755264
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 264814,
+    "to": 264787
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 441317,
+    "to": 4081259
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2581018,
+    "to": 3671661
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 65786,
+    "to": 377432
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 348760
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 627308,
+    "to": 627305
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3896148,
+    "to": 4317738
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790266,
+    "to": 692840
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 552326,
+    "to": 3931746
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 751216,
+    "to": 751215
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 627308
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 348771
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 104150,
+    "to": 2683466
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 264820,
+    "to": 264814
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2744902,
+    "to": 2744908
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 197818,
+    "to": 561763
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 264787,
+    "to": 3521124
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2701849,
+    "to": 264820
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 140191,
+    "to": 751217
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 751217,
+    "to": 751216
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 79898,
+    "to": 1543787
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2826117,
+    "to": 3234390
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 715162,
+    "to": 2483887
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 94870,
+    "to": 94850
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 191765,
+    "to": 4206285
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2389270,
+    "to": 282248
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 627779,
+    "to": 2745026
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3515784,
+    "to": 2834114
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16456,
+    "to": 94870
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4190975,
+    "to": 409247
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3926160,
+    "to": 3483314
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16383,
+    "to": 28318
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 291492
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526823,
+    "to": 547497
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4081259,
+    "to": 2448013
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2415764,
+    "to": 3995302
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 367961,
+    "to": 119461
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 572574,
+    "to": 3529370
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3776841,
+    "to": 3640986
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2693769,
+    "to": 2693770
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 197801,
+    "to": 2693769
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 614763,
+    "to": 167598
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 648869
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3091285,
+    "to": 3420813
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3375373,
+    "to": 3508878
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 480950
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 64717,
+    "to": 3251852
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 119461,
+    "to": 119474
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 614763,
+    "to": 283313
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2970563,
+    "to": 3925653
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526775,
+    "to": 11963
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3413631,
+    "to": 4243206
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4121750,
+    "to": 626380
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 288848,
+    "to": 845508
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 4190975
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 554793,
+    "to": 443087
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 94850,
+    "to": 94920
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 204772,
+    "to": 2455287
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3258850,
+    "to": 222927
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2556360,
+    "to": 4338327
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 444107
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 79869,
+    "to": 2680559
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 614763,
+    "to": 2556657
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 534380,
+    "to": 286421
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 626380,
+    "to": 626394
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 78407,
+    "to": 166614
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 286421,
+    "to": 286419
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 166614,
+    "to": 166613
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 104199,
+    "to": 104150
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4190975,
+    "to": 101081
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 66847,
+    "to": 527061
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 409247,
+    "to": 269036
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 94920,
+    "to": 3772121
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3262010,
+    "to": 4328119
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 506636,
+    "to": 3003081
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3303863,
+    "to": 2485982
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 57457,
+    "to": 627448
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3010482,
+    "to": 2600667
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2611572,
+    "to": 2749157
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 408668,
+    "to": 2831078
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 109363,
+    "to": 472816
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 735599,
+    "to": 3576536
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 57457,
+    "to": 699120
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2976783,
+    "to": 286456
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 286421,
+    "to": 629516
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 50035,
+    "to": 104199
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 42758
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 283313,
+    "to": 506637
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 506637,
+    "to": 506636
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 485500,
+    "to": 527108
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3003081,
+    "to": 506634
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 715083,
+    "to": 292629
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3369291,
+    "to": 3233577
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 85050,
+    "to": 599835
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 121620
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 609439,
+    "to": 501532
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 629516,
+    "to": 629524
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2948877,
+    "to": 2983737
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 159944,
+    "to": 47903
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 554793
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 65358,
+    "to": 2542347
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2542347,
+    "to": 2542348
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 146408,
+    "to": 710444
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2983857,
+    "to": 2948877
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4262798,
+    "to": 2751241
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2485618,
+    "to": 2757388
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1790267,
+    "to": 731937
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2751241,
+    "to": 2751246
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 561681,
+    "to": 4114203
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3241964,
+    "to": 3829535
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 341272,
+    "to": 3085066
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 629524,
+    "to": 629543
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3231685,
+    "to": 2415380
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2983737,
+    "to": 2574111
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 547497,
+    "to": 109363
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2759462,
+    "to": 2759457
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 240892,
+    "to": 119602
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 246809,
+    "to": 2759462
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 33320,
+    "to": 125752
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3413631,
+    "to": 4243209
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2732911,
+    "to": 2732913
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3293227,
+    "to": 3239801
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3413631,
+    "to": 4243210
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 674977,
+    "to": 317249
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3079210,
+    "to": 2671479
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 32584
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 408668,
+    "to": 3157890
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 56762,
+    "to": 637763
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1544181,
+    "to": 116555
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 609439,
+    "to": 65358
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2537838,
+    "to": 24398
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 528536,
+    "to": 2732911
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 116555,
+    "to": 317259
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2427958,
+    "to": 3517294
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 287572
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 755264,
+    "to": 962393
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 141414,
+    "to": 2826117
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 625572,
+    "to": 961366
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 599835,
+    "to": 599888
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 961366,
+    "to": 961367
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3529370,
+    "to": 2710396
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 294268,
+    "to": 3642229
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2710396,
+    "to": 2710398
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3108317,
+    "to": 246622
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 410698,
+    "to": 621396
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3555726,
+    "to": 4404006
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2639330,
+    "to": 4108135
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 736737,
+    "to": 145248
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4404006,
+    "to": 4404010
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2391301,
+    "to": 3091285
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 479675,
+    "to": 534380
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 32626,
+    "to": 246631
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2611569,
+    "to": 4393776
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 283034,
+    "to": 749415
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 88027,
+    "to": 278378
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2433383,
+    "to": 3896148
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 396312,
+    "to": 32626
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 33320,
+    "to": 50035
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 47903,
+    "to": 10107
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4319696,
+    "to": 3764048
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2729264,
+    "to": 4219720
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3420813,
+    "to": 3010482
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 159944,
+    "to": 2983857
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 336442,
+    "to": 3720134
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 183342,
+    "to": 3512264
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 444107,
+    "to": 2591670
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 64717,
+    "to": 3231685
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2453799,
+    "to": 1008512
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 244248,
+    "to": 4131765
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 259256,
+    "to": 2701251
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 283313,
+    "to": 172951
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 302994,
+    "to": 302993
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 283313,
+    "to": 302994
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 144293,
+    "to": 4333534
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2561227,
+    "to": 2970563
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2600667,
+    "to": 3010495
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 458719,
+    "to": 148382
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2742205,
+    "to": 2742206
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2391301,
+    "to": 140191
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 606585,
+    "to": 2742205
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 625187,
+    "to": 645014
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 240892,
+    "to": 492454
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16456,
+    "to": 117669
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 188850,
+    "to": 144292
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394057,
+    "to": 32679
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 144292,
+    "to": 144293
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 159944,
+    "to": 2609048
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 287572,
+    "to": 399279
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 625575,
+    "to": 625573
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 625573,
+    "to": 625572
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526817,
+    "to": 965536
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 65786,
+    "to": 625575
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2983857,
+    "to": 2748322
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4119803,
+    "to": 4387835
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 492454,
+    "to": 4387836
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 65786,
+    "to": 653242
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4131194,
+    "to": 2754466
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 609439,
+    "to": 487354
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 480481,
+    "to": 3273623
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 230633,
+    "to": 2620321
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 222644,
+    "to": 3698690
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 64717,
+    "to": 4262798
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3364870,
+    "to": 3364862
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 614763,
+    "to": 614339
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1527104,
+    "to": 3082218
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4328119,
+    "to": 3364870
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 348760,
+    "to": 3394540
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4333534,
+    "to": 144339
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3971304,
+    "to": 3241964
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3576536,
+    "to": 3304426
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 725983
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 458719
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 147741,
+    "to": 88027
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526770,
+    "to": 1526775
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1544172,
+    "to": 1544181
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2321233,
+    "to": 441317
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 441317,
+    "to": 2545614
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 1526769,
+    "to": 1526770
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 4063294,
+    "to": 642028
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2394114,
+    "to": 1526769
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 409247,
+    "to": 204772
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 32626,
+    "to": 731107
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2391301,
+    "to": 146408
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 751215,
+    "to": 659424
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16383,
+    "to": 16363
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2701251,
+    "to": 2701259
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 965536,
+    "to": 609252
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3720134,
+    "to": 3639248
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 56762,
+    "to": 591866
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 286419,
+    "to": 3633097
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 2389270,
+    "to": 1544172
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 79886,
+    "to": 79869
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 3021786,
+    "to": 3021787
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 973135,
+    "to": 559095
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 16456,
+    "to": 16383
+  },
+  {
+    "type": "HAS_CHILD",
+    "from": 661704,
+    "to": 3021786
+  }
+]
+	  //EDGES_END
+	  );
+
+      /**
+       * filter values are updated in the outer scope.
+       * in order to apply filters to new values, DataView.refresh() should be called
+       */
+      
+	  
+      const edgesFilterValues = {
+	  //edgesFilterValues_START
+"": true,
+		//END
+      };
+	  const nodesFilterValues = {
+	  //nodesFilterValues_START
+"животные": true,
+"растения": true,
+"грибы": true,
+"бактерии": true,
+"вирусы": true,
+"хромисты": true,
+"простейшие": true,
+		//END
+      };
+
+      const edgesFilter = (edge) => {
+        return !edge.group || edgesFilterValues[edge.group];
+      };
+	  const nodesFilter = (node) => {
+        return !node.group || nodesFilterValues[node.group];
+      };
+
+      const nodesView = new vis.DataView(nodes, { filter: nodesFilter });
+      const edgesView = new vis.DataView(edges, { filter: edgesFilter });
+
+      
+
+      edgeFilters.forEach((filter) =>
+        filter.addEventListener("change", (e) => {
+          const { value, checked } = e.target;
+          edgesFilterValues[value] = checked;
+          edgesView.refresh();
+        })
+      );
+	  nodeFilters.forEach((node) =>
+        node.addEventListener("change", (e) => {
+          const { value, checked } = e.target;
+          nodesFilterValues[value] = checked;
+          nodesView.refresh();
+        })
+      );
+
+      startNetwork({ nodes: nodesView, edges: edgesView });
+	  
+	  network.on('click', function(params) {
+		  var nodeId = params.nodes[0];
+		  var node = nodes.get(nodeId);
+		  
+		  
+		  if (node.url && window.event.ctrlKey) {
+            window.open(node.url, '_blank');
+            //return;
+          }
+		//  console.log('clicked '+nodeId);
+		//nodes.update({id: nodeId, fixed: {x: false, y: false}});
+		});
+		//network.on('doubleClick', function(params) {
+		//	var nodeId = params.nodes[0];
+		//	var node = nodes.get(nodeId);
+		//	if (node.url && !node.fixed.x && !node.fixed.y) {
+		//		console.log(node.fixed);
+		//		window.open(node.url, '_blank');
+		//	}
+		//});
+	  ebableNodeLocking();
+	  
+	  function toggleShape() {
+      nodes.forEach(function(node) {
+        node.shape = node.shape === "ellipse" ? "dot" : "ellipse";
+      });
+      nodes.update(nodes.get());
+    }
+	function changeLabelColor() {
+	  let randomColor = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
+      nodes.forEach(function(node) {
+        node.font = { color: randomColor };
+      });
+      nodes.update(nodes.get());
+    }
+	function ebableNodeLocking() {
+		network.on("dragEnd", function (params) {
+		  for (var i = 0; i < params.nodes.length; i++) {
+			  var nodeId = params.nodes[i];
+			  nodes.update({id: nodeId, fixed: {x: true, y: true}});
+		  }
+		});
+		network.on('dragStart', function(params) {
+		  for (var i = 0; i < params.nodes.length; i++) {
+			  var nodeId = params.nodes[i];
+			  nodes.update({id: nodeId, fixed: {x: false, y: false}});
+		  }
+		});
+		network.on('doubleClick', function(params) {
+		  for (var i = 0; i < params.nodes.length; i++) {
+			  var nodeId = params.nodes[i];
+			  nodes.update({id: nodeId, fixed: {x: false, y: false}});
+		  }
+		});
+	}
+    </script>
+  </body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaflet Offline Map</title>
+    <!-- Include Leaflet CSS from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* Ensure the map takes up the full height of the container */
+        #mapid {
+            height: 95vh;
+        }
+        .feature-marker {
+    display: inline-block;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    transform-origin: left center;
+    color: var(--marker-color);
+    font-weight: bold;
+    font-size: 12px; /* Fallback */
+    text-shadow: 
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;
+    padding: 0 2px;
+    text-align: center;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+        .feature-icon {
+            /* Required for dynamic sizing */
+            width: auto !important;
+            height: auto !important;
+        }
+    </style>
+</head>
+<body onload="onLoad();">
+    <!-- Map container -->
+    <div id="mapid"></div>
+
+    <!-- Include Leaflet JS from CDN -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://zverik.github.io/Leaflet.LimitZoom/Leaflet.LimitZoom.js"></script>
+    <script src="https://zverik.github.io/Leaflet.LimitZoom/Leaflet.ContinuousZoom.js"></script>
+    
+    <script>
+        function onLoad() {
+            const nativeZooms = [1, 2, 3, 4, 5];
+            const [min,max] = [Math.min(...nativeZooms),Math.max(...nativeZooms)];
+            const allZooms = Array.from({length:max-min+1},(_,i)=>min+i);
+            
+            // Initialize the map and set the view to a specific location and zoom level
+            var map = L.map('mapid',{
+                attributionControl: false,
+                crs: L.CRS.Simple,
+                tileSize: 512,
+                zooms: allZooms,
+                minZoom: nativeZooms[0],
+                maxZoom: nativeZooms[nativeZooms.length - 1] // Fixed: was [-1] which doesn't work in JS
+            }).setView([-256, 256], nativeZooms[0]);
+
+            // Custom TileLayer with Metadata that preserves zoom functionality
+            L.TileLayer.Metadata = L.TileLayer.extend({
+    initialize: function(url, options) {
+        L.TileLayer.prototype.initialize.call(this, url, options);
+        this._featureMarkers = new L.FeatureGroup();
+        this._featureZoomMap = new Map();
+        this._currentZoom = null;
+        this._featuresEnabled = false; // Default to enabled
+    },
+
+    onAdd: function(map) {
+        L.TileLayer.prototype.onAdd.call(this, map);
+        this._featureMarkers.addTo(map);
+        map.on('zoomend', this._updateFeatureVisibility, this);
+        this._currentZoom = map.getZoom();
+        this._addToggleControl();
+    },
+
+    onRemove: function(map) {
+        map.off('zoomend', this._updateFeatureVisibility, this);
+        if (this._toggleControl) {
+            map.removeControl(this._toggleControl);
+        }
+        this._featureMarkers.removeFrom(map);
+        L.TileLayer.prototype.onRemove.call(this, map);
+    },
+
+    _addToggleControl: function() {
+        this._toggleControl = L.control({position: 'topright'});
+        this._toggleControl.onAdd = () => {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            const button = L.DomUtil.create('a', '', container);
+            button.innerHTML = 'text';
+            button.title = 'Toggle features';
+            button.style.fontSize = '20px';
+            button.style.padding = '5px 10px';
+            button.style.cursor = 'pointer';
+            
+            L.DomEvent.on(button, 'click', () => {
+                this._featuresEnabled = !this._featuresEnabled;
+                if (this._featuresEnabled) {
+                    this._updateFeatureVisibility();
+                    button.style.backgroundColor = '';
+                } else {
+                    this._featureMarkers.clearLayers();
+                    button.style.backgroundColor = '#ccc';
+                }
+            });
+            
+            return container;
+        };
+        this._toggleControl.addTo(this._map);
+    },
+
+    _updateFeatureVisibility: function() {
+        if (!this._featuresEnabled) return;
+        
+        const newZoom = this._map.getZoom();
+        if (newZoom === this._currentZoom) return;
+        
+        this._currentZoom = newZoom;
+        this._featureMarkers.clearLayers();
+        
+        if (this._featureZoomMap.has(newZoom)) {
+            this._featureZoomMap.get(newZoom).forEach(markers => {
+                markers.forEach(marker => this._featureMarkers.addLayer(marker));
+            });
+        }
+    },
+
+    createTile: function(coords, done) {
+        const tile = L.TileLayer.prototype.createTile.call(this, coords, done);
+        const tileKey = `${coords.x}:${coords.y}`;
+        
+        if (!this._featuresEnabled || !this.options.nativeZooms.includes(coords.z)) {
+            return tile;
+        }
+
+        // Cleanup old markers
+        if (this._featureZoomMap.has(coords.z)) {
+            const zoomMap = this._featureZoomMap.get(coords.z);
+            if (zoomMap.has(tileKey)) {
+                zoomMap.get(tileKey).forEach(marker => {
+                    this._featureMarkers.removeLayer(marker);
+                });
+                zoomMap.delete(tileKey);
+            }
+        }
+
+        const metadataUrl = this.getTileUrl(coords).replace('.png', '.json');
+        fetch(metadataUrl)
+            .then(response => response.ok ? response.json() : null)
+            .then(metadata => {
+                if (metadata?.features) {
+                    const newMarkers = [];
+                    
+                    metadata.features.forEach(feat => {
+                    // Create the marker
+                    const fontSize = feat.fontSize ? `${feat.fontSize}px` : '12px'; // Default to 12px
+                    const marker = L.marker(xy(feat.x, feat.y), {
+                        icon: L.divIcon({
+                            html: `<div class="feature-marker" style="font-size:${fontSize};--marker-color:${feat.color || '#3388ff'}">${feat.label || ''}</div>`,
+                            className: 'feature-icon',
+                            iconSize: null,
+                            iconAnchor: [0, 0]
+                        })
+                    });
+
+                    if (feat.url) {
+                        marker.on('click', () => window.open(feat.url, feat.target || '_blank'));
+                        marker.getElement().style.cursor = 'pointer';
+                    }
+
+                    newMarkers.push(marker);
+
+                    // Schedule dynamic width scaling after DOM update
+                    setTimeout(() => {
+                        const el = marker.getElement();
+                        if (el && feat.width) {
+                            const label = el.querySelector('.feature-marker');
+                            const actualWidth = label.scrollWidth;
+                            label.style.setProperty('--actual-width', `${actualWidth}px`);
+                            label.style.setProperty('--max-width', `${feat.width}px`);
+                        }
+                    }, 0);
+                });
+
+                    // Store and show markers
+                    if (!this._featureZoomMap.has(coords.z)) {
+                        this._featureZoomMap.set(coords.z, new Map());
+                    }
+                    this._featureZoomMap.get(coords.z).set(tileKey, newMarkers);
+
+                    if (coords.z === this._currentZoom) {
+                        newMarkers.forEach(marker => this._featureMarkers.addLayer(marker));
+                    }
+                }
+            })
+            .catch(() => {});
+
+        return tile;
+    }
+});
+            // Force correct width scaling
+            setTimeout(() => {
+                const el = marker.getElement();
+                if (el && feat.width) {
+                    const label = el.querySelector('.feature-marker');
+                    const actualWidth = label.scrollWidth;
+                    label.style.setProperty('--actual-width', `${actualWidth}px`);
+                    label.style.setProperty('--max-width', `${feat.width}px`);
+                }
+            }, 0);
+
+            // Create the tile layer with metadata support './tiles-gbif/{z}/{x}/{y}.png'
+            new L.TileLayer.Metadata('https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/tiles-gbif0718/{z}/{x}/{y}.png', {
+                nativeZooms: nativeZooms,
+                tileSize: 512,
+                maxZoom: nativeZooms[nativeZooms.length - 1],
+                continuousWorld: true // Important for continuous zoom
+            }).addTo(map);
+            
+            var yx = L.latLng;
+
+            var xy = function(x, y) {
+                if (Array.isArray(x)) {    // When doing xy([x, y]);
+                    return yx(x[1], x[0]);
+                }
+                return yx(y, x);  // When doing xy(x, y);
+            };
+            
+            //L.marker( xy(256,0) ).addTo(map).bindPopup();
+            //L.marker( xy(512,0) ).addTo(map).bindPopup();
+        }
+    </script>
+</body>
+</html>

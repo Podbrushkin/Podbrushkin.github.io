@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Vector Tiles</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.6.1/ol.css">
+    <style>
+        html {
+          font-size: 100%; /* Respects user's browser/OS preference */
+        }
+
+        body {
+          font-size: 1rem; /* Default = browser's preferred size (e.g., 16px) */
+        }
+      .map {
+        width: 100%;
+        height: 95vh;
+        //height: 400px;
+        background: #f8f4f0;
+      }
+      .hover-label {
+          position: relative;
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid #ccc;
+          border-radius: 3px;
+          padding: 4px 8px;
+      //  font-size: 12px;
+          white-space: nowrap;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          pointer-events: none;
+          font-family: Arial;
+      //    font-weight: bold;
+        }
+        .gbif-context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 10px;
+            min-width: 250px;
+            max-width: 350px;
+            z-index: 1000;
+            display: none;
+            font-family: Arial, sans-serif;
+            //font-size: 0.75rem;
+        }
+        
+        .ol-rotate {
+          left: 3em;
+          top: 0.5em;
+          right: auto;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <script src="https://cdn.jsdelivr.net/npm/proj4@2.8.0/dist/proj4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.6.1/dist/ol.js"></script>
+    <!-- This is for thumbnail url patterenn -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+    <script>
+      var lang = 'scientific' //scientific en ru
+      const isMobile = 'ontouchstart' in window;
+      const ranks = 'kingdomFk,phylumFk,classFk,orderFk,familyFk,genusFk'.split(',')
+      var onlyZoomSpecific = true;
+      var displayGroupLabels = true;
+      var displayNonGroupLabels = true;
+      var displayPoints = true;
+      var shiftLabels = true;
+      
+      var displayNonGroupLabelsToggle = null;
+      var displayPointsToggle = null;
+      
+      //var pbfLayer = null;
+      //var map = null;
+      
+      //if (navigator.language.startsWith('ru')) {
+      if (navigator.languages.some(lang => lang.startsWith('ru'))) {
+        lang = 'ru';
+       }
+       if (isMobile) { displayPoints = false;}
+      function getLocalizedName(feature) {
+            //console.log(feature.get('labelRu'));
+            //console.log(feature.get('scientificName'));
+            //var props = feature.properties_;
+            //console.log(props);
+            
+            if (lang == 'ru') return feature.get('labelRu') ?? feature.get('scientificName');
+            if (lang == 'en') return feature.get('labelEn') ?? feature.get('scientificName');
+            if (lang == 'scientific') return feature.get('scientificName');
+            if (lang == 'none') return null;
+        }
+        var forceLabelsFromZoomLevel = null;
+  const labelOnlyStyle = function(feature) {
+        //console.log(feature)
+      // These zoom checks work only with map.getView().on('change:resolution'
+      const olZoom = map.getView().getZoom();
+      //console.log('olZoom='+olZoom)
+      // Optional: Show features only on specified zoom
+      const feaZoom = feature.get('zoom');
+      
+      //if (feaZoom != null && olZoom-1 != feaZoom && forceLabelsFromZoomLevel != feaZoom) 
+      //  return null;
+        
+  
+      var name = getLocalizedName(feature);
+      
+      //if (!name) return null; // Skip features without names
+      //const color = feature.get('color') ?? '#FFFFFF';
+      const rankMatchZoom = 
+          olZoom > 0 && 
+          ranks.length >= olZoom && 
+          ranks[olZoom - 1] && 
+          ranks[olZoom - 1].startsWith(feature.get('rank'));
+      
+      var color;
+      if (rankMatchZoom) {
+        color = getColorRgb(feature.get('id'), 0.7)
+      }
+      //else if (onlyZoomSpecific && !rankMatchZoom) {
+      //  return //pointOnlyStyle(feature)
+      //}
+      else if (feature.get('colorById')) {
+        color = getColorRgb(feature.get('id'), 0.7)
+        //console.log('colorById'+feature.get('id')+'='+color);
+      } else {
+        color = feature.get('color') ?? '#FFFFFF';
+      }
+      
+      var fontSize = 0.75;
+      if (rankMatchZoom) {fontSize *= 2}
+      //if (feature.get('fontsize')) {
+      //  fontSize = Math.min(feature.get('fontsize')/64, 3);
+      //  fontSize = Math.max(fontSize,0.5);
+      //}
+      if (feature.get('groupWidth') && false) {
+        var gWidth = feature.get('groupWidth')
+        var baseGWidth = 200
+        //var avgCharWidth = 2500
+        //fontSize = fontSize / name.length * (gWidth /Math.pow(1024,olZoom));
+        //fontSize = (gWidth / name.length) * (fontSize / avgCharWidth);
+        //fontSize = gWidth / olZoom / name.length * 0.0003;
+        //fontSize = gWidth / Math.pow(olZoom,2) / name.length * 0.0003;
+        //fontSize = gWidth / name.length / Math.pow(0.9, olZoom) * 0.0003;
+        //fontSize = gWidth  / (olZoom ) * 0.00003;
+        //fontSize = gWidth  * 0.00003;    // too small when olZoom grows
+        //fontSize = gWidth / (name.length*0.15)  * 0.00003*olZoom;    // 
+        //fontSize = gWidth / (name.length*0.15)  * 0.00003*Math.pow(olZoom,1.3);    // 
+        fontSize = gWidth / (name.length*0.15)  * 0.00003*Math.pow(olZoom,1.1);    // 
+        
+        
+      }
+      //fontSize = Math.min(fontSize, 6);
+      fontSize = Math.max(fontSize,0.62);
+      
+      const groupX = feature.get('groupX');
+      const groupY = feature.get('groupY');
+      
+      
+      // Use custom center coordinates if available, otherwise use feature geometry
+      //var labelPosition = groupX && groupY ? 
+      //    [Number(groupX), Number(groupY)] : 
+      //    feature.flatCoordinates_;
+      
+      
+      
+      //var offsetXY = [0,0]; //groupX && groupY ? 
+      const resolution = map.getView().getResolution();
+      //console.log('Resolution (map units per pixel):', resolution);
+      //  console.log('100 pixels =', 100 * resolution, 'map units');
+        const originalPosition = feature.flatCoordinates_;
+
+        // Calculate pixel offsets
+        let offsetX = 0;
+        let offsetY = 0;
+        
+
+        //console.log('map.getView().getRotation()='+map.getView().getRotation())
+      if (rankMatchZoom && groupX && groupY && olZoom == 2 && map.getView().getRotation() == 0) {
+        
+        offsetX = (Number(groupX) - originalPosition[0]) / resolution;
+        offsetY = (Number(groupY) - originalPosition[1]) / -resolution;
+        //console.log('offsetX,offsetY',offsetX,offsetY)
+      }
+      
+      //if (name.includes('Arachnida')) {
+      //      // Nudge it slightly to the right to avoid edge issues
+      //      labelPosition = [labelPosition[0]*0.0001, labelPosition[1]*0.9];
+      //      //labelPosition = [-11678457.52323294, -11561585.61137392]
+      //  }
+      
+      //if (name.match('Arachn') || name.match('Bivalvia') || name.match('Araneae')) {
+      //
+      //  // arane labelPosition= -11678457.52323294, -11561585.61137392
+      //  console.log('labelOnlyStyle:'+name+': '+rankMatchZoom);
+      //  console.log('groupX,groupY,labelPosition,feature.flatCoordinates_',groupX,groupY,labelPosition,feature.flatCoordinates_);
+      //  const proj = ol.proj.transform(labelPosition, 'EPSG:3857', 'EPSG:4326');
+      //  console.log('Lat/Lon:', proj);
+      //  //fontSize=10
+      //}
+      
+      
+      return new ol.style.Style({
+        //geometry: new ol.geom.Point(labelPosition), // will vanish if coord shifts from original tile
+        text: new ol.style.Text({
+          text: name,
+          font: `bold ${fontSize}rem Arial`,
+          fill: new ol.style.Fill({
+            color: color
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'black',
+            width: 2
+          }),
+          offsetX: offsetX,
+          offsetY: offsetY,
+          placement: 'point',
+          textBaseline: 'middle'
+        })
+      });
+    };
+    const autoStyle = function(feature) {
+        if (!displayPoints && !displayGroupLabels && !displayNonGroupLabels) {
+            map.removeLayer(pbfLayer);
+        }
+        const olZoom = map.getView().getZoom();
+        const rankMatchZoom = 
+              olZoom > 0 && 
+              ranks.length >= olZoom && 
+              ranks[olZoom - 1] && 
+              ranks[olZoom - 1].startsWith(feature.get('rank'));
+          
+        if (feature.type_ == 'Polygon') return simplePolygonStyle(feature);
+        else if (rankMatchZoom && displayGroupLabels) return labelOnlyStyle(feature);
+        else if (!rankMatchZoom && displayNonGroupLabels) return labelOnlyStyle(feature);
+        else if (displayPoints) return pointOnlyStyle(feature);
+        
+        //console.log('Geometry:', feature.getGeometry());
+    }
+    function simplePolygonStyle(feature) {
+        var color = getColorRgb(feature.get('id'))
+        return new ol.style.Style({
+            fill: new ol.style.Fill({
+                color: 'rgba(100, 150, 255, 0)' // Light blue, semi-transparent
+                //color: color
+            }),
+            stroke: new ol.style.Stroke({
+                color: 'rgba(50, 50, 150, 1)', // Darker blue border
+                width: 2
+            })
+        });
+    }
+    var rankToColor = null;
+    const rootFontSize = parseFloat(
+      getComputedStyle(document.documentElement).fontSize
+    );
+    var pointToLabelChance = 0.4*16/rootFontSize;
+    var pointToLabelChance = 1;
+    var pointToLabelEnabled = true;
+    
+    console.log('rootFontSize='+rootFontSize);
+    const pointOnlyStyle = function(feature) {
+        //const geometry = feature.getGeometry();
+       //const geomType = geometry.getType();
+       //console.log('Geometry:', feature.getGeometry());
+
+      const olZoom = map.getView().getZoom();
+      //const feaZoom = feature.get('zoom');
+      
+      //if (pointToLabelEnabled && olZoom <= 8 && Math.random() <= pointToLabelChance) {
+      //  return labelOnlyStyle(feature)
+      //}
+      //const effectiveZoom = Math.min(olZoom,pngDirZooms[pngDirZooms.length-1]+1);
+      //console.log('effectiveZoom='+effectiveZoom);
+      
+      //if (feaZoom != null && olZoom-1 < feaZoom) return null;
+      //var radius = olZoom - 2.5 // +5
+      //const radius = 0.5 * olZoom * olZoom - 3;
+      //var radius = Math.pow(olZoom,3)/32 //*0.8 // +5
+      //var radius = Math.pow(1.1,olZoom)
+      //var radius = 0.03 * Math.pow(2, olZoom); // this for plants poorly scaled
+      //radius = Math.min(radius,25)
+      var radius = 0.015 * Math.pow(2, olZoom); // this for all kingdoms
+      radius = Math.min(radius,20);
+      radius = Math.max(radius,3);
+      //console.log(`Zoom: ${olZoom}, Radius: ${radius}`);
+      
+      //var color = feature.get('color') || '#3388ff';
+      //if (feature.get('rank') && rankToColor) {
+      //  color = rankToColor[feature.get('rank')] || '#3388ff';
+      //}
+      var color = getColorRgb(feature.get('rank'), 1.0);
+      
+      return new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: radius,
+          fill: new ol.style.Fill({color: color})
+        })
+      });
+    };
+   
+    
+    // it's min/max x/y of EPSG:3857
+    const extent = [-20037508, -20037508, 20037508, 20037508];
+
+    const projection = new ol.proj.Projection({
+      code: 'xkcd-image',
+      units: 'pixels',
+      extent: extent
+    });
+    var declutterGlobal = false;
+        // at olZoom=8 OpenLayers shows tiles from /tiles/7/x/y both for vector and png
+        // Therefore if biggest dir is /5/ then maxZoom = 6. olZoom = dirZoom+1
+      //var nativeZooms = [0, 1, 2];
+      //const [minZoom,maxZoom] = [Math.min(...nativeZooms),Math.max(...nativeZooms)];
+      var pngDirZooms = [0, 1, 2, 3, 4, 5, 6];
+      var pbfDirZooms = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+      console.log("pbfDirZooms: " + pbfDirZooms);
+      var pngLayer = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            tileSize: 512,
+            url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/tiles-gbif0822/{z}/{x}/{y}.png',
+            //url: './tiles/{z}/{x}/{y}.png',
+            projection: projection,
+            minZoom: pngDirZooms[0],
+            maxZoom: pngDirZooms[pngDirZooms.length-1]
+          })
+        });
+        
+        
+        function createPbfLayer() {
+          return new ol.layer.VectorTile({
+            zIndex: 1,
+            declutter: declutterGlobal,
+            source: new ol.source.VectorTile({
+              format: new ol.format.MVT(),
+              //url: './tilesMeta/{z}/{x}/{y}.pbf',
+              url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/tilesmeta-gbif0822/{z}/{x}/{y}.pbf',
+              projection: projection,
+              declutter: declutterGlobal,
+              //tileSize: 512,
+              minZoom: pbfDirZooms[0],
+              maxZoom: pbfDirZooms[pbfDirZooms.length - 1],
+            }),
+            style: autoStyle
+          });
+        }
+        
+    
+      const map = new ol.Map({
+        layers: [
+          pngLayer,
+          //vectorLayer,
+          //pbfLayer,
+            //new ol.layer.Tile({
+            //    //projection: projection,
+            //    source: new ol.source.TileDebug({
+            //    projection: projection,
+            //    tileGrid: pngLayer.getSource().getTileGrid() // Use same grid as your base layer
+            //    })
+            //  })
+        ],
+        target: 'map',
+        view: new ol.View({
+          //declutter: true,
+          projection: projection,
+          center: ol.extent.getCenter(extent),
+          //enableRotation: false,
+          tileSize: 512,
+          constrainResolution: true,    // zoom snap only through native
+          multiWorld: true,
+          zoom: 0,
+          //minZoom: minZoom,
+          //maxZoom: maxZoom
+        }),
+      });
+      
+      pbfLayer = createPbfLayer(); // Your layer creation function
+        map.getLayers().insertAt(1,pbfLayer);
+    //  const debugLayer = new TileLayer({
+    //  source: new TileDebug({
+    //    projection: 'EPSG:3857', // Match your map's projection
+    //    //tileGrid: pbfLayer.getSource().getTileGrid() // Use same grid as your base layer
+    //  }),
+    //  zIndex: 100 // Make sure it's on top
+    //});
+
+    //map.addLayer(debugLayer);
+      
+      // Open gbif at single LMB
+      //map.on('click', function(evt) {
+      //    const olZoom = map.getView().getZoom();
+      //    console.log('olZoom='+olZoom)
+      //    const feature = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+      //      return f;
+      //    });
+      //    
+      //    if (feature && feature.get('id')) {
+      //      const url = 'https://www.gbif.org/species/'+feature.get('id');
+      //      window.open(url, '_blank'); // Open external links in new tab
+      //        //console.log('Clicked:', feature.get('name'), 'url:', url);
+      //      
+      //    }
+      //  });
+        
+        // This is to avoid features not disappearing on zoom out for vector tiles (not needed for vector from json)
+        //map.getView().on('change:resolution', function() {
+        //  //console.log('Zoom changed - clearing and refreshing');
+        //  
+        //  const source = pbfLayer.getSource();
+        //  source.clear(); // Clear tile cache
+        //  
+        //  // Force style refresh
+        //  pbfLayer.setStyle(pointOnlyStyle);
+        //  pbfLayer.changed();
+        //});
+        
+        var displayPointsUserState = null;
+        var displayNonGroupLabelsUserState = null;
+        var wasAboveThreshold = false;
+
+        map.on('moveend', function() {
+            const currentZoom = Math.floor(map.getView().getZoom());
+            const thresholdZoom = pbfDirZooms[pbfDirZooms.length - 1] + 1;
+            const isAboveThreshold = currentZoom >= thresholdZoom;
+            
+            if (isAboveThreshold && !wasAboveThreshold) {
+                // Entering threshold zoom - save states and apply automatic changes
+                displayPointsUserState = displayPoints;
+                displayNonGroupLabelsUserState = displayNonGroupLabels;
+                
+                displayNonGroupLabels = false;
+                displayPoints = true;
+                displayNonGroupLabelsToggle.checked = false;
+                displayPointsToggle.checked = true;
+                pbfLayer.setStyle(autoStyle);
+            } 
+            else if (!isAboveThreshold && wasAboveThreshold && 
+                     displayPointsUserState !== null && displayNonGroupLabelsUserState !== null) {
+                // Exiting threshold zoom - restore previous states
+                displayPoints = displayPointsUserState;
+                displayNonGroupLabels = displayNonGroupLabelsUserState;
+                displayPointsToggle.checked = displayPoints;
+                displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
+                
+                displayPointsUserState = null;
+                displayNonGroupLabelsUserState = null;
+                pbfLayer.setStyle(autoStyle);
+            }
+            
+            wasAboveThreshold = isAboveThreshold;
+        });
+        
+        // Add a vector layer for temporary lines
+        const tempLineSource = new ol.source.Vector();
+        const tempLineLayer = new ol.layer.Vector({
+          zIndex: 0,
+          source: tempLineSource,
+          style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'rgba(255, 255, 255, 0.8)',
+              width: 2
+            })
+          })
+        });
+        map.addLayer(tempLineLayer);
+
+        
+        let currentLineFeature = null;
+        
+        // Create hover overlay for desktop
+        if (!isMobile) {
+        
+            const hoverElement = document.createElement('div');
+            hoverElement.className = 'hover-label';
+            
+            const hoverOverlay = new ol.Overlay({
+              element: hoverElement,
+              offset: [15, 0],
+              positioning: 'bottom-left'
+            });
+            map.addOverlay(hoverOverlay);
+
+            
+
+            map.on('pointermove', function(evt) {
+              if (map.getView().getAnimating()) return;
+              
+              
+              
+              const feature = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                return f;
+              });
+              
+              if (feature) {
+                //console.log('fea:', feature);
+                //console.log('Geometry:', feature.getGeometry());
+                // Get localized name
+                const name = getLocalizedName(feature);
+                var hier = null;
+                try {
+                  hier = lang == 'ru' ? feature.properties_.hierRu : feature.properties_.hier;
+                  
+                  var hierParts = hier.split('|');
+                  hierParts.pop(); // Remove the last element
+                  hier = hierParts.join('<br>');
+                } catch {}
+                //hier = hier.replaceAll('\|','</br>')
+                if (name == null) {
+                    if (currentLineFeature) {
+                        tempLineSource.removeFeature(currentLineFeature);
+                        currentLineFeature = null;
+                      }
+                      return;
+                }
+                
+                // Position the label
+                hoverOverlay.setPosition(evt.coordinate);
+                hoverElement.innerHTML = (hier ? '<i>'+hier + '</i><br>' : '')+'<b>' + name + '</b>';
+                hoverElement.style.display = 'block';
+                map.getTargetElement().style.cursor = 'pointer';
+                
+                // Create line to parent if parent coordinates exist
+                drawLineToParent(feature);
+                
+              } else {
+                hoverElement.style.display = 'none';
+                map.getTargetElement().style.cursor = '';
+              }
+            });
+        }   
+
+function drawLineToParent(feature) {
+    // Clear previous line
+      if (currentLineFeature) {
+        tempLineSource.removeFeature(currentLineFeature);
+        currentLineFeature = null;
+      }
+    const properties = feature.properties_;
+    
+    if (properties && properties.px && properties.py) {
+      // Get the feature's coordinates from flatCoordinates_
+      const featureCoords = feature.flatCoordinates_; // Direct access to coordinates
+      const parentCoords = [properties.px, properties.py]
+        const lineGeometry = new ol.geom.LineString([parentCoords, featureCoords]);
+        currentLineFeature = new ol.Feature({
+          geometry: lineGeometry
+        });
+        tempLineSource.addFeature(currentLineFeature);
+    }
+}
+
+        // Make sure hover works even when map moves
+        //map.on('movestart', function() {
+        //  hoverElement.style.display = 'none';
+        //});
+
+
+        // We add pbf layer only on high zoom levels (to avoid requests at low zoom)
+        //map.getView().on('change:resolution', function() {
+        //  const currentZoom = Math.floor(this.getZoom());
+        //  const minPbfZoom = pbfDirZooms[0] + 1;
+        //  
+        //  if (currentZoom >= minPbfZoom) {
+        //    if (!pbfLayer) {
+        //      pbfLayer = createPbfLayer(); // Your layer creation function
+        //      //map.addLayer(pbfLayer);
+        //      map.getLayers().insertAt(1,pbfLayer);
+        //    }
+        //  } else {
+        //    if (pbfLayer) {
+        //      map.removeLayer(pbfLayer);
+        //      pbfLayer = null;
+        //    }
+        //  }
+        //});
+
+        const languageSwitcherElement = document.createElement('div');
+        languageSwitcherElement.className = 'ol-unselectable ol-control';
+        languageSwitcherElement.style = 'background: rgba(255,255,255,0.8); padding: 5px; border-radius: 4px;';
+
+        languageSwitcherElement.innerHTML = `
+          <!-- <label for="ol-language-select" style="font-weight: bold; margin-right: 5px;">Language:</label> -->
+          <select id="ol-language-select" style="font-size: 100%;" > 
+            <option value="scientific">Scientific</option>
+            <option value="ru">Russian</option>
+            <option value="en">English</option>
+            <!-- <option value="none">No labels</option> -->
+          </select>
+          <!-- <label style="display: block;"> -->
+            <!-- <input type="checkbox" id="declutter-toggle" checked> Declutter -->
+          <!-- </label> -->
+          <label style="display: block;">
+            <input type="checkbox" id="displayNonGroupLabels-toggle" > Taxa names
+          </label>
+          <label style="display: block;">
+            <input type="checkbox" id="groupLabels-toggle" > Group names
+          </label>
+          <label style="display: block;">
+            <input type="checkbox" id="points-toggle" > Points
+          </label>
+        `;
+
+        // Create OpenLayers Control
+        const languageControl = new ol.control.Control({
+          element: languageSwitcherElement
+        });
+
+        // Add control to map (will appear in top-left by default)
+        map.addControl(languageControl);
+        
+        // Position it to top-right using CSS class or inline style
+        languageSwitcherElement.style.right = '0.5em';
+        languageSwitcherElement.style.top = '0.5em';
+        languageSwitcherElement.style.left = 'auto';
+        languageSwitcherElement.style.position = 'absolute';
+        
+        // Get reference to the select inside the control
+        const olLangSelect = document.getElementById('ol-language-select');
+        //const declutterToggle = document.getElementById('declutter-toggle');
+        displayNonGroupLabelsToggle = document.getElementById('displayNonGroupLabels-toggle');
+        const groupLabelsToggle = document.getElementById('groupLabels-toggle');
+        displayPointsToggle = document.getElementById('points-toggle');
+        
+        // Function to update language and refresh styles
+        function updateLanguage() {
+          lang = olLangSelect.value;
+          // This triggers re-render with new labels
+          
+            if (pbfLayer != null) pbfLayer.setStyle(autoStyle);
+        }
+
+        // Listen for changes
+        olLangSelect.addEventListener('change', updateLanguage);
+        
+        //declutterToggle.addEventListener('change', function() {
+        //  if (pbfLayer != null) {
+        //    pbfLayer.declutter = this.checked;
+        //    pbfLayer.setStyle(autoStyle);
+        //  }
+        //  //pbfLayer.setDeclutter(this.checked);
+        //  
+        //});
+        displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
+        displayNonGroupLabelsToggle.addEventListener('change', function() {
+          if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
+          displayNonGroupLabels = this.checked;
+          pbfLayer.setStyle(autoStyle); // re-render
+        });
+        groupLabelsToggle.checked = displayGroupLabels;
+        groupLabelsToggle.addEventListener('change', function() {
+           if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
+           displayGroupLabels = this.checked;
+           pbfLayer.setStyle(autoStyle);
+        });
+        displayPointsToggle.checked = displayPoints;
+        displayPointsToggle.addEventListener('change', function() {
+          if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
+          displayPoints = this.checked
+          pbfLayer.setStyle(autoStyle);
+        });
+        
+    
+
+// Create context menu element once
+const contextMenu = document.createElement('div');
+contextMenu.className = 'gbif-context-menu';
+contextMenu.style.display = 'none'; // Start hidden
+document.body.appendChild(contextMenu);
+
+// Handle LMB on map
+
+map.on('singleclick', function(evt) {
+    const pixel = map.getEventPixel(evt.originalEvent || evt);
+    const hitTolerance = isMobile ? 10 : 0;
+    const feature = map.forEachFeatureAtPixel(
+        pixel,
+        (f) => f,
+        { hitTolerance }
+    );
+
+    if (feature) {
+        const properties = feature.properties_ || {}; // Safer default
+        let gbifId = null;
+        try {
+            gbifId = properties.id || feature.get('id');
+        } catch (e) {
+            gbifId = feature.get('id');
+        }
+
+        if (gbifId) {
+            drawLineToParent(feature);
+            console.log('gbifid=' + gbifId);
+
+            
+            // Show initial content with feature properties only
+            displayCombinedData(properties, { image: null, externalResources: [] }); // Pass empty WD data initially
+            positionContextMenu(evt); // Ensure menu is positioned correctly
+            contextMenu.style.display = 'block'; // Make it visible
+
+            
+            // Do NOT await this call. Let it run in the background.
+            fetchAndApplyWikidata(gbifId, properties);
+            
+        }
+    }
+});
+
+function showContextMenu(evt, content) {
+    // Create structure with separate content area
+    contextMenu.innerHTML = `
+        <div style="position: relative;">
+            <button class="context-menu-close" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+            <div class="context-menu-content">${content}</div>
+        </div>
+    `;
+    
+    positionContextMenu(evt);
+    contextMenu.style.display = 'block';
+    
+    contextMenu.querySelector('.context-menu-close').addEventListener('click', hideContextMenu);
+}
+
+function hideContextMenu() {
+    contextMenu.style.display = 'none';
+}
+
+function positionContextMenu() {
+    const mapElement = document.getElementById('map');
+    const mapRect = mapElement.getBoundingClientRect();
+    
+    // Position at center top
+    const left = mapRect.left + (mapRect.width / 2);
+    const top = mapRect.top + 20;
+    
+    contextMenu.style.left = left + 'px';
+    contextMenu.style.top = top + 'px';
+    contextMenu.style.transform = 'translateX(-50%)'; // Move left by 50% of own width
+    contextMenu.style.display = 'block';
+}
+
+// Close when clicking elsewhere
+document.addEventListener('click', function(evt) {
+    if (!contextMenu.contains(evt.target) && contextMenu.style.display === 'block') {
+        hideContextMenu();
+    }
+});
+
+// Prevent closing when clicking inside menu
+contextMenu.addEventListener('click', function(evt) {
+    evt.stopPropagation();
+});
+
+// Fetches Wikidata and updates the existing context menu if successful
+async function fetchAndApplyWikidata(gbifId, featureProps) {
+    const placeholder = document.getElementById('wd-status-placeholder');
+    try {
+        console.log("Fetching Wikidata for ID:", gbifId);
+        
+        placeholder.textContent = 'Loading Wikidata...'
+        
+        const wikidataData = await fetchWikidataResources(gbifId);
+
+        if (wikidataData && (wikidataData.image || (wikidataData.externalResources && wikidataData.externalResources.length > 0))) {
+            console.log("Wikidata fetched successfully, updating menu:", wikidataData);
+            // Update the *existing* menu content with WD data
+            displayCombinedData(featureProps, wikidataData); // This will re-render the content, now including WD parts
+            placeholder.textContent = ''
+        } else {
+             console.log("Wikidata fetched, but no relevant data (image/resources) found.");
+             placeholder.textContent = 'No wikidata for this taxon.'
+        }
+    } catch (error) {
+        console.error("Error fetching or applying Wikidata:", error);
+        // Silently fail - the initial feature data is already displayed.
+        
+    }
+}
+
+
+
+function showContextMenuContent(content) {
+    // Replace content but keep close button
+    const closeBtn = contextMenu.querySelector('.context-menu-close');
+    contextMenu.innerHTML = `
+        <div style="position: relative;">
+            ${closeBtn.outerHTML}
+            ${content}
+        </div>
+    `;
+    // Reattach event listener to new button
+    contextMenu.querySelector('.context-menu-close').addEventListener('click', hideContextMenu);
+}
+
+// Display combined data in context menu
+function displayCombinedData(gbifData, wikidataData) {
+    // Ensure inputs are valid objects
+    gbifData = gbifData || {};
+    wikidataData = wikidataData || { image: null, externalResources: [] };
+
+    let html = `<div style="max-width: 350px;">`;
+
+    // --- Scientific Name ---
+    const scientificName = gbifData.scientificName || 'N/A';
+    html += `<h3 style="margin: 0 0 0.5rem 0; color: #2c5aa0;">${scientificName}</h3>`;
+
+    // --- Authorship ---
+    if (gbifData.authorship) {
+        html += `<div style="margin-bottom: 0.25rem;"><strong>Author:</strong> ${gbifData.authorship}</div>`;
+    }
+
+    // --- Rank & Descendants ---
+    html += `<div style="margin-bottom: 0.5rem;"><strong>Rank:</strong> ${gbifData.rank || 'N/A'}<br/>`;
+    html += `<strong>Descendants:</strong> ${gbifData.descendants || 'N/A'}</div>`;
+
+    // --- Image (from Wikidata) ---
+    if (wikidataData.image) {
+        const thumbnailUrl = getThumbnailUrl(wikidataData.image, 160);
+        console.log("Thumbnail URL:", thumbnailUrl);
+        // Fix potential URL encoding issue in Commons link construction
+        try {
+            const url = new URL(wikidataData.image);
+            const pathParts = url.pathname.split('/');
+            const fileName = pathParts[pathParts.length - 1];
+            // Properly encode the filename for the URL
+            const commonsPage = 'https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(fileName);
+
+            html += `
+                <div style="text-align: center; margin: 0.5rem 0;">
+                    <a href="${commonsPage}" target="_blank" title="View full image">
+                        <img src="${thumbnailUrl}"
+                             style="border: 1px solid #ddd; border-radius: 3px; max-width: 100%; height: auto;"
+                             alt="Species image"
+                             onerror="this.parentElement.style.display='none'"> <!-- Hide container on error -->
+                    </a>
+                </div>
+            `;
+        } catch (e) {
+            console.error("Error processing image URL:", wikidataData.image, e);
+        }
+    }
+
+    // --- Resources (GBIF + Wikidata External Links) ---
+    html += '<div style="margin: 0.5rem 0;">';
+    const links = [];
+
+    // GBIF Link (always present if gbifId exists)
+    if (gbifData.id) {
+        links.push(`<a href="https://www.gbif.org/species/${gbifData.id}" target="_blank">GBIF</a>`);
+    }
+
+    const priorityOrder = ["enWiki", "ruWiki", "LifeMap"];
+
+    // Wikidata External Resources
+    if (Array.isArray(wikidataData.externalResources) && wikidataData.externalResources.length > 0) {
+        // Sort resources
+        wikidataData.externalResources
+            .sort((a, b) =>
+                (priorityOrder.indexOf(b.name) - priorityOrder.indexOf(a.name)) ||
+                (a.name || "").localeCompare(b.name || "")
+            )
+            .forEach(resource => {
+                // Basic validation
+                if (resource.url && resource.name) {
+                    links.push(`<a href="${resource.url}" target="_blank">${resource.name}</a>`);
+                }
+            });
+    }
+
+    if (links.length > 0) {
+        html += `<strong>Resources:</strong> ${links.join(' , ')}`;
+    } else if (gbifData.id) {
+         // Show only GBIF if no other resources were added (including WD ones)
+         // This case is already handled by pushing GBIF link above, but ensures Resources header is shown if only GBIF exists.
+    }
+    html += '</div>';
+
+    // --- Taxonomic Hierarchy ---
+    var rankData =
+       `kingdom царство ki
+        phylum тип ph
+        class класс cl
+        order отряд or
+        family семейство fa
+        genus род ge
+        species вид sp
+        subspecies подвид su
+        undefined - un`.split('\n').map(line => line.trim().split(' '));
+    var rankNameIndex = lang == 'ru' ? 1 : 0;
+
+    const hier = lang == 'ru' ? gbifData.hierRu : gbifData.hier;
+    const hierRanks = gbifData.hierRanks;
+
+    if (hier && hierRanks) {
+        const hierParts = hier.split('|').filter(part => part); // Filter out empty parts
+        const rankPairs = [];
+
+        // Process hierRanks string into full rank names
+        for (var i = 0; i < hierRanks.length; i += 2) {
+            var twoChar = hierRanks.substring(i, i + 2);
+            var rankEntry = rankData.find(arr => arr[2] === twoChar);
+            if (rankEntry) {
+                rankPairs.push(rankEntry[rankNameIndex]);
+            } else {
+                rankPairs.push(twoChar); // Fallback if not found
+            }
+        }
+
+        // Only display if we have parts to show
+        if (hierParts.length > 0 && hierParts.length === rankPairs.length) {
+            html += '<div style="margin-top: 0.5rem;"><strong>Hierarchy:</strong>';
+            for (let i = 0; i < hierParts.length; i++) {
+                
+                html += `
+                    <div style="display: flex; margin-left: 0.5rem; margin-top: 0.125rem;">
+                        <div style="min-width: 100px;">${rankPairs[i]}:</div>
+                        <div>${hierParts[i]}</div>
+                    </div>
+                `;
+                
+            }
+            html += '</div>';
+        }
+    }
+
+    html += ` <span id="wd-status-placeholder" style="color: #888; font-style: italic;"></span>`;
+    html += '</div>'; // Close main container div
+
+    // --- Update the Menu Content ---
+    const contentArea = contextMenu.querySelector('.context-menu-content');
+    if (contentArea) {
+        contentArea.innerHTML = html; // Update the content area
+    } else {
+        // Fallback if structure unexpectedly changed (e.g., called before initial show)
+        contextMenu.innerHTML = `
+            <div style="position: relative;">
+                <button class="context-menu-close" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+                <div class="context-menu-content">${html}</div>
+            </div>
+        `;
+        // Reattach listener if recreating
+        const newCloseBtn = contextMenu.querySelector('.context-menu-close');
+        if (newCloseBtn) {
+           newCloseBtn.addEventListener('click', hideContextMenu);
+        }
+    }
+}
+
+function getExternalResourcesHtml(externalResources) {
+    if (externalResources.length === 0) return '';
+    
+    const links = externalResources.map(resource => {
+        const formattedName = resource.name
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+        return `<a href="${resource.url}" target="_blank">${formattedName}</a>`;
+    });
+    
+    return `<div style="margin: 0.5rem 0;"><strong>Resources:</strong> ${links.join(' | ')}</div>`;
+}
+
+// Generate thumbnail URL from Wikimedia Commons image using proper MD5
+function getThumbnailUrl(imageUrl, thumbSize = 160) {
+    try {
+        // Extract filename from URL
+        const url = new URL(imageUrl);
+        const pathParts = url.pathname.split('/');
+        const filename = decodeURIComponent(pathParts[pathParts.length - 1]);
+        
+        // Get proper MD5 hash using the imported library
+        const title = filename.replace(/^File:/, '').replace(/ /g, '_');
+        const hash = md5(title); // Using the imported md5 function
+        
+        const hashPrefix1 = hash.substring(0, 1);
+        const hashPrefix2 = hash.substring(0, 2);
+        
+        return `https://upload.wikimedia.org/wikipedia/commons/thumb/${hashPrefix1}/${hashPrefix2}/${encodeURIComponent(title)}/${thumbSize}px-${encodeURIComponent(title)}`;
+        
+    } catch (error) {
+        console.error('Error generating thumbnail URL:', error);
+        return imageUrl; // Fallback to original image
+    }
+}
+// Fetch Wikidata resources using SPARQL
+async function fetchWikidataResources(gbifId) {
+    try {
+        const lang = typeof window.lang !== 'undefined' ? window.lang : 'en';
+        const wikiLang = (lang === 'en' || lang === 'ru') ? lang : 'en';
+        
+        const sparqlQuery = `
+            SELECT ?obj ?name ?url WHERE {
+              ?obj wdt:P846 '${gbifId}' .
+              {
+                ?obj wdt:P18 ?url.
+                BIND("img" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P10585 ?id.
+                wd:P10585 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("CoL" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P685 ?id.
+                wd:P685 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("NCBI" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P685 ?id.
+                BIND(IRI(CONCAT('https://lifemap.cnrs.fr/tree?efficiency-mode=true&tid=', ?id)) AS ?url)
+                BIND("LifeMap" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P815 ?id.
+                wd:P815 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("ITIS" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P3151 ?id.
+                wd:P3151 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("iNatur" AS ?name)
+              }
+              UNION
+              {
+                ?url schema:about ?obj;
+                  schema:isPartOf <https://${wikiLang}.wikipedia.org/>.
+                BIND("${wikiLang}Wiki" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P373 ?categLabel .
+                BIND (URI(CONCAT("https://commons.wikimedia.org/wiki/Category:", ?categLabel)) AS ?url)
+                BIND("wcCateg" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P373 ?categLabel .
+                BIND("wcImages" AS ?name)
+                BIND (ENCODE_FOR_URI(CONCAT("deepcategory:\\"", ?categLabel, "\\"")) AS ?query)
+                BIND (URI(CONCAT("https://commons.wikimedia.org/w/index.php?search=", ?query, "&title=Special:MediaSearch&type=image")) AS ?url)
+              }
+            }
+        `;
+        
+        const url = 'https://query.wikidata.org/sparql?query=' + encodeURIComponent(sparqlQuery) + '&format=json';
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/sparql-results+json'
+            }
+        });
+        
+        const data = await response.json();
+        return processWikidataResults(data);
+        
+    } catch (error) {
+        console.error('Error fetching Wikidata:', error);
+        return { image: null, wikipedia: null, col: null };
+    }
+}
+// Returns object with processed Wikidata SPARQL results
+function processWikidataResults(data) {
+    const result = { 
+        image: null,
+        externalResources: []
+    };
+    
+    if (data && data.results && data.results.bindings[0]) {
+        result.externalResources.push({
+                    name: 'WD',
+                    url: data.results.bindings[0].obj.value
+                });
+        data.results.bindings.forEach(binding => {
+            if (binding.name && binding.url) {
+                const name = binding.name.value;
+                const url = binding.url.value;
+                
+                if (name === 'img') {
+                    result.image = url;
+                } else {
+                    result.externalResources.push({
+                        name: name,
+                        url: url
+                    });
+                }
+            }
+        });
+    }
+    
+    return result;
+}
+
+
+// THis func should be equivalent to Java similar func
+function getColorRgb(input, pastelFactor = 1.0) {
+    if (input == null) {return 'black'}
+    // Generate MD5 hash using blueimp-md5
+    const md5Hash = md5(input.toString());
+    
+    // Convert hex string to bytes
+    const hashBytes = [];
+    for (let i = 0; i < md5Hash.length; i += 2) {
+        hashBytes.push(parseInt(md5Hash.substr(i, 2), 16));
+    }
+
+    // Use bytes for RGB components (similar to Java version)
+    let r = hashBytes[0];
+    let g = hashBytes[4];  // Using spaced-out indices like in Java
+    let b = hashBytes[8];
+
+    if (pastelFactor < 1.0) {
+        // Convert to pastel by mixing with white
+        r = Math.floor(r * pastelFactor + 255 * (1 - pastelFactor));
+        g = Math.floor(g * pastelFactor + 255 * (1 - pastelFactor));
+        b = Math.floor(b * pastelFactor + 255 * (1 - pastelFactor));
+    }
+
+    // Convert to hex string
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+      
+    
+    </script>
+  </body>
+</html>
