@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapbox Vector Tiles</title>
+    <title>Full Tree of Life</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.6.1/ol.css">
     <style>
         html {
@@ -51,6 +51,24 @@
           top: 0.5em;
           right: auto;
         }
+        
+        .zoom-indicator {
+            left: 4.5em;
+            top: 0.5em;
+            right: auto;
+            //background: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            border-radius: 4px;
+            //box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .zoom-indicator.hidden {
+            opacity: 0;
+        }
     </style>
   </head>
   <body>
@@ -66,17 +84,31 @@
       const ranks = 'kingdomFk,phylumFk,classFk,orderFk,familyFk,genusFk'.split(',')
       var onlyZoomSpecific = true;
       var displayGroupLabels = true;
-      var displayNonGroupLabels = true;
+      var displayNonGroupLabels = false;
       var displayPoints = true;
       var shiftLabels = true;
       
       var displayNonGroupLabelsToggle = null;
       var displayPointsToggle = null;
       
+      // --- Taxonomic Hierarchy ---
+    var rankData =
+       `kingdom царство ki
+        phylum тип ph
+        class класс cl
+        order отряд or
+        family семейство fa
+        genus род ge
+        species вид sp
+        subspecies подвид su
+        undefined - un`.split('\n').map(line => line.trim().split(' '));
+    var rankNameIndex = lang == 'ru' ? 1 : 0;
+      
       //var pbfLayer = null;
       //var map = null;
       
       //if (navigator.language.startsWith('ru')) {
+      //console.log(navigator.languages)
       if (navigator.languages.some(lang => lang.startsWith('ru'))) {
         lang = 'ru';
        }
@@ -420,11 +452,17 @@
         var displayPointsUserState = null;
         var displayNonGroupLabelsUserState = null;
         var wasAboveThreshold = false;
-
+        var nonGroupLabelsAutoEnabled = false;
+        
         map.on('moveend', function() {
             const currentZoom = Math.floor(map.getView().getZoom());
             const thresholdZoom = pbfDirZooms[pbfDirZooms.length - 1] + 1;
             const isAboveThreshold = currentZoom >= thresholdZoom;
+            
+            // auto-enable once at zoom=2
+            if (!displayNonGroupLabels && !nonGroupLabelsAutoEnabled && currentZoom==2) {
+                displayNonGroupLabelsToggle.checked = displayNonGroupLabels = true;
+            }
             
             if (isAboveThreshold && !wasAboveThreshold) {
                 // Entering threshold zoom - save states and apply automatic changes
@@ -466,7 +504,7 @@
           })
         });
         map.addLayer(tempLineLayer);
-
+        
         
         let currentLineFeature = null;
         
@@ -576,6 +614,46 @@ function drawLineToParent(feature) {
         //    }
         //  }
         //});
+        
+        const zoomIndicator = document.createElement('div');
+        zoomIndicator.className = 'ol-unselectable ol-control zoom-indicator';
+
+        let hideTimeout = null;
+
+        // Function to show the zoom indicator
+        function showZoomIndicator() {
+            // Clear any existing timeout
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+            
+            // Update the text with current zoom level
+            const zoom = Math.round(map.getView().getZoom());
+            var rankNameIndex = lang == 'ru' ? 1 : 0;
+            var rankIndex = Math.min(Math.max(0,zoom-1),6)
+            var localizedRank = rankData[rankIndex][rankNameIndex];
+            zoomIndicator.textContent = `${zoom}: ${localizedRank}`;
+            
+            // Make indicator visible
+            zoomIndicator.classList.remove('hidden');
+            
+            // Set timeout to hide the indicator after 2 seconds
+            hideTimeout = setTimeout(() => {
+                zoomIndicator.classList.add('hidden');
+            }, 2000);
+        }
+
+        // Listen for zoom changes
+        map.getView().on('change:resolution', showZoomIndicator);
+        setTimeout(showZoomIndicator, 100);
+        
+        const zoomIndicatorControl = new ol.control.Control({
+          element: zoomIndicator
+        });
+
+        // Add control to map (will appear in top-left by default)
+        map.addControl(zoomIndicatorControl);
+        
 
         const languageSwitcherElement = document.createElement('div');
         languageSwitcherElement.className = 'ol-unselectable ol-control';
@@ -602,7 +680,7 @@ function drawLineToParent(feature) {
             <input type="checkbox" id="points-toggle" > Points
           </label>
         `;
-
+        
         // Create OpenLayers Control
         const languageControl = new ol.control.Control({
           element: languageSwitcherElement
@@ -634,6 +712,7 @@ function drawLineToParent(feature) {
 
         // Listen for changes
         olLangSelect.addEventListener('change', updateLanguage);
+        olLangSelect.value = lang;
         
         //declutterToggle.addEventListener('change', function() {
         //  if (pbfLayer != null) {
@@ -877,17 +956,6 @@ function displayCombinedData(gbifData, wikidataData) {
     }
     html += '</div>';
 
-    // --- Taxonomic Hierarchy ---
-    var rankData =
-       `kingdom царство ki
-        phylum тип ph
-        class класс cl
-        order отряд or
-        family семейство fa
-        genus род ge
-        species вид sp
-        subspecies подвид su
-        undefined - un`.split('\n').map(line => line.trim().split(' '));
     var rankNameIndex = lang == 'ru' ? 1 : 0;
 
     const hier = lang == 'ru' ? gbifData.hierRu : gbifData.hier;
