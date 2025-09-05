@@ -88,9 +88,10 @@
             E.g. edges bent like letter 'C' point from bottom to top.</li>
         <li>Control level of visual clutter with checkboxes at topright corner.</li>
         <li>Rely on "Scientific" labeling strategy to avoid GBIF-Wikidata mapping errors.</li>
-        <li>Missing external url? Add it to Wikidata, probably it will appear straght away.</li>
+        <li>Missing external url? Add it to Wikidata, probably it will appear straight away.</li>
         <li>Use Shift+Alt+Drag to rotate.</li>
         <li>Ctrl+F5 can help in resolving performance issues.</li>
+        <li>Feedback: <img src='https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/mail.png' style='height: 1.2rem'><img></li>
         </ul>
         
     </details>
@@ -108,9 +109,13 @@
       var displayNonGroupLabels = false;
       var displayPoints = true;
       var shiftLabels = true;
+      var declutterGlobal = false;
+      var labelPolygons = true;
       
       var displayNonGroupLabelsToggle = null;
       var displayPointsToggle = null;
+      
+      let zoomHistory = [];
       
       // --- Taxonomic Hierarchy ---
     var rankData =
@@ -134,17 +139,27 @@
         lang = 'ru';
        }
        if (isMobile) { displayPoints = false;}
-      function getLocalizedName(feature) {
-            //console.log(feature.get('labelRu'));
-            //console.log(feature.get('scientificName'));
-            //var props = feature.properties_;
-            //console.log(props);
-            
-            if (lang == 'ru') return feature.get('labelRu') ?? feature.get('scientificName');
-            if (lang == 'en') return feature.get('labelEn') ?? feature.get('scientificName');
-            if (lang == 'scientific') return feature.get('scientificName');
-            if (lang == 'none') return null;
-        }
+      function getLocalizedName(input) {
+        // Check if input is a feature (has get method) or a plain object with properties_
+        const getValue = (key) => {
+            if (input.get && typeof input.get === 'function') {
+                // It's a feature with get method
+                return input.get(key);
+            } else if (input.properties_) {
+                // It's an object with properties_ field
+                return input.properties_[key];
+            } else if (input[key]) {
+                // It's a plain object
+                return input[key];
+            }
+            return undefined;
+        };
+        
+        if (lang == 'ru') return getValue('labelRu') ?? getValue('scientificName');
+        if (lang == 'en') return getValue('labelEn') ?? getValue('scientificName');
+        if (lang == 'scientific') return getValue('scientificName');
+        if (lang == 'none') return null;
+    }
         var forceLabelsFromZoomLevel = null;
   const labelOnlyStyle = function(feature) {
         //console.log(feature)
@@ -275,9 +290,7 @@
       });
     };
     const autoStyle = function(feature) {
-        if (!displayPoints && !displayGroupLabels && !displayNonGroupLabels) {
-            map.removeLayer(pbfLayer);
-        }
+        
         const olZoom = map.getView().getZoom();
         const rankMatchZoom = 
               olZoom > 0 && 
@@ -285,7 +298,16 @@
               ranks[olZoom - 1] && 
               ranks[olZoom - 1].startsWith(feature.get('rank'));
           
-        if (feature.type_ == 'Polygon') return simplePolygonStyle(feature);
+        if (rankMatchZoom && feature.type_ == 'Polygon' && !isMobile) {
+            var styles = [simplePolygonStyle(feature)];
+            // Add label if global labelPolygons is true
+            //if (labelPolygons === true) {
+            //    var labelStyle = polygonLabelStyle(feature);
+            //    if (labelStyle) styles.push(labelStyle);
+            //}
+            return styles;
+        }
+        else if (feature.type_ == 'Polygon') return simplePolygonStyle(feature)
         else if (rankMatchZoom && displayGroupLabels) return labelOnlyStyle(feature);
         else if (!rankMatchZoom && displayNonGroupLabels) return labelOnlyStyle(feature);
         else if (displayPoints) return pointOnlyStyle(feature);
@@ -293,18 +315,22 @@
         //console.log('Geometry:', feature.getGeometry());
     }
     function simplePolygonStyle(feature) {
+        //console.log(feature.get('scientificName'))
+        //console.log(feature.get('id'))
         var color = getColorRgb(feature.get('id'))
         return new ol.style.Style({
             fill: new ol.style.Fill({
                 color: 'rgba(100, 150, 255, 0)' // Light blue, semi-transparent
                 //color: color
             }),
-            stroke: new ol.style.Stroke({
-                color: 'rgba(50, 50, 150, 1)', // Darker blue border
-                width: 2
-            })
+            //stroke: new ol.style.Stroke({
+            //    //color: 'rgba(50, 50, 150, 1)', // Darker blue border
+            //    color: color,
+            //    width: 1
+            //})
         });
     }
+    
     var rankToColor = null;
     const rootFontSize = parseFloat(
       getComputedStyle(document.documentElement).fontSize
@@ -363,7 +389,7 @@
       units: 'pixels',
       extent: extent
     });
-    var declutterGlobal = false;
+    
         // at olZoom=8 OpenLayers shows tiles from /tiles/7/x/y both for vector and png
         // Therefore if biggest dir is /5/ then maxZoom = 6. olZoom = dirZoom+1
       //var nativeZooms = [0, 1, 2];
@@ -382,21 +408,67 @@
           })
         });
         
+        // This func prevents stale features from displaying when there's no new tile at new zoom level
+        var tileLoadFunction = function(tile, url) {
+            tile.setLoader(function(extent, resolution, projection) {
+                fetch(url).then(function(response) {
+                    if (response.status === 200) {
+                        const contentLength = response.headers.get('content-length');
+                        if (contentLength === '0') {
+                            // Handle 0-byte files
+                            return Promise.resolve(new ArrayBuffer(0));
+                        }
+                        return response.arrayBuffer();
+                    } else {
+                        // Handle missing files
+                        return Promise.resolve(new ArrayBuffer(0));
+                    }
+                }).then(function(data) {
+                    if (data && data.byteLength > 0) {
+                        try {
+                            const format = new ol.format.MVT(); // Use MVT format directly
+                            const features = format.readFeatures(data, {
+                                extent: extent,
+                                featureProjection: projection
+                            });
+                            tile.setFeatures(features);
+                        } catch (parseError) {
+                            console.log('Parse error for tile:', url, parseError);
+                            tile.setFeatures([]);
+                        }
+                    } else {
+                        // Empty data - set empty features
+                        tile.setFeatures([]);
+                    }
+                }).catch(function(error) {
+                    console.log('Tile load error:', url, error);
+                    tile.setFeatures([]);
+                });
+            });
+        };
         
         function createPbfLayer() {
+            // https://openlayers.org/en/latest/apidoc/module-ol_layer_Tile-TileLayer.html
+            // https://openlayers.org/en/latest/apidoc/module-ol_source_VectorTile.html
           return new ol.layer.VectorTile({
             zIndex: 1,
             declutter: declutterGlobal,
             source: new ol.source.VectorTile({
               format: new ol.format.MVT(),
               //url: './tilesMeta/{z}/{x}/{y}.pbf',
-              url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/tilesmeta-gbif0822/{z}/{x}/{y}.pbf',
+              url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/tilesmeta-gbif0905/{z}/{x}/{y}.pbf',
+              tileLoadFunction: tileLoadFunction,
               projection: projection,
               declutter: declutterGlobal,
               //tileSize: 512,
               minZoom: pbfDirZooms[0],
               maxZoom: pbfDirZooms[pbfDirZooms.length - 1],
+              //cacheSize: 0,
+              //overlaps: false,
+              transition: 0,    //A duration for tile opacity transitions in milliseconds
             }),
+            useInterimTilesOnError: false, // no effect
+            //cacheSize: 0,
             style: autoStyle
           });
         }
@@ -432,15 +504,14 @@
       
       pbfLayer = createPbfLayer(); // Your layer creation function
         map.getLayers().insertAt(1,pbfLayer);
-    //  const debugLayer = new TileLayer({
-    //  source: new TileDebug({
-    //    projection: 'EPSG:3857', // Match your map's projection
-    //    //tileGrid: pbfLayer.getSource().getTileGrid() // Use same grid as your base layer
-    //  }),
-    //  zIndex: 100 // Make sure it's on top
-    //});
-
-    //map.addLayer(debugLayer);
+        if (false)
+      map.getLayers().insertAt(2,new ol.layer.Tile({
+                //projection: projection,
+                source: new ol.source.TileDebug({
+                projection: projection,
+                tileGrid: pngLayer.getSource().getTileGrid() // Use same grid as your base layer
+                })
+              }))
       
       // Open gbif at single LMB
       //map.on('click', function(evt) {
@@ -469,48 +540,84 @@
         //  pbfLayer.setStyle(pointOnlyStyle);
         //  pbfLayer.changed();
         //});
-        
-        var displayPointsUserState = null;
-        var displayNonGroupLabelsUserState = null;
-        var wasAboveThreshold = false;
-        var nonGroupLabelsAutoEnabled = false;
-        
-        map.on('moveend', function() {
-            const currentZoom = Math.floor(map.getView().getZoom());
-            const thresholdZoom = pbfDirZooms[pbfDirZooms.length - 1] + 1;
-            const isAboveThreshold = currentZoom >= thresholdZoom;
-            
-            // auto-enable once at zoom=2
-            if (!displayNonGroupLabels && !nonGroupLabelsAutoEnabled && currentZoom==2) {
-                displayNonGroupLabelsToggle.checked = displayNonGroupLabels = true;
-            }
-            
-            if (isAboveThreshold && !wasAboveThreshold) {
-                // Entering threshold zoom - save states and apply automatic changes
-                displayPointsUserState = displayPoints;
-                displayNonGroupLabelsUserState = displayNonGroupLabels;
+        var nonGroupLabelsAlreadyAutoEnabled = false;
+        map.getView().on('change:resolution', function() {
+            const olZoom = map.getView().getZoom();
+            if (olZoom % 1 === 0) {
+                //console.log(map.getView().getZoom());
                 
-                displayNonGroupLabels = false;
-                displayPoints = true;
-                displayNonGroupLabelsToggle.checked = false;
-                displayPointsToggle.checked = true;
-                pbfLayer.setStyle(autoStyle);
-            } 
-            else if (!isAboveThreshold && wasAboveThreshold && 
-                     displayPointsUserState !== null && displayNonGroupLabelsUserState !== null) {
-                // Exiting threshold zoom - restore previous states
-                displayPoints = displayPointsUserState;
-                displayNonGroupLabels = displayNonGroupLabelsUserState;
-                displayPointsToggle.checked = displayPoints;
-                displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
+                zoomHistory.push(olZoom);
+                // Keep only last 2 entries
+                if (zoomHistory.length > 2) {
+                    zoomHistory.shift();
+                }
+                //console.log(zoomHistory);
                 
-                displayPointsUserState = null;
-                displayNonGroupLabelsUserState = null;
-                pbfLayer.setStyle(autoStyle);
+                if (olZoom == 9 && zoomHistory[0] < 9) { // zoomed in to last level
+                    displayNonGroupLabelsToggle.checked = displayNonGroupLabels = false;
+                    displayPointsToggle.checked = displayPoints = true;
+                }
+                if (!nonGroupLabelsAlreadyAutoEnabled && olZoom == 2 && zoomHistory[0] < 2) { // zoomed in to phylum
+                    // nonGroupLabels are disabled initially to keep low zooms uncluttered
+                    displayNonGroupLabelsToggle.checked = displayNonGroupLabels = true;
+                    nonGroupLabelsAlreadyAutoEnabled = true;    // enably only once just to make good first impression
+                }
             }
+            //if (map.getView().getAnimating()) return;
             
-            wasAboveThreshold = isAboveThreshold;
-        });
+        })
+        
+        //var displayPointsUserState = null;
+        //var displayNonGroupLabelsUserState = null;
+        //var wasAboveThreshold = false;
+        //var nonGroupLabelsAutoEnabled = false;
+        //
+        //map.on('moveend', function() {
+		//	return
+        //    // Remove pbf layer if all disabled (for performance)
+        //    //if (!displayPoints && !displayGroupLabels && !displayNonGroupLabels && isMobile) {
+        //    //    map.removeLayer(pbfLayer);
+        //    //}
+        //    
+        //    const currentZoom = Math.floor(map.getView().getZoom());
+        //    const thresholdZoom = pbfDirZooms[pbfDirZooms.length - 1] + 1;
+        //    const isAboveThreshold = currentZoom >= thresholdZoom;
+        //    
+        //    return
+        //    
+        //    // auto-enable once at zoom=2
+        //    if (!displayNonGroupLabels && !nonGroupLabelsAutoEnabled && currentZoom==2) {
+        //        displayNonGroupLabelsToggle.checked = displayNonGroupLabels = true;
+        //    }
+        //    
+        //    
+        //    
+        //    if (isAboveThreshold && !wasAboveThreshold) {
+        //        // Entering threshold zoom - save states and apply automatic changes
+        //        displayPointsUserState = displayPoints;
+        //        displayNonGroupLabelsUserState = displayNonGroupLabels;
+        //        
+        //        displayNonGroupLabels = false;
+        //        displayPoints = true;
+        //        displayNonGroupLabelsToggle.checked = false;
+        //        displayPointsToggle.checked = true;
+        //        pbfLayer.setStyle(autoStyle);
+        //    } 
+        //    else if (!isAboveThreshold && wasAboveThreshold && 
+        //             displayPointsUserState !== null && displayNonGroupLabelsUserState !== null) {
+        //        // Exiting threshold zoom - restore previous states
+        //        displayPoints = displayPointsUserState;
+        //        displayNonGroupLabels = displayNonGroupLabelsUserState;
+        //        displayPointsToggle.checked = displayPoints;
+        //        displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
+        //        
+        //        displayPointsUserState = null;
+        //        displayNonGroupLabelsUserState = null;
+        //        pbfLayer.setStyle(autoStyle);
+        //    }
+        //    
+        //    wasAboveThreshold = isAboveThreshold;
+        //});
         
         // Add a vector layer for temporary lines
         const tempLineSource = new ol.source.Vector();
@@ -528,6 +635,7 @@
         
         
         let currentLineFeature = null;
+        let currentPolygonFeature = null;
         
         // Create hover overlay for desktop
         if (!isMobile) {
@@ -574,15 +682,31 @@
                       }
                       return;
                 }
+                const olZoom = map.getView().getZoom();
+                const rankMatchZoom = 
+                      olZoom > 0 && 
+                      ranks.length >= olZoom && 
+                      ranks[olZoom - 1] && 
+                      ranks[olZoom - 1].startsWith(feature.get('rank'));
+                
+                var nameHtml = '<b>' + name + '</b>';
+                if (rankMatchZoom) {
+                    var color = getColorRgb(feature.get('id'));
+                    nameHtml = '<b style="background: '+color+'; padding: 2px 4px; border-radius: 3px;">' + name + '</b>'
+                }
                 
                 // Position the label
                 hoverOverlay.setPosition(evt.coordinate);
-                hoverElement.innerHTML = (hier ? '<i>'+hier + '</i><br>' : '')+'<b>' + name + '</b>';
+                hoverElement.innerHTML = (hier ? '<i>'+hier + '</i><br>' : '')+nameHtml;
                 hoverElement.style.display = 'block';
                 map.getTargetElement().style.cursor = 'pointer';
                 
                 // Create line to parent if parent coordinates exist
-                drawLineToParent(feature);
+                if (feature.type_ != 'Polygon') {
+                    drawLineToParent(feature);
+                    
+                }
+                drawPolygon(feature);
                 
               } else {
                 hoverElement.style.display = 'none';
@@ -608,6 +732,35 @@ function drawLineToParent(feature) {
           geometry: lineGeometry
         });
         tempLineSource.addFeature(currentLineFeature);
+    }
+}
+function drawPolygon(feature) {
+    if (currentPolygonFeature) {
+        tempLineSource.removeFeature(currentPolygonFeature);
+        currentPolygonFeature = null;
+    }
+    
+    const properties = feature.properties_;
+    
+    if (properties && properties.polygon) {
+        try {
+            const polygonString = properties.polygon;
+            const coordsString = polygonString.replace('POLYGON ((', '').replace('))', '');
+            const coordPairs = coordsString.split(', ');
+            const coordinates = coordPairs.map(pair => {
+                const [x, y] = pair.split(' ').map(Number);
+                return [x, y];
+            });
+            
+            const polygonGeometry = new ol.geom.Polygon([coordinates]);
+            currentPolygonFeature = new ol.Feature({
+                geometry: polygonGeometry
+            });
+            
+            tempLineSource.addFeature(currentPolygonFeature);
+        } catch (error) {
+            console.error('Error parsing polygon:', error);
+        }
     }
 }
 
@@ -668,6 +821,9 @@ function drawLineToParent(feature) {
         map.getView().on('change:resolution', showZoomIndicator);
         setTimeout(showZoomIndicator, 100);
         
+        
+        
+        
         const zoomIndicatorControl = new ol.control.Control({
           element: zoomIndicator
         });
@@ -688,9 +844,9 @@ function drawLineToParent(feature) {
             <option value="en">English</option>
             <!-- <option value="none">No labels</option> -->
           </select>
-          <!-- <label style="display: block;"> -->
-            <!-- <input type="checkbox" id="declutter-toggle" checked> Declutter -->
-          <!-- </label> -->
+          <label style="display: none;">
+            <input type="checkbox" id="declutter-toggle" > Declutter
+          </label>
           <label style="display: block;">
             <input type="checkbox" id="displayNonGroupLabels-toggle" > Taxa names
           </label>
@@ -718,7 +874,7 @@ function drawLineToParent(feature) {
         
         // Get reference to the select inside the control
         const olLangSelect = document.getElementById('ol-language-select');
-        //const declutterToggle = document.getElementById('declutter-toggle');
+        const declutterToggle = document.getElementById('declutter-toggle');
         displayNonGroupLabelsToggle = document.getElementById('displayNonGroupLabels-toggle');
         const groupLabelsToggle = document.getElementById('groupLabels-toggle');
         displayPointsToggle = document.getElementById('points-toggle');
@@ -735,14 +891,17 @@ function drawLineToParent(feature) {
         olLangSelect.addEventListener('change', updateLanguage);
         olLangSelect.value = lang;
         
-        //declutterToggle.addEventListener('change', function() {
-        //  if (pbfLayer != null) {
-        //    pbfLayer.declutter = this.checked;
-        //    pbfLayer.setStyle(autoStyle);
-        //  }
-        //  //pbfLayer.setDeclutter(this.checked);
-        //  
-        //});
+        declutterToggle.addEventListener('change', function() {
+          if (pbfLayer != null) {
+            //pbfLayer.declutter = this.checked;
+            pbfLayer.setDeclutter(this.checked);
+            pbfLayer.setStyle(autoStyle);
+          }
+          
+          
+        });
+        declutterToggle.checked = declutterGlobal;
+        
         displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
         displayNonGroupLabelsToggle.addEventListener('change', function() {
           if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
@@ -768,11 +927,16 @@ function drawLineToParent(feature) {
 const contextMenu = document.createElement('div');
 contextMenu.className = 'gbif-context-menu';
 contextMenu.style.display = 'none'; // Start hidden
+var contextMenuVisible = false;
 document.body.appendChild(contextMenu);
 
 // Handle LMB on map
 
 map.on('singleclick', function(evt) {
+    if (isMobile && contextMenuVisible) {hideContextMenu(); return;} // On mobile we close menu on any click outside menu
+    if (!isMobile && contextMenuVisible) hideContextMenu(); // On desktop allow immediate open of new menu
+    //if (!isMobile && !contextMenu.contains(evt.target))
+    
     const pixel = map.getEventPixel(evt.originalEvent || evt);
     const hitTolerance = isMobile ? 10 : 0;
     const feature = map.forEachFeatureAtPixel(
@@ -782,6 +946,7 @@ map.on('singleclick', function(evt) {
     );
 
     if (feature) {
+        
         const properties = feature.properties_ || {}; // Safer default
         let gbifId = null;
         try {
@@ -791,7 +956,10 @@ map.on('singleclick', function(evt) {
         }
 
         if (gbifId) {
-            drawLineToParent(feature);
+            if (feature.type_ != 'Polygon') {
+                drawLineToParent(feature);
+            }
+            
             console.log('gbifid=' + gbifId);
 
             
@@ -799,7 +967,7 @@ map.on('singleclick', function(evt) {
             displayCombinedData(properties, { image: null, externalResources: [] }); // Pass empty WD data initially
             positionContextMenu(evt); // Ensure menu is positioned correctly
             contextMenu.style.display = 'block'; // Make it visible
-
+            contextMenuVisible = true;
             
             // Do NOT await this call. Let it run in the background.
             fetchAndApplyWikidata(gbifId, properties);
@@ -808,23 +976,9 @@ map.on('singleclick', function(evt) {
     }
 });
 
-function showContextMenu(evt, content) {
-    // Create structure with separate content area
-    contextMenu.innerHTML = `
-        <div style="position: relative;">
-            <button class="context-menu-close" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
-            <div class="context-menu-content">${content}</div>
-        </div>
-    `;
-    
-    positionContextMenu(evt);
-    contextMenu.style.display = 'block';
-    
-    contextMenu.querySelector('.context-menu-close').addEventListener('click', hideContextMenu);
-}
-
 function hideContextMenu() {
     contextMenu.style.display = 'none';
+    contextMenuVisible = false;
 }
 
 function positionContextMenu() {
@@ -842,11 +996,14 @@ function positionContextMenu() {
 }
 
 // Close when clicking elsewhere
-document.addEventListener('click', function(evt) {
-    if (!contextMenu.contains(evt.target) && contextMenu.style.display === 'block') {
-        hideContextMenu();
-    }
-});
+//document.addEventListener('click', function(evt) {
+//    if (!contextMenu.contains(evt.target) && contextMenu.style.display === 'block') {
+//        console.log('closing menu')
+//        hideContextMenu();
+//        evt.stopPropagation();
+//    }
+//	
+//});
 
 // Prevent closing when clicking inside menu
 contextMenu.addEventListener('click', function(evt) {
@@ -880,20 +1037,6 @@ async function fetchAndApplyWikidata(gbifId, featureProps) {
 }
 
 
-
-function showContextMenuContent(content) {
-    // Replace content but keep close button
-    const closeBtn = contextMenu.querySelector('.context-menu-close');
-    contextMenu.innerHTML = `
-        <div style="position: relative;">
-            ${closeBtn.outerHTML}
-            ${content}
-        </div>
-    `;
-    // Reattach event listener to new button
-    contextMenu.querySelector('.context-menu-close').addEventListener('click', hideContextMenu);
-}
-
 // Display combined data in context menu
 function displayCombinedData(gbifData, wikidataData) {
     // Ensure inputs are valid objects
@@ -901,10 +1044,28 @@ function displayCombinedData(gbifData, wikidataData) {
     wikidataData = wikidataData || { image: null, externalResources: [] };
 
     let html = `<div style="max-width: 350px;">`;
+    
+    // Conditional color hint
+    var underlineCss = '';
+    const olZoom = map.getView().getZoom();
+    const rankMatchZoom = 
+          olZoom > 0 && 
+          ranks.length >= olZoom && 
+          ranks[olZoom - 1] && 
+          ranks[olZoom - 1].startsWith(gbifData.rank);
+    if (rankMatchZoom) {
+        var color = getColorRgb(gbifData.id);
+        //underlineCss = "border-top: 8px solid "+ color;
+        html += `<div style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 10px; height: 80px; background-color: ${color}; margin-right: -10px;"></div>`;
+    }
 
     // --- Scientific Name ---
     const scientificName = gbifData.scientificName || 'N/A';
-    html += `<h3 style="margin: 0 0 0.5rem 0; color: #2c5aa0;">${scientificName}</h3>`;
+    var name = getLocalizedName(gbifData)
+    var nameStr = name != scientificName ? ` (${name})` : "";
+    html += `<h3 style="margin: 0 0 0.5rem 0; color: #2c5aa0; ${underlineCss}">${scientificName+nameStr}</h3>`;
+    
+    
 
     // --- Authorship ---
     if (gbifData.authorship) {
@@ -950,7 +1111,11 @@ function displayCombinedData(gbifData, wikidataData) {
     if (gbifData.id) {
         links.push(`<a href="https://www.gbif.org/species/${gbifData.id}" target="_blank">GBIF</a>`);
     }
-
+    var name = getLocalizedName(gbifData)
+    const ytQuery = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name);
+    links.push(`<a href="${ytQuery}" target="_blank">YT</a>`);
+    
+    //console.log('name='+name)
     const priorityOrder = ["enWiki", "ruWiki", "LifeMap"];
 
     // Wikidata External Resources
@@ -1025,7 +1190,7 @@ function displayCombinedData(gbifData, wikidataData) {
         // Fallback if structure unexpectedly changed (e.g., called before initial show)
         contextMenu.innerHTML = `
             <div style="position: relative;">
-                <button class="context-menu-close" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+                <button class="context-menu-close" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 2em; cursor: pointer;">×</button>
                 <div class="context-menu-content">${html}</div>
             </div>
         `;
@@ -1230,3 +1395,6 @@ function getColorRgb(input, pastelFactor = 1.0) {
     </script>
   </body>
 </html>
+
+
+

@@ -1,0 +1,8326 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+<style>
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+a:visited {
+    text-decoration: underline;
+}
+.tag-filter-section {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.tag-filter-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.tag-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.tag-filter-option {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+.tag-filter-count {
+    margin-left: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+.tag-filter-select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.control-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.row-count {
+    margin-left: auto;
+    color: #666;
+    font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+<details>
+<summary>Details</summary>
+<pre>MATCH (t:Taxon)
+RETURN t.id, t.scientificName, t.labelRu, t.rank, t.depth, t.descendants
+ORDER BY t.descendants DESC
+LIMIT 1000</pre>
+</details>
+<div id="tagFiltersContainer"></div>
+<div class="control-bar">
+    <select id="tagFilterSelect" class="tag-filter-select">
+        <option value="">Tag & Filter</option>
+    </select>
+    <label for="fSearch">Search</label>
+    <input type="text" id="fSearch" name="fSearch">
+    <label>2025-08-27</label>
+    <div class="row-count" id="rowCount">0 rows</div>
+</div>
+<div id="example-table"></div>
+
+<script>
+// Columns to be interpreted as tags initially
+var initialTagColumns = [];
+
+var data = 
+//JSON_ARRAY_START[
+  {
+    "t.id": 1,
+    "t.scientificName": "root",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 0,
+    "t.descendants": 2684549
+  },
+  {
+    "t.id": 131567,
+    "t.scientificName": "cellular organisms",
+    "t.labelRu": null,
+    "t.rank": "cellular root",
+    "t.depth": 1,
+    "t.descendants": 2393663
+  },
+  {
+    "t.id": 2759,
+    "t.scientificName": "Eukaryota",
+    "t.labelRu": "эукариоты",
+    "t.rank": "domain",
+    "t.depth": 2,
+    "t.descendants": 1789203
+  },
+  {
+    "t.id": 33154,
+    "t.scientificName": "Opisthokonta",
+    "t.labelRu": "заднежгутиковые",
+    "t.rank": "clade",
+    "t.depth": 3,
+    "t.descendants": 1450704
+  },
+  {
+    "t.id": 33208,
+    "t.scientificName": "Metazoa",
+    "t.labelRu": "многоклеточные животные",
+    "t.rank": "kingdom",
+    "t.depth": 4,
+    "t.descendants": 1240191
+  },
+  {
+    "t.id": 6072,
+    "t.scientificName": "Eumetazoa",
+    "t.labelRu": "эуметазои",
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 1233333
+  },
+  {
+    "t.id": 33213,
+    "t.scientificName": "Bilateria",
+    "t.labelRu": "двусторонне-симметричные",
+    "t.rank": "clade",
+    "t.depth": 6,
+    "t.descendants": 1216689
+  },
+  {
+    "t.id": 33317,
+    "t.scientificName": "Protostomia",
+    "t.labelRu": "первичноротые",
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 1080975
+  },
+  {
+    "t.id": 1206794,
+    "t.scientificName": "Ecdysozoa",
+    "t.labelRu": "линяющие",
+    "t.rank": "clade",
+    "t.depth": 8,
+    "t.descendants": 982719
+  },
+  {
+    "t.id": 88770,
+    "t.scientificName": "Panarthropoda",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 9,
+    "t.descendants": 961339
+  },
+  {
+    "t.id": 6656,
+    "t.scientificName": "Arthropoda",
+    "t.labelRu": "членистоногие",
+    "t.rank": "phylum",
+    "t.depth": 10,
+    "t.descendants": 959250
+  },
+  {
+    "t.id": 197563,
+    "t.scientificName": "Mandibulata",
+    "t.labelRu": "жвалоносные",
+    "t.rank": "clade",
+    "t.depth": 11,
+    "t.descendants": 874764
+  },
+  {
+    "t.id": 197562,
+    "t.scientificName": "Pancrustacea",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 869857
+  },
+  {
+    "t.id": 6960,
+    "t.scientificName": "Hexapoda",
+    "t.labelRu": "шестиногие",
+    "t.rank": "subphylum",
+    "t.depth": 13,
+    "t.descendants": 820549
+  },
+  {
+    "t.id": 50557,
+    "t.scientificName": "Insecta",
+    "t.labelRu": "насекомые",
+    "t.rank": "class",
+    "t.depth": 14,
+    "t.descendants": 801392
+  },
+  {
+    "t.id": 85512,
+    "t.scientificName": "Dicondylia",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 15,
+    "t.descendants": 801125
+  },
+  {
+    "t.id": 7496,
+    "t.scientificName": "Pterygota",
+    "t.labelRu": "крылатые насекомые",
+    "t.rank": "subclass",
+    "t.depth": 16,
+    "t.descendants": 800779
+  },
+  {
+    "t.id": 33340,
+    "t.scientificName": "Neoptera",
+    "t.labelRu": "новокрылые",
+    "t.rank": "infraclass",
+    "t.depth": 17,
+    "t.descendants": 790951
+  },
+  {
+    "t.id": 33392,
+    "t.scientificName": "Endopterygota",
+    "t.labelRu": "насекомые с полным превращением",
+    "t.rank": "cohort",
+    "t.depth": 18,
+    "t.descendants": 706815
+  },
+  {
+    "t.id": 2,
+    "t.scientificName": "Bacteria",
+    "t.labelRu": "бактерии",
+    "t.rank": "domain",
+    "t.depth": 2,
+    "t.descendants": 589384
+  },
+  {
+    "t.id": 3379134,
+    "t.scientificName": "Pseudomonadati",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 288897
+  },
+  {
+    "t.id": 33090,
+    "t.scientificName": "Viridiplantae",
+    "t.labelRu": "Зелёные растения",
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 275756
+  },
+  {
+    "t.id": 10239,
+    "t.scientificName": "Viruses",
+    "t.labelRu": "вирусы",
+    "t.rank": "acellular root",
+    "t.depth": 1,
+    "t.descendants": 270033
+  },
+  {
+    "t.id": 7147,
+    "t.scientificName": "Diptera",
+    "t.labelRu": "двукрылые",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 269957
+  },
+  {
+    "t.id": 35493,
+    "t.scientificName": "Streptophyta",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 261445
+  },
+  {
+    "t.id": 131221,
+    "t.scientificName": "Streptophytina",
+    "t.labelRu": null,
+    "t.rank": "subphylum",
+    "t.depth": 5,
+    "t.descendants": 261042
+  },
+  {
+    "t.id": 3193,
+    "t.scientificName": "Embryophyta",
+    "t.labelRu": "высшие растения",
+    "t.rank": "clade",
+    "t.depth": 6,
+    "t.descendants": 259563
+  },
+  {
+    "t.id": 58023,
+    "t.scientificName": "Tracheophyta",
+    "t.labelRu": "сосудистые растения",
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 248652
+  },
+  {
+    "t.id": 78536,
+    "t.scientificName": "Euphyllophyta",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 8,
+    "t.descendants": 247629
+  },
+  {
+    "t.id": 1224,
+    "t.scientificName": "Pseudomonadota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 240368
+  },
+  {
+    "t.id": 58024,
+    "t.scientificName": "Spermatophyta",
+    "t.labelRu": "семенные растения",
+    "t.rank": "clade",
+    "t.depth": 9,
+    "t.descendants": 238009
+  },
+  {
+    "t.id": 3398,
+    "t.scientificName": "Magnoliopsida",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 10,
+    "t.descendants": 236183
+  },
+  {
+    "t.id": 1437183,
+    "t.scientificName": "Mesangiospermae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 11,
+    "t.descendants": 235779
+  },
+  {
+    "t.id": 1783272,
+    "t.scientificName": "Bacillati",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 231053
+  },
+  {
+    "t.id": 4751,
+    "t.scientificName": "Fungi",
+    "t.labelRu": "грибы",
+    "t.rank": "kingdom",
+    "t.depth": 4,
+    "t.descendants": 209936
+  },
+  {
+    "t.id": 2559587,
+    "t.scientificName": "Riboviria",
+    "t.labelRu": null,
+    "t.rank": "realm",
+    "t.depth": 2,
+    "t.descendants": 205125
+  },
+  {
+    "t.id": 2732396,
+    "t.scientificName": "Orthornavirae",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 197232
+  },
+  {
+    "t.id": 451864,
+    "t.scientificName": "Dikarya",
+    "t.labelRu": "высшие грибы",
+    "t.rank": "subkingdom",
+    "t.depth": 5,
+    "t.descendants": 189268
+  },
+  {
+    "t.id": 7399,
+    "t.scientificName": "Hymenoptera",
+    "t.labelRu": "перепончатокрылые",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 174833
+  },
+  {
+    "t.id": 71240,
+    "t.scientificName": "eudicotyledons",
+    "t.labelRu": "эвдикоты",
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 170452
+  },
+  {
+    "t.id": 91827,
+    "t.scientificName": "Gunneridae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 13,
+    "t.descendants": 170444
+  },
+  {
+    "t.id": 1437201,
+    "t.scientificName": "Pentapetalae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 14,
+    "t.descendants": 170399
+  },
+  {
+    "t.id": 85604,
+    "t.scientificName": "Amphiesmenoptera",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 19,
+    "t.descendants": 160794
+  },
+  {
+    "t.id": 7148,
+    "t.scientificName": "Nematocera",
+    "t.labelRu": "длинноусые",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 157694
+  },
+  {
+    "t.id": 7400,
+    "t.scientificName": "Apocrita",
+    "t.labelRu": "стебельчатобрюхие",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 151873
+  },
+  {
+    "t.id": 7088,
+    "t.scientificName": "Lepidoptera",
+    "t.labelRu": "чешуекрылые",
+    "t.rank": "order",
+    "t.depth": 20,
+    "t.descendants": 147834
+  },
+  {
+    "t.id": 2497569,
+    "t.scientificName": "Negarnaviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 140278
+  },
+  {
+    "t.id": 1236,
+    "t.scientificName": "Gammaproteobacteria",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 136756
+  },
+  {
+    "t.id": 2497571,
+    "t.scientificName": "Polyploviricotina",
+    "t.labelRu": null,
+    "t.rank": "subphylum",
+    "t.depth": 5,
+    "t.descendants": 135251
+  },
+  {
+    "t.id": 33511,
+    "t.scientificName": "Deuterostomia",
+    "t.labelRu": "вторичноротые",
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 134963
+  },
+  {
+    "t.id": 2497577,
+    "t.scientificName": "Insthoviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 131916
+  },
+  {
+    "t.id": 2499411,
+    "t.scientificName": "Articulavirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 131915
+  },
+  {
+    "t.id": 11308,
+    "t.scientificName": "Orthomyxoviridae",
+    "t.labelRu": "ортомиксовирусы",
+    "t.rank": "family",
+    "t.depth": 8,
+    "t.descendants": 131873
+  },
+  {
+    "t.id": 7711,
+    "t.scientificName": "Chordata",
+    "t.labelRu": "хордовые",
+    "t.rank": "phylum",
+    "t.depth": 8,
+    "t.descendants": 127399
+  },
+  {
+    "t.id": 89593,
+    "t.scientificName": "Craniata",
+    "t.labelRu": "черепные",
+    "t.rank": "subphylum",
+    "t.depth": 9,
+    "t.descendants": 126096
+  },
+  {
+    "t.id": 7742,
+    "t.scientificName": "Vertebrata",
+    "t.labelRu": "позвоночные",
+    "t.rank": "clade",
+    "t.depth": 10,
+    "t.descendants": 126094
+  },
+  {
+    "t.id": 7776,
+    "t.scientificName": "Gnathostomata",
+    "t.labelRu": "челюстноротые",
+    "t.rank": "clade",
+    "t.depth": 11,
+    "t.descendants": 125475
+  },
+  {
+    "t.id": 117570,
+    "t.scientificName": "Teleostomi",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 123045
+  },
+  {
+    "t.id": 117571,
+    "t.scientificName": "Euteleostomi",
+    "t.labelRu": "костные позвоночные",
+    "t.rank": "clade",
+    "t.depth": 13,
+    "t.descendants": 123044
+  },
+  {
+    "t.id": 4890,
+    "t.scientificName": "Ascomycota",
+    "t.labelRu": "аскомицеты",
+    "t.rank": "phylum",
+    "t.depth": 6,
+    "t.descendants": 122146
+  },
+  {
+    "t.id": 716545,
+    "t.scientificName": "saccharomyceta",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 118570
+  },
+  {
+    "t.id": 197911,
+    "t.scientificName": "Alphainfluenzavirus",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 112715
+  },
+  {
+    "t.id": 2955291,
+    "t.scientificName": "Alphainfluenzavirus influenzae",
+    "t.labelRu": null,
+    "t.rank": "species",
+    "t.depth": 10,
+    "t.descendants": 112714
+  },
+  {
+    "t.id": 11320,
+    "t.scientificName": "Influenza A virus",
+    "t.labelRu": "Вирус гриппа А",
+    "t.rank": null,
+    "t.depth": 11,
+    "t.descendants": 112713
+  },
+  {
+    "t.id": 147538,
+    "t.scientificName": "Pezizomycotina",
+    "t.labelRu": "пезизомикотины",
+    "t.rank": "subphylum",
+    "t.depth": 8,
+    "t.descendants": 111935
+  },
+  {
+    "t.id": 716546,
+    "t.scientificName": "leotiomyceta",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 9,
+    "t.descendants": 106018
+  },
+  {
+    "t.id": 41191,
+    "t.scientificName": "Glossata",
+    "t.labelRu": "хоботковые",
+    "t.rank": "suborder",
+    "t.depth": 21,
+    "t.descendants": 103927
+  },
+  {
+    "t.id": 41196,
+    "t.scientificName": "Neolepidoptera",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 22,
+    "t.descendants": 103856
+  },
+  {
+    "t.id": 41197,
+    "t.scientificName": "Heteroneura",
+    "t.labelRu": "разнокрылые бабочки",
+    "t.rank": "parvorder",
+    "t.depth": 23,
+    "t.descendants": 103158
+  },
+  {
+    "t.id": 37567,
+    "t.scientificName": "Ditrysia",
+    "t.labelRu": "двупорые",
+    "t.rank": "clade",
+    "t.depth": 24,
+    "t.descendants": 101624
+  },
+  {
+    "t.id": 7203,
+    "t.scientificName": "Brachycera",
+    "t.labelRu": "короткоусые двукрылые",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 101034
+  },
+  {
+    "t.id": 43733,
+    "t.scientificName": "Muscomorpha",
+    "t.labelRu": "круглошовные мухи",
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 98600
+  },
+  {
+    "t.id": 2697495,
+    "t.scientificName": "Spiralia",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 8,
+    "t.descendants": 98242
+  },
+  {
+    "t.id": 1206795,
+    "t.scientificName": "Lophotrochozoa",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 9,
+    "t.descendants": 96143
+  },
+  {
+    "t.id": 7041,
+    "t.scientificName": "Coleoptera",
+    "t.labelRu": "жесткокрылые",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 95728
+  },
+  {
+    "t.id": 201174,
+    "t.scientificName": "Actinomycetota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 95116
+  },
+  {
+    "t.id": 480118,
+    "t.scientificName": "Eremoneura",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 95007
+  },
+  {
+    "t.id": 1239,
+    "t.scientificName": "Bacillota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 93796
+  },
+  {
+    "t.id": 1760,
+    "t.scientificName": "Actinomycetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 93158
+  },
+  {
+    "t.id": 6843,
+    "t.scientificName": "Chelicerata",
+    "t.labelRu": "хелицеровые",
+    "t.rank": "subphylum",
+    "t.depth": 11,
+    "t.descendants": 84246
+  },
+  {
+    "t.id": 6854,
+    "t.scientificName": "Arachnida",
+    "t.labelRu": "паукообразные",
+    "t.rank": "class",
+    "t.depth": 12,
+    "t.descendants": 83311
+  },
+  {
+    "t.id": 71274,
+    "t.scientificName": "asterids",
+    "t.labelRu": "астериды",
+    "t.rank": "clade",
+    "t.depth": 15,
+    "t.descendants": 79699
+  },
+  {
+    "t.id": 480117,
+    "t.scientificName": "Cyclorrhapha",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 76520
+  },
+  {
+    "t.id": 41084,
+    "t.scientificName": "Polyphaga",
+    "t.labelRu": "разноядные жуки",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 76501
+  },
+  {
+    "t.id": 91061,
+    "t.scientificName": "Bacilli",
+    "t.labelRu": "бациллы",
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 76143
+  },
+  {
+    "t.id": 43786,
+    "t.scientificName": "Culicomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 74509
+  },
+  {
+    "t.id": 71275,
+    "t.scientificName": "rosids",
+    "t.labelRu": "розиды",
+    "t.rank": "clade",
+    "t.depth": 15,
+    "t.descendants": 73578
+  },
+  {
+    "t.id": 43784,
+    "t.scientificName": "Bibionomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 73556
+  },
+  {
+    "t.id": 41830,
+    "t.scientificName": "Sciaroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 73352
+  },
+  {
+    "t.id": 104431,
+    "t.scientificName": "Obtectomera",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 25,
+    "t.descendants": 72558
+  },
+  {
+    "t.id": 28211,
+    "t.scientificName": "Alphaproteobacteria",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 71269
+  },
+  {
+    "t.id": 41828,
+    "t.scientificName": "Chironomoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 69972
+  },
+  {
+    "t.id": 5204,
+    "t.scientificName": "Basidiomycota",
+    "t.labelRu": "базидиомицеты",
+    "t.rank": "phylum",
+    "t.depth": 6,
+    "t.descendants": 67076
+  },
+  {
+    "t.id": 8287,
+    "t.scientificName": "Sarcopterygii",
+    "t.labelRu": "лопастепёрые рыбы",
+    "t.rank": "superclass",
+    "t.depth": 14,
+    "t.descendants": 63566
+  },
+  {
+    "t.id": 1338369,
+    "t.scientificName": "Dipnotetrapodomorpha",
+    "t.labelRu": "дипнотетраподоморфы",
+    "t.rank": "clade",
+    "t.depth": 15,
+    "t.descendants": 63559
+  },
+  {
+    "t.id": 32523,
+    "t.scientificName": "Tetrapoda",
+    "t.labelRu": "четвероногие",
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 63527
+  },
+  {
+    "t.id": 1385,
+    "t.scientificName": "Bacillales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 62131
+  },
+  {
+    "t.id": 33342,
+    "t.scientificName": "Paraneoptera",
+    "t.labelRu": null,
+    "t.rank": "cohort",
+    "t.depth": 18,
+    "t.descendants": 61531
+  },
+  {
+    "t.id": 5302,
+    "t.scientificName": "Agaricomycotina",
+    "t.labelRu": null,
+    "t.rank": "subphylum",
+    "t.depth": 7,
+    "t.descendants": 59538
+  },
+  {
+    "t.id": 7898,
+    "t.scientificName": "Actinopterygii",
+    "t.labelRu": "лучепёрые рыбы",
+    "t.rank": "superclass",
+    "t.depth": 14,
+    "t.descendants": 59476
+  },
+  {
+    "t.id": 186623,
+    "t.scientificName": "Actinopteri",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 15,
+    "t.descendants": 59303
+  },
+  {
+    "t.id": 41665,
+    "t.scientificName": "Neopterygii",
+    "t.labelRu": "новопёрые рыбы",
+    "t.rank": "subclass",
+    "t.depth": 16,
+    "t.descendants": 59196
+  },
+  {
+    "t.id": 32443,
+    "t.scientificName": "Teleostei",
+    "t.labelRu": "костистые рыбы",
+    "t.rank": "infraclass",
+    "t.depth": 17,
+    "t.descendants": 59166
+  },
+  {
+    "t.id": 1955251,
+    "t.scientificName": "Proctotrupomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 58957
+  },
+  {
+    "t.id": 7149,
+    "t.scientificName": "Chironomidae",
+    "t.labelRu": "комары-звонцы",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 58749
+  },
+  {
+    "t.id": 1489341,
+    "t.scientificName": "Osteoglossocephalai",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 18,
+    "t.descendants": 57494
+  },
+  {
+    "t.id": 186625,
+    "t.scientificName": "Clupeocephala",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 19,
+    "t.descendants": 57037
+  },
+  {
+    "t.id": 155619,
+    "t.scientificName": "Agaricomycetes",
+    "t.labelRu": "агарикомицеты",
+    "t.rank": "class",
+    "t.depth": 8,
+    "t.descendants": 55835
+  },
+  {
+    "t.id": 7401,
+    "t.scientificName": "Ichneumonoidea",
+    "t.labelRu": "ихневмоноидные наездники",
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 53068
+  },
+  {
+    "t.id": 4447,
+    "t.scientificName": "Liliopsida",
+    "t.labelRu": "лилиопсиды",
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 52788
+  },
+  {
+    "t.id": 715989,
+    "t.scientificName": "sordariomyceta",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 10,
+    "t.descendants": 52683
+  },
+  {
+    "t.id": 7524,
+    "t.scientificName": "Hemiptera",
+    "t.labelRu": "полужесткокрылые",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 51255
+  },
+  {
+    "t.id": 1437197,
+    "t.scientificName": "Petrosaviidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 13,
+    "t.descendants": 49778
+  },
+  {
+    "t.id": 6933,
+    "t.scientificName": "Acari",
+    "t.labelRu": "клещи",
+    "t.rank": "subclass",
+    "t.depth": 13,
+    "t.descendants": 49286
+  },
+  {
+    "t.id": 6657,
+    "t.scientificName": "Crustacea",
+    "t.labelRu": "ракообразные",
+    "t.rank": "subphylum",
+    "t.depth": 13,
+    "t.descendants": 49269
+  },
+  {
+    "t.id": 43738,
+    "t.scientificName": "Schizophora",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 48923
+  },
+  {
+    "t.id": 6447,
+    "t.scientificName": "Mollusca",
+    "t.labelRu": "моллюски",
+    "t.rank": "phylum",
+    "t.depth": 10,
+    "t.descendants": 48707
+  },
+  {
+    "t.id": 32524,
+    "t.scientificName": "Amniota",
+    "t.labelRu": "амниоты",
+    "t.rank": "clade",
+    "t.depth": 17,
+    "t.descendants": 48124
+  },
+  {
+    "t.id": 91835,
+    "t.scientificName": "fabids",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 47560
+  },
+  {
+    "t.id": 33406,
+    "t.scientificName": "Cecidomyiidae",
+    "t.labelRu": "галлицы",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 46308
+  },
+  {
+    "t.id": 2172821,
+    "t.scientificName": "Multicrustacea",
+    "t.labelRu": null,
+    "t.rank": "superclass",
+    "t.depth": 14,
+    "t.descendants": 44167
+  },
+  {
+    "t.id": 500585,
+    "t.scientificName": "unclassified Lepidoptera",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 21,
+    "t.descendants": 43707
+  },
+  {
+    "t.id": 41088,
+    "t.scientificName": "Cucujiformia",
+    "t.labelRu": "кукуйиформные",
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 43463
+  },
+  {
+    "t.id": 329961,
+    "t.scientificName": "unclassified Cecidomyiidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 43408
+  },
+  {
+    "t.id": 147550,
+    "t.scientificName": "Sordariomycetes",
+    "t.labelRu": "сордариомицеты",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 43112
+  },
+  {
+    "t.id": 2698737,
+    "t.scientificName": "Sar",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 3,
+    "t.descendants": 41505
+  },
+  {
+    "t.id": 91347,
+    "t.scientificName": "Enterobacterales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 39552
+  },
+  {
+    "t.id": 186817,
+    "t.scientificName": "Bacillaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 39492
+  },
+  {
+    "t.id": 6946,
+    "t.scientificName": "Acariformes",
+    "t.labelRu": "акариформные клещи",
+    "t.rank": "superorder",
+    "t.depth": 14,
+    "t.descendants": 39347
+  },
+  {
+    "t.id": 91888,
+    "t.scientificName": "lamiids",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 38619
+  },
+  {
+    "t.id": 7434,
+    "t.scientificName": "Aculeata",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 37794
+  },
+  {
+    "t.id": 6448,
+    "t.scientificName": "Gastropoda",
+    "t.labelRu": "брюхоногие",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 37568
+  },
+  {
+    "t.id": 2732408,
+    "t.scientificName": "Pisuviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 37058
+  },
+  {
+    "t.id": 356,
+    "t.scientificName": "Hyphomicrobiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 36567
+  },
+  {
+    "t.id": 1489388,
+    "t.scientificName": "Euteleosteomorpha",
+    "t.labelRu": "Настоящие костистые рыбы",
+    "t.rank": "cohort",
+    "t.depth": 20,
+    "t.descendants": 36544
+  },
+  {
+    "t.id": 114727,
+    "t.scientificName": "H1N1 subtype",
+    "t.labelRu": null,
+    "t.rank": "serotype",
+    "t.depth": 12,
+    "t.descendants": 36143
+  },
+  {
+    "t.id": 6681,
+    "t.scientificName": "Malacostraca",
+    "t.labelRu": "высшие раки",
+    "t.rank": "class",
+    "t.depth": 15,
+    "t.descendants": 36057
+  },
+  {
+    "t.id": 72041,
+    "t.scientificName": "Eumalacostraca",
+    "t.labelRu": "эумалакостраки",
+    "t.rank": "subclass",
+    "t.depth": 16,
+    "t.descendants": 35976
+  },
+  {
+    "t.id": 1798711,
+    "t.scientificName": "Cyanobacteriota/Melainabacteria group",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 35710
+  },
+  {
+    "t.id": 1117,
+    "t.scientificName": "Cyanobacteriota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 5,
+    "t.descendants": 35409
+  },
+  {
+    "t.id": 119210,
+    "t.scientificName": "H3N2 subtype",
+    "t.labelRu": null,
+    "t.rank": "serotype",
+    "t.depth": 12,
+    "t.descendants": 35315
+  },
+  {
+    "t.id": 2731341,
+    "t.scientificName": "Duplodnaviria",
+    "t.labelRu": null,
+    "t.rank": "realm",
+    "t.depth": 2,
+    "t.descendants": 34814
+  },
+  {
+    "t.id": 2731360,
+    "t.scientificName": "Heunggongvirae",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 34813
+  },
+  {
+    "t.id": 123365,
+    "t.scientificName": "Neoteleostei",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 21,
+    "t.descendants": 34617
+  },
+  {
+    "t.id": 123366,
+    "t.scientificName": "Eurypterygia",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 34595
+  },
+  {
+    "t.id": 123367,
+    "t.scientificName": "Ctenosquamata",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 34028
+  },
+  {
+    "t.id": 3028117,
+    "t.scientificName": "Cyanophyceae",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 33949
+  },
+  {
+    "t.id": 452333,
+    "t.scientificName": "Agaricomycetidae",
+    "t.labelRu": "агарикомицетовые",
+    "t.rank": "subclass",
+    "t.depth": 9,
+    "t.descendants": 33863
+  },
+  {
+    "t.id": 8457,
+    "t.scientificName": "Sauropsida",
+    "t.labelRu": "завропсиды",
+    "t.rank": "clade",
+    "t.depth": 18,
+    "t.descendants": 33840
+  },
+  {
+    "t.id": 32561,
+    "t.scientificName": "Sauria",
+    "t.labelRu": "ящерицы",
+    "t.rank": "clade",
+    "t.depth": 19,
+    "t.descendants": 33839
+  },
+  {
+    "t.id": 49928,
+    "t.scientificName": "unclassified Bacteria",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 3,
+    "t.descendants": 33739
+  },
+  {
+    "t.id": 7422,
+    "t.scientificName": "Chalcidoidea",
+    "t.labelRu": "хальциды",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 33738
+  },
+  {
+    "t.id": 2731618,
+    "t.scientificName": "Uroviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 33382
+  },
+  {
+    "t.id": 2731619,
+    "t.scientificName": "Caudoviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 33381
+  },
+  {
+    "t.id": 123368,
+    "t.scientificName": "Acanthomorphata",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 24,
+    "t.descendants": 33354
+  },
+  {
+    "t.id": 72274,
+    "t.scientificName": "Pseudomonadales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 32857
+  },
+  {
+    "t.id": 2732506,
+    "t.scientificName": "Pisoniviricetes",
+    "t.labelRu": "пизонивирицеты",
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 32733
+  },
+  {
+    "t.id": 1386,
+    "t.scientificName": "Bacillus",
+    "t.labelRu": "бациллы",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 32631
+  },
+  {
+    "t.id": 123369,
+    "t.scientificName": "Euacanthomorphacea",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 25,
+    "t.descendants": 32327
+  },
+  {
+    "t.id": 1489872,
+    "t.scientificName": "Percomorphaceae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 26,
+    "t.descendants": 31882
+  },
+  {
+    "t.id": 135621,
+    "t.scientificName": "Pseudomonadaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 30918
+  },
+  {
+    "t.id": 28216,
+    "t.scientificName": "Betaproteobacteria",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 30879
+  },
+  {
+    "t.id": 85011,
+    "t.scientificName": "Kitasatosporales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 30772
+  },
+  {
+    "t.id": 2062,
+    "t.scientificName": "Streptomycetaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 30746
+  },
+  {
+    "t.id": 185979,
+    "t.scientificName": "unclassified Bacillus (in: firmicutes)",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 30694
+  },
+  {
+    "t.id": 286,
+    "t.scientificName": "Pseudomonas",
+    "t.labelRu": "Псевдомонады",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 30435
+  },
+  {
+    "t.id": 91882,
+    "t.scientificName": "campanulids",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 29857
+  },
+  {
+    "t.id": 543,
+    "t.scientificName": "Enterobacteriaceae",
+    "t.labelRu": "энтеробактерии",
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 29745
+  },
+  {
+    "t.id": 1883,
+    "t.scientificName": "Streptomyces",
+    "t.labelRu": "стрептомицеты",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 29705
+  },
+  {
+    "t.id": 464095,
+    "t.scientificName": "Picornavirales",
+    "t.labelRu": "пикорнавирусы",
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 29182
+  },
+  {
+    "t.id": 5338,
+    "t.scientificName": "Agaricales",
+    "t.labelRu": "агариковые",
+    "t.rank": "order",
+    "t.depth": 10,
+    "t.descendants": 28803
+  },
+  {
+    "t.id": 196821,
+    "t.scientificName": "unclassified Pseudomonas",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 28761
+  },
+  {
+    "t.id": 2593676,
+    "t.scientificName": "unclassified Streptomyces",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 28161
+  },
+  {
+    "t.id": 715962,
+    "t.scientificName": "dothideomyceta",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 10,
+    "t.descendants": 27745
+  },
+  {
+    "t.id": 1783270,
+    "t.scientificName": "FCB group",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 27607
+  },
+  {
+    "t.id": 43737,
+    "t.scientificName": "Aschiza",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 27592
+  },
+  {
+    "t.id": 147541,
+    "t.scientificName": "Dothideomycetes",
+    "t.labelRu": "дотидеомицеты",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 26980
+  },
+  {
+    "t.id": 7408,
+    "t.scientificName": "Ichneumonidae",
+    "t.labelRu": "Ихневмониды",
+    "t.rank": "family",
+    "t.depth": 22,
+    "t.descendants": 26697
+  },
+  {
+    "t.id": 68336,
+    "t.scientificName": "Bacteroidota/Chlorobiota group",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 26609
+  },
+  {
+    "t.id": 7402,
+    "t.scientificName": "Braconidae",
+    "t.labelRu": "бракониды",
+    "t.rank": "family",
+    "t.depth": 22,
+    "t.descendants": 26360
+  },
+  {
+    "t.id": 48479,
+    "t.scientificName": "environmental samples",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 3,
+    "t.descendants": 26214
+  },
+  {
+    "t.id": 85006,
+    "t.scientificName": "Micrococcales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 25854
+  },
+  {
+    "t.id": 976,
+    "t.scientificName": "Bacteroidota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 6,
+    "t.descendants": 25773
+  },
+  {
+    "t.id": 43808,
+    "t.scientificName": "Orthocladiinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 25620
+  },
+  {
+    "t.id": 6893,
+    "t.scientificName": "Araneae",
+    "t.labelRu": "пауки",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 25424
+  },
+  {
+    "t.id": 4734,
+    "t.scientificName": "commelinids",
+    "t.labelRu": "коммелиниды",
+    "t.rank": "clade",
+    "t.depth": 14,
+    "t.descendants": 25187
+  },
+  {
+    "t.id": 91836,
+    "t.scientificName": "malvids",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 25033
+  },
+  {
+    "t.id": 43741,
+    "t.scientificName": "Acalyptratae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 25,
+    "t.descendants": 24850
+  },
+  {
+    "t.id": 43742,
+    "t.scientificName": "Calyptratae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 25,
+    "t.descendants": 24063
+  },
+  {
+    "t.id": 80840,
+    "t.scientificName": "Burkholderiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 23882
+  },
+  {
+    "t.id": 11974,
+    "t.scientificName": "Caliciviridae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 22801
+  },
+  {
+    "t.id": 4209,
+    "t.scientificName": "Asterales",
+    "t.labelRu": "астроцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 22773
+  },
+  {
+    "t.id": 33341,
+    "t.scientificName": "Polyneoptera",
+    "t.labelRu": null,
+    "t.rank": "cohort",
+    "t.depth": 18,
+    "t.descendants": 22569
+  },
+  {
+    "t.id": 6340,
+    "t.scientificName": "Annelida",
+    "t.labelRu": "кольчатые черви",
+    "t.rank": "phylum",
+    "t.depth": 10,
+    "t.descendants": 22467
+  },
+  {
+    "t.id": 37570,
+    "t.scientificName": "Noctuoidea",
+    "t.labelRu": "совкообразные",
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 22371
+  },
+  {
+    "t.id": 222543,
+    "t.scientificName": "Hypocreomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 21989
+  },
+  {
+    "t.id": 33630,
+    "t.scientificName": "Alveolata",
+    "t.labelRu": "альвеоляты",
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 21577
+  },
+  {
+    "t.id": 83136,
+    "t.scientificName": "Trombidiformes",
+    "t.labelRu": "тромбидиформные клещи",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 21456
+  },
+  {
+    "t.id": 1955247,
+    "t.scientificName": "Auchenorrhyncha",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 21233
+  },
+  {
+    "t.id": 73496,
+    "t.scientificName": "Asparagales",
+    "t.labelRu": "Спаржецветные",
+    "t.rank": "order",
+    "t.depth": 14,
+    "t.descendants": 21110
+  },
+  {
+    "t.id": 6231,
+    "t.scientificName": "Nematoda",
+    "t.labelRu": "нематоды",
+    "t.rank": "phylum",
+    "t.depth": 9,
+    "t.descendants": 20984
+  },
+  {
+    "t.id": 43739,
+    "t.scientificName": "Platypezoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 25,
+    "t.descendants": 20831
+  },
+  {
+    "t.id": 36164,
+    "t.scientificName": "Phoridae",
+    "t.labelRu": "Горбатки",
+    "t.rank": "family",
+    "t.depth": 26,
+    "t.descendants": 20622
+  },
+  {
+    "t.id": 6947,
+    "t.scientificName": "Prostigmata",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 16,
+    "t.descendants": 20570
+  },
+  {
+    "t.id": 186634,
+    "t.scientificName": "Otomorpha",
+    "t.labelRu": null,
+    "t.rank": "cohort",
+    "t.depth": 20,
+    "t.descendants": 20489
+  },
+  {
+    "t.id": 4210,
+    "t.scientificName": "Asteraceae",
+    "t.labelRu": "астровые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 20241
+  },
+  {
+    "t.id": 355688,
+    "t.scientificName": "Agaricomycetes incertae sedis",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 20176
+  },
+  {
+    "t.id": 142786,
+    "t.scientificName": "Norovirus",
+    "t.labelRu": "норовирусы",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 20134
+  },
+  {
+    "t.id": 3431196,
+    "t.scientificName": "Norovirus norwalkense",
+    "t.labelRu": null,
+    "t.rank": "species",
+    "t.depth": 9,
+    "t.descendants": 20112
+  },
+  {
+    "t.id": 11983,
+    "t.scientificName": "Norwalk virus",
+    "t.labelRu": "Вирус Норуолк",
+    "t.rank": null,
+    "t.depth": 10,
+    "t.descendants": 20111
+  },
+  {
+    "t.id": 1329799,
+    "t.scientificName": "Archelosauria",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 20,
+    "t.descendants": 19986
+  },
+  {
+    "t.id": 72025,
+    "t.scientificName": "Fabales",
+    "t.labelRu": "бобовоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 19764
+  },
+  {
+    "t.id": 2787854,
+    "t.scientificName": "other entries",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 1,
+    "t.descendants": 19722
+  },
+  {
+    "t.id": 28384,
+    "t.scientificName": "other sequences",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 2,
+    "t.descendants": 19721
+  },
+  {
+    "t.id": 216305,
+    "t.scientificName": "Heterobranchia",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 19609
+  },
+  {
+    "t.id": 32519,
+    "t.scientificName": "Ostariophysi",
+    "t.labelRu": null,
+    "t.rank": "subcohort",
+    "t.depth": 21,
+    "t.descendants": 19414
+  },
+  {
+    "t.id": 81077,
+    "t.scientificName": "artificial sequences",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 3,
+    "t.descendants": 19306
+  },
+  {
+    "t.id": 186626,
+    "t.scientificName": "Otophysi",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 19297
+  },
+  {
+    "t.id": 29278,
+    "t.scientificName": "vectors",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 4,
+    "t.descendants": 19249
+  },
+  {
+    "t.id": 8492,
+    "t.scientificName": "Archosauria",
+    "t.labelRu": "архозавры",
+    "t.rank": "clade",
+    "t.depth": 21,
+    "t.descendants": 19177
+  },
+  {
+    "t.id": 216307,
+    "t.scientificName": "Euthyneura",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 13,
+    "t.descendants": 19148
+  },
+  {
+    "t.id": 436486,
+    "t.scientificName": "Dinosauria",
+    "t.labelRu": "динозавры",
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 19108
+  },
+  {
+    "t.id": 436489,
+    "t.scientificName": "Saurischia",
+    "t.labelRu": "ящеротазовые",
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 19102
+  },
+  {
+    "t.id": 436491,
+    "t.scientificName": "Theropoda",
+    "t.labelRu": "тероподы",
+    "t.rank": "clade",
+    "t.depth": 24,
+    "t.descendants": 19101
+  },
+  {
+    "t.id": 436492,
+    "t.scientificName": "Coelurosauria",
+    "t.labelRu": "целурозавры",
+    "t.rank": "clade",
+    "t.depth": 25,
+    "t.descendants": 19100
+  },
+  {
+    "t.id": 8782,
+    "t.scientificName": "Aves",
+    "t.labelRu": "птицы",
+    "t.rank": "class",
+    "t.depth": 26,
+    "t.descendants": 19096
+  },
+  {
+    "t.id": 38820,
+    "t.scientificName": "Poales",
+    "t.labelRu": "злакоцветные",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 19041
+  },
+  {
+    "t.id": 6905,
+    "t.scientificName": "Araneomorphae",
+    "t.labelRu": "аранеоморфные пауки",
+    "t.rank": "suborder",
+    "t.depth": 14,
+    "t.descendants": 18991
+  },
+  {
+    "t.id": 3803,
+    "t.scientificName": "Fabaceae",
+    "t.labelRu": "бобовые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 18986
+  },
+  {
+    "t.id": 7184,
+    "t.scientificName": "Sciaridae",
+    "t.labelRu": "Детритницы",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 18960
+  },
+  {
+    "t.id": 8825,
+    "t.scientificName": "Neognathae",
+    "t.labelRu": "новонёбные",
+    "t.rank": "infraclass",
+    "t.depth": 27,
+    "t.descendants": 18893
+  },
+  {
+    "t.id": 2153479,
+    "t.scientificName": "Formicoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 18801
+  },
+  {
+    "t.id": 36668,
+    "t.scientificName": "Formicidae",
+    "t.labelRu": "муравьи",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 18800
+  },
+  {
+    "t.id": 30001,
+    "t.scientificName": "Collembola",
+    "t.labelRu": "коллемболы",
+    "t.rank": "class",
+    "t.depth": 14,
+    "t.descendants": 18771
+  },
+  {
+    "t.id": 4143,
+    "t.scientificName": "Lamiales",
+    "t.labelRu": "ясноткоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 18674
+  },
+  {
+    "t.id": 197912,
+    "t.scientificName": "Betainfluenzavirus",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 18538
+  },
+  {
+    "t.id": 2955465,
+    "t.scientificName": "Betainfluenzavirus influenzae",
+    "t.labelRu": null,
+    "t.rank": "species",
+    "t.depth": 10,
+    "t.descendants": 18537
+  },
+  {
+    "t.id": 11520,
+    "t.scientificName": "Influenza B virus",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 11,
+    "t.descendants": 18536
+  },
+  {
+    "t.id": 50672,
+    "t.scientificName": "Empidoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 23,
+    "t.descendants": 18478
+  },
+  {
+    "t.id": 6157,
+    "t.scientificName": "Platyhelminthes",
+    "t.labelRu": "плоские черви",
+    "t.rank": "phylum",
+    "t.depth": 10,
+    "t.descendants": 18354
+  },
+  {
+    "t.id": 3078114,
+    "t.scientificName": "Neoaves",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 28,
+    "t.descendants": 17820
+  },
+  {
+    "t.id": 6682,
+    "t.scientificName": "Eucarida",
+    "t.labelRu": "эвкариды",
+    "t.rank": "superorder",
+    "t.depth": 17,
+    "t.descendants": 17702
+  },
+  {
+    "t.id": 83137,
+    "t.scientificName": "Sarcoptiformes",
+    "t.labelRu": "Саркоптиформные клещи",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 17677
+  },
+  {
+    "t.id": 33365,
+    "t.scientificName": "Cicadomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 17634
+  },
+  {
+    "t.id": 6683,
+    "t.scientificName": "Decapoda",
+    "t.labelRu": "десятиногие ракообразные",
+    "t.rank": "order",
+    "t.depth": 18,
+    "t.descendants": 17535
+  },
+  {
+    "t.id": 5125,
+    "t.scientificName": "Hypocreales",
+    "t.labelRu": "гипокрейные",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 17496
+  },
+  {
+    "t.id": 6820,
+    "t.scientificName": "Peracarida",
+    "t.labelRu": "перакариды",
+    "t.rank": "superorder",
+    "t.depth": 17,
+    "t.descendants": 17235
+  },
+  {
+    "t.id": 37572,
+    "t.scientificName": "Papilionoidea",
+    "t.labelRu": "булавоусые",
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 16751
+  },
+  {
+    "t.id": 156408,
+    "t.scientificName": "unclassified Hymenoptera",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 20,
+    "t.descendants": 16493
+  },
+  {
+    "t.id": 135623,
+    "t.scientificName": "Vibrionales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 16306
+  },
+  {
+    "t.id": 641,
+    "t.scientificName": "Vibrionaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 16292
+  },
+  {
+    "t.id": 43831,
+    "t.scientificName": "Metopininae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 27,
+    "t.descendants": 16229
+  },
+  {
+    "t.id": 6073,
+    "t.scientificName": "Cnidaria",
+    "t.labelRu": "стрекающие",
+    "t.rank": "phylum",
+    "t.depth": 6,
+    "t.descendants": 16197
+  },
+  {
+    "t.id": 119089,
+    "t.scientificName": "Chromadorea",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 10,
+    "t.descendants": 16111
+  },
+  {
+    "t.id": 54970,
+    "t.scientificName": "Chironominae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 16040
+  },
+  {
+    "t.id": 6692,
+    "t.scientificName": "Pleocyemata",
+    "t.labelRu": "плеоциматы",
+    "t.rank": "suborder",
+    "t.depth": 19,
+    "t.descendants": 16036
+  },
+  {
+    "t.id": 33343,
+    "t.scientificName": "Prosorrhyncha",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 20,
+    "t.descendants": 15868
+  },
+  {
+    "t.id": 33345,
+    "t.scientificName": "Heteroptera",
+    "t.labelRu": "клопы",
+    "t.rank": "suborder",
+    "t.depth": 21,
+    "t.descendants": 15832
+  },
+  {
+    "t.id": 192434,
+    "t.scientificName": "Megaseliini",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 28,
+    "t.descendants": 15806
+  },
+  {
+    "t.id": 33347,
+    "t.scientificName": "Euheteroptera",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 15748
+  },
+  {
+    "t.id": 2982305,
+    "t.scientificName": "Agaricineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 11,
+    "t.descendants": 15625
+  },
+  {
+    "t.id": 36165,
+    "t.scientificName": "Megaselia",
+    "t.labelRu": "мегазелия",
+    "t.rank": "genus",
+    "t.depth": 29,
+    "t.descendants": 15531
+  },
+  {
+    "t.id": 74971,
+    "t.scientificName": "Entelegynae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 15,
+    "t.descendants": 15500
+  },
+  {
+    "t.id": 33634,
+    "t.scientificName": "Stramenopiles",
+    "t.labelRu": "страменопилы",
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 15495
+  },
+  {
+    "t.id": 85007,
+    "t.scientificName": "Mycobacteriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 15427
+  },
+  {
+    "t.id": 8292,
+    "t.scientificName": "Amphibia",
+    "t.labelRu": "земноводные",
+    "t.rank": "class",
+    "t.depth": 17,
+    "t.descendants": 15401
+  },
+  {
+    "t.id": 33349,
+    "t.scientificName": "Neoheteroptera",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 15237
+  },
+  {
+    "t.id": 977775,
+    "t.scientificName": "Panpulmonata",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 14,
+    "t.descendants": 15130
+  },
+  {
+    "t.id": 41666,
+    "t.scientificName": "Batrachia",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 18,
+    "t.descendants": 15086
+  },
+  {
+    "t.id": 2157,
+    "t.scientificName": "Archaea",
+    "t.labelRu": "археи",
+    "t.rank": "domain",
+    "t.depth": 2,
+    "t.descendants": 15073
+  },
+  {
+    "t.id": 71529,
+    "t.scientificName": "Curculionoidea",
+    "t.labelRu": "куркулионоидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 15025
+  },
+  {
+    "t.id": 33368,
+    "t.scientificName": "Membracoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 15023
+  },
+  {
+    "t.id": 451868,
+    "t.scientificName": "Pleosporomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 15021
+  },
+  {
+    "t.id": 662,
+    "t.scientificName": "Vibrio",
+    "t.labelRu": "Вибрионы",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 14833
+  },
+  {
+    "t.id": 37581,
+    "t.scientificName": "Gelechioidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 25,
+    "t.descendants": 14804
+  },
+  {
+    "t.id": 3073808,
+    "t.scientificName": "Telluraves",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 29,
+    "t.descendants": 14475
+  },
+  {
+    "t.id": 33351,
+    "t.scientificName": "Panheteroptera",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 24,
+    "t.descendants": 14419
+  },
+  {
+    "t.id": 122929,
+    "t.scientificName": "Norovirus GII",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 11,
+    "t.descendants": 14393
+  },
+  {
+    "t.id": 40674,
+    "t.scientificName": "Mammalia",
+    "t.labelRu": "млекопитающие",
+    "t.rank": "class",
+    "t.depth": 18,
+    "t.descendants": 14282
+  },
+  {
+    "t.id": 32525,
+    "t.scientificName": "Theria",
+    "t.labelRu": "звери",
+    "t.rank": "clade",
+    "t.depth": 19,
+    "t.descendants": 14257
+  },
+  {
+    "t.id": 3041,
+    "t.scientificName": "Chlorophyta",
+    "t.labelRu": "Зелёные водоросли",
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 14221
+  },
+  {
+    "t.id": 2618618,
+    "t.scientificName": "unclassified Megaselia",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 30,
+    "t.descendants": 14220
+  },
+  {
+    "t.id": 92860,
+    "t.scientificName": "Pleosporales",
+    "t.labelRu": "плеоспоровые",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 14190
+  },
+  {
+    "t.id": 69555,
+    "t.scientificName": "Caenogastropoda",
+    "t.labelRu": "ценогастроподы",
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 14178
+  },
+  {
+    "t.id": 1161,
+    "t.scientificName": "Nostocales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 14177
+  },
+  {
+    "t.id": 82592,
+    "t.scientificName": "Geometroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 14100
+  },
+  {
+    "t.id": 66551,
+    "t.scientificName": "Oribatida",
+    "t.labelRu": "панцирные клещи",
+    "t.rank": "suborder",
+    "t.depth": 16,
+    "t.descendants": 14078
+  },
+  {
+    "t.id": 30102,
+    "t.scientificName": "Cicadellidae",
+    "t.labelRu": "цикадки",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 14010
+  },
+  {
+    "t.id": 41085,
+    "t.scientificName": "Staphyliniformia",
+    "t.labelRu": "стафилиниформные",
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 14007
+  },
+  {
+    "t.id": 82593,
+    "t.scientificName": "Geometridae",
+    "t.labelRu": "пяденицы",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 13891
+  },
+  {
+    "t.id": 186826,
+    "t.scientificName": "Lactobacillales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 13888
+  },
+  {
+    "t.id": 43754,
+    "t.scientificName": "Muscoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 13866
+  },
+  {
+    "t.id": 8504,
+    "t.scientificName": "Lepidosauria",
+    "t.labelRu": "лепидозавры",
+    "t.rank": "class",
+    "t.depth": 20,
+    "t.descendants": 13851
+  },
+  {
+    "t.id": 8509,
+    "t.scientificName": "Squamata",
+    "t.labelRu": "чешуйчатые",
+    "t.rank": "order",
+    "t.depth": 21,
+    "t.descendants": 13845
+  },
+  {
+    "t.id": 2614977,
+    "t.scientificName": "unclassified Vibrio",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 13761
+  },
+  {
+    "t.id": 8342,
+    "t.scientificName": "Anura",
+    "t.labelRu": "бесхвостые земноводные",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 13725
+  },
+  {
+    "t.id": 1329961,
+    "t.scientificName": "Bifurcata",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 13665
+  },
+  {
+    "t.id": 9347,
+    "t.scientificName": "Eutheria",
+    "t.labelRu": "эутерии",
+    "t.rank": "clade",
+    "t.depth": 20,
+    "t.descendants": 13518
+  },
+  {
+    "t.id": 2692248,
+    "t.scientificName": "core chlorophytes",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 13479
+  },
+  {
+    "t.id": 305539,
+    "t.scientificName": "unclassified Chironomidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 13474
+  },
+  {
+    "t.id": 4747,
+    "t.scientificName": "Orchidaceae",
+    "t.labelRu": "орхидные",
+    "t.rank": "family",
+    "t.depth": 15,
+    "t.descendants": 13413
+  },
+  {
+    "t.id": 7042,
+    "t.scientificName": "Curculionidae",
+    "t.labelRu": "долгоносики",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 13309
+  },
+  {
+    "t.id": 186801,
+    "t.scientificName": "Clostridia",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 13267
+  },
+  {
+    "t.id": 71528,
+    "t.scientificName": "Chrysomeloidea",
+    "t.labelRu": "хризомелоидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 13234
+  },
+  {
+    "t.id": 1437010,
+    "t.scientificName": "Boreoeutheria",
+    "t.labelRu": "бореоэутерии",
+    "t.rank": "clade",
+    "t.depth": 21,
+    "t.descendants": 13132
+  },
+  {
+    "t.id": 147545,
+    "t.scientificName": "Eurotiomycetes",
+    "t.labelRu": "Эуроциомицеты",
+    "t.rank": "class",
+    "t.depth": 10,
+    "t.descendants": 13029
+  },
+  {
+    "t.id": 4055,
+    "t.scientificName": "Gentianales",
+    "t.labelRu": "горечавкоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 13018
+  },
+  {
+    "t.id": 6236,
+    "t.scientificName": "Rhabditida",
+    "t.labelRu": "рабдитиды",
+    "t.rank": "order",
+    "t.depth": 11,
+    "t.descendants": 13013
+  },
+  {
+    "t.id": 117743,
+    "t.scientificName": "Flavobacteriia",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 12996
+  },
+  {
+    "t.id": 30263,
+    "t.scientificName": "Trichoptera",
+    "t.labelRu": "Ручейники",
+    "t.rank": "order",
+    "t.depth": 20,
+    "t.descendants": 12958
+  },
+  {
+    "t.id": 102804,
+    "t.scientificName": "Asteroideae",
+    "t.labelRu": "астровые",
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 12958
+  },
+  {
+    "t.id": 200644,
+    "t.scientificName": "Flavobacteriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 8,
+    "t.descendants": 12887
+  },
+  {
+    "t.id": 6341,
+    "t.scientificName": "Polychaeta",
+    "t.labelRu": "многощетинковые черви",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 12847
+  },
+  {
+    "t.id": 3814,
+    "t.scientificName": "Papilionoideae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 12834
+  },
+  {
+    "t.id": 34735,
+    "t.scientificName": "Apoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 12823
+  },
+  {
+    "t.id": 41071,
+    "t.scientificName": "Adephaga",
+    "t.labelRu": "плотоядные жуки",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 12810
+  },
+  {
+    "t.id": 2731342,
+    "t.scientificName": "Monodnaviria",
+    "t.labelRu": null,
+    "t.rank": "realm",
+    "t.depth": 2,
+    "t.descendants": 12646
+  },
+  {
+    "t.id": 2231393,
+    "t.scientificName": "50 kb inversion clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 20,
+    "t.descendants": 12501
+  },
+  {
+    "t.id": 3646,
+    "t.scientificName": "Malpighiales",
+    "t.labelRu": "мальпигиецветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 12468
+  },
+  {
+    "t.id": 81084,
+    "t.scientificName": "Platygastroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 12461
+  },
+  {
+    "t.id": 8416,
+    "t.scientificName": "Neobatrachia",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 12443
+  },
+  {
+    "t.id": 1489922,
+    "t.scientificName": "Eupercaria",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 27,
+    "t.descendants": 12413
+  },
+  {
+    "t.id": 120490,
+    "t.scientificName": "Eupulmonata",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 15,
+    "t.descendants": 12347
+  },
+  {
+    "t.id": 3073809,
+    "t.scientificName": "Australaves",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 30,
+    "t.descendants": 12328
+  },
+  {
+    "t.id": 33373,
+    "t.scientificName": "Sternorrhyncha",
+    "t.labelRu": "Грудохоботные",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 12171
+  },
+  {
+    "t.id": 3524,
+    "t.scientificName": "Caryophyllales",
+    "t.labelRu": "гвоздичноцветные",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 12168
+  },
+  {
+    "t.id": 147547,
+    "t.scientificName": "Lecanoromycetes",
+    "t.labelRu": "леканоромицеты",
+    "t.rank": "class",
+    "t.depth": 10,
+    "t.descendants": 11920
+  },
+  {
+    "t.id": 229894,
+    "t.scientificName": "Brachypylina",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 17,
+    "t.descendants": 11861
+  },
+  {
+    "t.id": 6527,
+    "t.scientificName": "Stylommatophora",
+    "t.labelRu": "стебельчатоглазые",
+    "t.rank": "order",
+    "t.depth": 16,
+    "t.descendants": 11843
+  },
+  {
+    "t.id": 89443,
+    "t.scientificName": "unclassified Fungi",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 5,
+    "t.descendants": 11669
+  },
+  {
+    "t.id": 222544,
+    "t.scientificName": "Sordariomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 11617
+  },
+  {
+    "t.id": 75543,
+    "t.scientificName": "Staphylinoidea",
+    "t.labelRu": "стафилиноидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 11564
+  },
+  {
+    "t.id": 1520881,
+    "t.scientificName": "OSLEUM clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 11,
+    "t.descendants": 11511
+  },
+  {
+    "t.id": 265459,
+    "t.scientificName": "unclassified Sciaridae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 11434
+  },
+  {
+    "t.id": 9126,
+    "t.scientificName": "Passeriformes",
+    "t.labelRu": "воробьинообразные",
+    "t.rank": "order",
+    "t.depth": 31,
+    "t.descendants": 11379
+  },
+  {
+    "t.id": 559852,
+    "t.scientificName": "unclassified Orthocladiinae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 25,
+    "t.descendants": 11359
+  },
+  {
+    "t.id": 83138,
+    "t.scientificName": "Anystina",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 17,
+    "t.descendants": 11315
+  },
+  {
+    "t.id": 265461,
+    "t.scientificName": "unclassified Diptera",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 20,
+    "t.descendants": 11224
+  },
+  {
+    "t.id": 186628,
+    "t.scientificName": "Characiphysae",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 23,
+    "t.descendants": 11137
+  },
+  {
+    "t.id": 4479,
+    "t.scientificName": "Poaceae",
+    "t.labelRu": "злаки",
+    "t.rank": "family",
+    "t.depth": 16,
+    "t.descendants": 11129
+  },
+  {
+    "t.id": 85023,
+    "t.scientificName": "Microbacteriaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 11061
+  },
+  {
+    "t.id": 1329950,
+    "t.scientificName": "Unidentata",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 10833
+  },
+  {
+    "t.id": 216366,
+    "t.scientificName": "Helicina",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 17,
+    "t.descendants": 10822
+  },
+  {
+    "t.id": 119060,
+    "t.scientificName": "Burkholderiaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 10800
+  },
+  {
+    "t.id": 730330,
+    "t.scientificName": "Entomobryomorpha",
+    "t.labelRu": "Ентомобрийоморфа",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 10698
+  },
+  {
+    "t.id": 41294,
+    "t.scientificName": "Nitrobacteraceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 10662
+  },
+  {
+    "t.id": 695564,
+    "t.scientificName": "Erebidae",
+    "t.labelRu": "Эребиды",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 10411
+  },
+  {
+    "t.id": 2763,
+    "t.scientificName": "Rhodophyta",
+    "t.labelRu": "Красные водоросли",
+    "t.rank": "phylum",
+    "t.depth": 3,
+    "t.descendants": 10410
+  },
+  {
+    "t.id": 41087,
+    "t.scientificName": "Elateriformia",
+    "t.labelRu": "элатериформные",
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 10369
+  },
+  {
+    "t.id": 41945,
+    "t.scientificName": "Ericales",
+    "t.labelRu": "Верескоцветные",
+    "t.rank": "order",
+    "t.depth": 16,
+    "t.descendants": 10312
+  },
+  {
+    "t.id": 1489908,
+    "t.scientificName": "Ovalentaria",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 27,
+    "t.descendants": 10301
+  },
+  {
+    "t.id": 6101,
+    "t.scientificName": "Anthozoa",
+    "t.labelRu": "коралловые полипы",
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 10230
+  },
+  {
+    "t.id": 135622,
+    "t.scientificName": "Alteromonadales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 10136
+  },
+  {
+    "t.id": 92558,
+    "t.scientificName": "Dolichopodidae",
+    "t.labelRu": "Мухи-зеленушки",
+    "t.rank": "family",
+    "t.depth": 24,
+    "t.descendants": 10015
+  },
+  {
+    "t.id": 2696291,
+    "t.scientificName": "Ochrophyta",
+    "t.labelRu": "охрофитовые водоросли",
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 10010
+  },
+  {
+    "t.id": 451871,
+    "t.scientificName": "Eurotiomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 11,
+    "t.descendants": 10005
+  },
+  {
+    "t.id": 1268,
+    "t.scientificName": "Micrococcaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 9918
+  },
+  {
+    "t.id": 6934,
+    "t.scientificName": "Parasitiformes",
+    "t.labelRu": "паразитиформные клещи",
+    "t.rank": "superorder",
+    "t.depth": 14,
+    "t.descendants": 9903
+  },
+  {
+    "t.id": 49546,
+    "t.scientificName": "Flavobacteriaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 9,
+    "t.descendants": 9876
+  },
+  {
+    "t.id": 33339,
+    "t.scientificName": "Palaeoptera",
+    "t.labelRu": "древнекрылые",
+    "t.rank": "infraclass",
+    "t.depth": 17,
+    "t.descendants": 9822
+  },
+  {
+    "t.id": 6993,
+    "t.scientificName": "Orthoptera",
+    "t.labelRu": "прямокрылые",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 9796
+  },
+  {
+    "t.id": 82115,
+    "t.scientificName": "Rhizobiaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 9724
+  },
+  {
+    "t.id": 90964,
+    "t.scientificName": "Staphylococcaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 9711
+  },
+  {
+    "t.id": 374,
+    "t.scientificName": "Bradyrhizobium",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 9710
+  },
+  {
+    "t.id": 43755,
+    "t.scientificName": "Oestroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 9701
+  },
+  {
+    "t.id": 3042114,
+    "t.scientificName": "Anthophila",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 9619
+  },
+  {
+    "t.id": 241806,
+    "t.scientificName": "Polypodiopsida",
+    "t.labelRu": "папоротниковые",
+    "t.rank": "class",
+    "t.depth": 9,
+    "t.descendants": 9618
+  },
+  {
+    "t.id": 2806,
+    "t.scientificName": "Florideophyceae",
+    "t.labelRu": "флоридеевые водоросли",
+    "t.rank": "class",
+    "t.depth": 4,
+    "t.descendants": 9594
+  },
+  {
+    "t.id": 5794,
+    "t.scientificName": "Apicomplexa",
+    "t.labelRu": "апикомплексы",
+    "t.rank": "phylum",
+    "t.depth": 5,
+    "t.descendants": 9567
+  },
+  {
+    "t.id": 158332,
+    "t.scientificName": "Epidendroideae",
+    "t.labelRu": "эпидендровые",
+    "t.rank": "subfamily",
+    "t.depth": 16,
+    "t.descendants": 9553
+  },
+  {
+    "t.id": 2631580,
+    "t.scientificName": "unclassified Bradyrhizobium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 9548
+  },
+  {
+    "t.id": 6821,
+    "t.scientificName": "Amphipoda",
+    "t.labelRu": "Бокоплавы",
+    "t.rank": "order",
+    "t.depth": 18,
+    "t.descendants": 9487
+  },
+  {
+    "t.id": 3366610,
+    "t.scientificName": "Methanobacteriati",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 9416
+  },
+  {
+    "t.id": 147548,
+    "t.scientificName": "Leotiomycetes",
+    "t.labelRu": "Леоциомицеты",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 9263
+  },
+  {
+    "t.id": 1279,
+    "t.scientificName": "Staphylococcus",
+    "t.labelRu": "стафилококки",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 9242
+  },
+  {
+    "t.id": 1521262,
+    "t.scientificName": "Polypodiidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 10,
+    "t.descendants": 9146
+  },
+  {
+    "t.id": 2732092,
+    "t.scientificName": "Shotokuvirae",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 9018
+  },
+  {
+    "t.id": 5042,
+    "t.scientificName": "Eurotiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 12,
+    "t.descendants": 8910
+  },
+  {
+    "t.id": 42113,
+    "t.scientificName": "Clitellata",
+    "t.labelRu": "поясковые черви",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 8900
+  },
+  {
+    "t.id": 112252,
+    "t.scientificName": "Fungi incertae sedis",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 5,
+    "t.descendants": 8893
+  },
+  {
+    "t.id": 535382,
+    "t.scientificName": "Caraboidea",
+    "t.labelRu": "карабоидные",
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 8865
+  },
+  {
+    "t.id": 41073,
+    "t.scientificName": "Carabidae",
+    "t.labelRu": "жужелицы",
+    "t.rank": "family",
+    "t.depth": 22,
+    "t.descendants": 8851
+  },
+  {
+    "t.id": 94020,
+    "t.scientificName": "RTA clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 8842
+  },
+  {
+    "t.id": 1301283,
+    "t.scientificName": "Oscillatoriophycideae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 7,
+    "t.descendants": 8802
+  },
+  {
+    "t.id": 34634,
+    "t.scientificName": "Mesostigmata",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 8790
+  },
+  {
+    "t.id": 3744,
+    "t.scientificName": "Rosales",
+    "t.labelRu": "розоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 8780
+  },
+  {
+    "t.id": 41819,
+    "t.scientificName": "Ceratopogonidae",
+    "t.labelRu": "Мокрецы",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 8742
+  },
+  {
+    "t.id": 1329912,
+    "t.scientificName": "Episquamata",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 24,
+    "t.descendants": 8724
+  },
+  {
+    "t.id": 2887326,
+    "t.scientificName": "Moraxellales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 8698
+  },
+  {
+    "t.id": 468,
+    "t.scientificName": "Moraxellaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 8695
+  },
+  {
+    "t.id": 590,
+    "t.scientificName": "Salmonella",
+    "t.labelRu": "сальмонеллы",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 8694
+  },
+  {
+    "t.id": 29026,
+    "t.scientificName": "Staphylinidae",
+    "t.labelRu": "Стафилиниды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 8650
+  },
+  {
+    "t.id": 41944,
+    "t.scientificName": "Myrtales",
+    "t.labelRu": "миртоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 8643
+  },
+  {
+    "t.id": 33415,
+    "t.scientificName": "Nymphalidae",
+    "t.labelRu": "нимфалиды",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 8598
+  },
+  {
+    "t.id": 715340,
+    "t.scientificName": "Pleosporineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 14,
+    "t.descendants": 8592
+  },
+  {
+    "t.id": 2231382,
+    "t.scientificName": "NPAAA clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 21,
+    "t.descendants": 8590
+  },
+  {
+    "t.id": 28890,
+    "t.scientificName": "Methanobacteriota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 8529
+  },
+  {
+    "t.id": 388435,
+    "t.scientificName": "Lecanoromycetidae",
+    "t.labelRu": "леканоромицетовые",
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 8467
+  },
+  {
+    "t.id": 2732407,
+    "t.scientificName": "Lenarviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 8467
+  },
+  {
+    "t.id": 72530,
+    "t.scientificName": "Chironomini",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 25,
+    "t.descendants": 8440
+  },
+  {
+    "t.id": 281668,
+    "t.scientificName": "Monogynaspida",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 16,
+    "t.descendants": 8400
+  },
+  {
+    "t.id": 1162,
+    "t.scientificName": "Nostocaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 8,
+    "t.descendants": 8389
+  },
+  {
+    "t.id": 7100,
+    "t.scientificName": "Noctuidae",
+    "t.labelRu": "совки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 8379
+  },
+  {
+    "t.id": 2788787,
+    "t.scientificName": "unclassified Caudoviricetes",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 6,
+    "t.descendants": 8293
+  },
+  {
+    "t.id": 6544,
+    "t.scientificName": "Bivalvia",
+    "t.labelRu": "двустворчатые",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 8292
+  },
+  {
+    "t.id": 27439,
+    "t.scientificName": "Chrysomelidae",
+    "t.labelRu": "листоеды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 8288
+  },
+  {
+    "t.id": 204455,
+    "t.scientificName": "Rhodobacterales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 8288
+  },
+  {
+    "t.id": 3042107,
+    "t.scientificName": "Diaprioidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 8281
+  },
+  {
+    "t.id": 44343,
+    "t.scientificName": "Diapriidae",
+    "t.labelRu": "Диаприиды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 8262
+  },
+  {
+    "t.id": 104430,
+    "t.scientificName": "Apoditrysia",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 25,
+    "t.descendants": 8262
+  },
+  {
+    "t.id": 222545,
+    "t.scientificName": "Xylariomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 8204
+  },
+  {
+    "t.id": 204457,
+    "t.scientificName": "Sphingomonadales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 8179
+  },
+  {
+    "t.id": 186627,
+    "t.scientificName": "Cypriniphysae",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 23,
+    "t.descendants": 8158
+  },
+  {
+    "t.id": 7952,
+    "t.scientificName": "Cypriniformes",
+    "t.labelRu": "карпообразные",
+    "t.rank": "order",
+    "t.depth": 24,
+    "t.descendants": 8157
+  },
+  {
+    "t.id": 37573,
+    "t.scientificName": "Pyraloidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 8126
+  },
+  {
+    "t.id": 2785011,
+    "t.scientificName": "Autobranchia",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 7977
+  },
+  {
+    "t.id": 186802,
+    "t.scientificName": "Eubacteriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 7937
+  },
+  {
+    "t.id": 6178,
+    "t.scientificName": "Trematoda",
+    "t.labelRu": "трематоды",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 7890
+  },
+  {
+    "t.id": 1723665,
+    "t.scientificName": "Gamasina",
+    "t.labelRu": "Гамазовые клещи",
+    "t.rank": "infraorder",
+    "t.depth": 17,
+    "t.descendants": 7881
+  },
+  {
+    "t.id": 110618,
+    "t.scientificName": "Nectriaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 14,
+    "t.descendants": 7859
+  },
+  {
+    "t.id": 33354,
+    "t.scientificName": "Cimicomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 25,
+    "t.descendants": 7849
+  },
+  {
+    "t.id": 6179,
+    "t.scientificName": "Digenea",
+    "t.labelRu": "дигенетические сосальщики",
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 7781
+  },
+  {
+    "t.id": 162252,
+    "t.scientificName": "Mymaridae",
+    "t.labelRu": "Мимариды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 7750
+  },
+  {
+    "t.id": 1762,
+    "t.scientificName": "Mycobacteriaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 7744
+  },
+  {
+    "t.id": 1131492,
+    "t.scientificName": "Aspergillaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 13,
+    "t.descendants": 7737
+  },
+  {
+    "t.id": 83141,
+    "t.scientificName": "Parasitengona",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 18,
+    "t.descendants": 7624
+  },
+  {
+    "t.id": 41086,
+    "t.scientificName": "Scarabaeiformia",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 7590
+  },
+  {
+    "t.id": 75546,
+    "t.scientificName": "Scarabaeoidea",
+    "t.labelRu": "Скарабеоидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 7589
+  },
+  {
+    "t.id": 3268,
+    "t.scientificName": "Polypodiales",
+    "t.labelRu": "многоножковые",
+    "t.rank": "order",
+    "t.depth": 11,
+    "t.descendants": 7576
+  },
+  {
+    "t.id": 1329911,
+    "t.scientificName": "Toxicofera",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 25,
+    "t.descendants": 7389
+  },
+  {
+    "t.id": 65207,
+    "t.scientificName": "Microgastrinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 23,
+    "t.descendants": 7384
+  },
+  {
+    "t.id": 24966,
+    "t.scientificName": "Rubiaceae",
+    "t.labelRu": "мареновые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 7358
+  },
+  {
+    "t.id": 7586,
+    "t.scientificName": "Echinodermata",
+    "t.labelRu": "иглокожие",
+    "t.rank": "phylum",
+    "t.depth": 8,
+    "t.descendants": 7331
+  },
+  {
+    "t.id": 135614,
+    "t.scientificName": "Lysobacterales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 7291
+  },
+  {
+    "t.id": 6381,
+    "t.scientificName": "Oligochaeta",
+    "t.labelRu": "малощетинковые черви",
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 7272
+  },
+  {
+    "t.id": 1763,
+    "t.scientificName": "Mycobacterium",
+    "t.labelRu": "Микобактерии",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 7242
+  },
+  {
+    "t.id": 32008,
+    "t.scientificName": "Burkholderia",
+    "t.labelRu": "Буркхольдерии",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 7212
+  },
+  {
+    "t.id": 6970,
+    "t.scientificName": "Dictyoptera",
+    "t.labelRu": "тараканообразные",
+    "t.rank": "superorder",
+    "t.depth": 19,
+    "t.descendants": 7158
+  },
+  {
+    "t.id": 451867,
+    "t.scientificName": "Dothideomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 7082
+  },
+  {
+    "t.id": 71193,
+    "t.scientificName": "Elateroidea",
+    "t.labelRu": "элатероидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 7078
+  },
+  {
+    "t.id": 2732406,
+    "t.scientificName": "Kitrinoviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 7075
+  },
+  {
+    "t.id": 314146,
+    "t.scientificName": "Euarchontoglires",
+    "t.labelRu": "эуархонтоглиресы",
+    "t.rank": "superorder",
+    "t.depth": 22,
+    "t.descendants": 7051
+  },
+  {
+    "t.id": 1244186,
+    "t.scientificName": "unclassified Diapriidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 7001
+  },
+  {
+    "t.id": 29035,
+    "t.scientificName": "Mycetophilidae",
+    "t.labelRu": "Грибные комары",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 6993
+  },
+  {
+    "t.id": 102793,
+    "t.scientificName": "H5N1 subtype",
+    "t.labelRu": null,
+    "t.rank": "serotype",
+    "t.depth": 12,
+    "t.descendants": 6988
+  },
+  {
+    "t.id": 71527,
+    "t.scientificName": "Tenebrionoidea",
+    "t.labelRu": "Тенебрионоидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 6936
+  },
+  {
+    "t.id": 227290,
+    "t.scientificName": "Rhizobium/Agrobacterium group",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 8,
+    "t.descendants": 6900
+  },
+  {
+    "t.id": 6040,
+    "t.scientificName": "Porifera",
+    "t.labelRu": "губки",
+    "t.rank": "phylum",
+    "t.depth": 5,
+    "t.descendants": 6846
+  },
+  {
+    "t.id": 12333,
+    "t.scientificName": "unclassified bacterial viruses",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 2,
+    "t.descendants": 6831
+  },
+  {
+    "t.id": 83139,
+    "t.scientificName": "Eupodina",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 17,
+    "t.descendants": 6783
+  },
+  {
+    "t.id": 232347,
+    "t.scientificName": "Magnoliidae",
+    "t.labelRu": "магнолиды",
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 6783
+  },
+  {
+    "t.id": 7479,
+    "t.scientificName": "Formicinae",
+    "t.labelRu": "формицины",
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 6773
+  },
+  {
+    "t.id": 43740,
+    "t.scientificName": "Syrphoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 25,
+    "t.descendants": 6759
+  },
+  {
+    "t.id": 2045261,
+    "t.scientificName": "Rhodymeniophycidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 5,
+    "t.descendants": 6758
+  },
+  {
+    "t.id": 2613784,
+    "t.scientificName": "unclassified Burkholderia",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 6734
+  },
+  {
+    "t.id": 133551,
+    "t.scientificName": "Eleutherozoa",
+    "t.labelRu": "свободноподвижные",
+    "t.rank": "clade",
+    "t.depth": 9,
+    "t.descendants": 6728
+  },
+  {
+    "t.id": 1930602,
+    "t.scientificName": "Psocodea",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 19,
+    "t.descendants": 6710
+  },
+  {
+    "t.id": 422676,
+    "t.scientificName": "Aconoidasida",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 6677
+  },
+  {
+    "t.id": 7995,
+    "t.scientificName": "Siluriformes",
+    "t.labelRu": "сомообразные",
+    "t.rank": "order",
+    "t.depth": 24,
+    "t.descendants": 6643
+  },
+  {
+    "t.id": 41297,
+    "t.scientificName": "Sphingomonadaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 6632
+  },
+  {
+    "t.id": 147537,
+    "t.scientificName": "Saccharomycotina",
+    "t.labelRu": null,
+    "t.rank": "subphylum",
+    "t.depth": 8,
+    "t.descendants": 6631
+  },
+  {
+    "t.id": 79707,
+    "t.scientificName": "Entomobryoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 16,
+    "t.descendants": 6624
+  },
+  {
+    "t.id": 186822,
+    "t.scientificName": "Paenibacillaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 6538
+  },
+  {
+    "t.id": 3208,
+    "t.scientificName": "Bryophyta",
+    "t.labelRu": "мхи",
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 6538
+  },
+  {
+    "t.id": 6752,
+    "t.scientificName": "Brachyura",
+    "t.labelRu": "крабы",
+    "t.rank": "infraorder",
+    "t.depth": 20,
+    "t.descendants": 6537
+  },
+  {
+    "t.id": 107755,
+    "t.scientificName": "Eulophidae",
+    "t.labelRu": "Эвлофиды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 6526
+  },
+  {
+    "t.id": 135619,
+    "t.scientificName": "Oceanospirillales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 6509
+  },
+  {
+    "t.id": 27474,
+    "t.scientificName": "Tachinidae",
+    "t.labelRu": "тахины",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 6495
+  },
+  {
+    "t.id": 29979,
+    "t.scientificName": "Isopoda",
+    "t.labelRu": "равноногие",
+    "t.rank": "order",
+    "t.depth": 18,
+    "t.descendants": 6491
+  },
+  {
+    "t.id": 93875,
+    "t.scientificName": "Integripalpia",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 21,
+    "t.descendants": 6489
+  },
+  {
+    "t.id": 469,
+    "t.scientificName": "Acinetobacter",
+    "t.labelRu": "Ацинетобактеры",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 6481
+  },
+  {
+    "t.id": 1177,
+    "t.scientificName": "Nostoc",
+    "t.labelRu": "Носток",
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 6387
+  },
+  {
+    "t.id": 32417,
+    "t.scientificName": "Scelionidae",
+    "t.labelRu": "Сцелиониды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 6383
+  },
+  {
+    "t.id": 547,
+    "t.scientificName": "Enterobacter",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 6362
+  },
+  {
+    "t.id": 8111,
+    "t.scientificName": "Perciformes",
+    "t.labelRu": "Окунеобразные",
+    "t.rank": "order",
+    "t.depth": 28,
+    "t.descendants": 6353
+  },
+  {
+    "t.id": 593869,
+    "t.scientificName": "unclassified Coleoptera",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 20,
+    "t.descendants": 6298
+  },
+  {
+    "t.id": 6300,
+    "t.scientificName": "Tylenchina",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 12,
+    "t.descendants": 6290
+  },
+  {
+    "t.id": 32033,
+    "t.scientificName": "Lysobacteraceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 6286
+  },
+  {
+    "t.id": 34695,
+    "t.scientificName": "Myrmicinae",
+    "t.labelRu": "Мирмицины",
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 6276
+  },
+  {
+    "t.id": 8417,
+    "t.scientificName": "Hyloidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 6257
+  },
+  {
+    "t.id": 72037,
+    "t.scientificName": "Hexanauplia",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 15,
+    "t.descendants": 6198
+  },
+  {
+    "t.id": 6830,
+    "t.scientificName": "Copepoda",
+    "t.labelRu": "веслоногие ракообразные",
+    "t.rank": "subclass",
+    "t.depth": 16,
+    "t.descendants": 6186
+  },
+  {
+    "t.id": 33380,
+    "t.scientificName": "Aphidomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 6175
+  },
+  {
+    "t.id": 404260,
+    "t.scientificName": "Bryophytina",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 8,
+    "t.descendants": 6173
+  },
+  {
+    "t.id": 7055,
+    "t.scientificName": "Scarabaeidae",
+    "t.labelRu": "пластинчатоусые",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 6153
+  },
+  {
+    "t.id": 116569,
+    "t.scientificName": "Neocopepoda",
+    "t.labelRu": null,
+    "t.rank": "infraclass",
+    "t.depth": 17,
+    "t.descendants": 6153
+  },
+  {
+    "t.id": 2290931,
+    "t.scientificName": "Stenosarchaea group",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 6127
+  },
+  {
+    "t.id": 116704,
+    "t.scientificName": "Eubrachyura",
+    "t.labelRu": "эубрахиуры",
+    "t.rank": null,
+    "t.depth": 21,
+    "t.descendants": 6119
+  },
+  {
+    "t.id": 1663,
+    "t.scientificName": "Arthrobacter",
+    "t.labelRu": "Артробактер",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 6117
+  },
+  {
+    "t.id": 43746,
+    "t.scientificName": "Ephydroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 6103
+  },
+  {
+    "t.id": 30062,
+    "t.scientificName": "Anthomyiidae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 6098
+  },
+  {
+    "t.id": 766,
+    "t.scientificName": "Rickettsiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 6083
+  },
+  {
+    "t.id": 314145,
+    "t.scientificName": "Laurasiatheria",
+    "t.labelRu": "Лавразиатерии",
+    "t.rank": "superorder",
+    "t.depth": 22,
+    "t.descendants": 6077
+  },
+  {
+    "t.id": 81078,
+    "t.scientificName": "Platygastridae",
+    "t.labelRu": "платигастриды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 6074
+  },
+  {
+    "t.id": 82596,
+    "t.scientificName": "Ennominae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 6056
+  },
+  {
+    "t.id": 490043,
+    "t.scientificName": "Norovirus GII isolates",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 6018
+  },
+  {
+    "t.id": 33385,
+    "t.scientificName": "Aphidoidea",
+    "t.labelRu": "тли",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 5996
+  },
+  {
+    "t.id": 235627,
+    "t.scientificName": "unclassified Arthrobacter",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 5985
+  },
+  {
+    "t.id": 3214,
+    "t.scientificName": "Bryopsida",
+    "t.labelRu": "листостебельные мхи",
+    "t.rank": "class",
+    "t.depth": 9,
+    "t.descendants": 5976
+  },
+  {
+    "t.id": 359160,
+    "t.scientificName": "BOP clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 17,
+    "t.descendants": 5973
+  },
+  {
+    "t.id": 2864,
+    "t.scientificName": "Dinophyceae",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 5952
+  },
+  {
+    "t.id": 7366,
+    "t.scientificName": "Muscidae",
+    "t.labelRu": "настоящие мухи",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 5910
+  },
+  {
+    "t.id": 85772,
+    "t.scientificName": "Tenthredinoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 20,
+    "t.descendants": 5881
+  },
+  {
+    "t.id": 314147,
+    "t.scientificName": "Glires",
+    "t.labelRu": "грызунообразные",
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 5875
+  },
+  {
+    "t.id": 7423,
+    "t.scientificName": "Pteromalidae",
+    "t.labelRu": "птеромалиды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 5854
+  },
+  {
+    "t.id": 6479,
+    "t.scientificName": "Neogastropoda",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 5848
+  },
+  {
+    "t.id": 48704,
+    "t.scientificName": "Entomobryidae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 17,
+    "t.descendants": 5834
+  },
+  {
+    "t.id": 30727,
+    "t.scientificName": "Cyprinoidei",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 25,
+    "t.descendants": 5793
+  },
+  {
+    "t.id": 43787,
+    "t.scientificName": "Psychodomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 5788
+  },
+  {
+    "t.id": 5878,
+    "t.scientificName": "Ciliophora",
+    "t.labelRu": "инфузории",
+    "t.rank": "phylum",
+    "t.depth": 5,
+    "t.descendants": 5786
+  },
+  {
+    "t.id": 1732196,
+    "t.scientificName": "Senticaudata",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 19,
+    "t.descendants": 5781
+  },
+  {
+    "t.id": 85823,
+    "t.scientificName": "Blattodea",
+    "t.labelRu": "таракановые",
+    "t.rank": "order",
+    "t.depth": 20,
+    "t.descendants": 5753
+  },
+  {
+    "t.id": 489821,
+    "t.scientificName": "Norovirus GII.4",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 12,
+    "t.descendants": 5729
+  },
+  {
+    "t.id": 5819,
+    "t.scientificName": "Haemosporida",
+    "t.labelRu": "Гемоспоридии",
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 5727
+  },
+  {
+    "t.id": 2593658,
+    "t.scientificName": "unclassified Nostoc",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 10,
+    "t.descendants": 5701
+  },
+  {
+    "t.id": 2323,
+    "t.scientificName": "Bacteria incertae sedis",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 3,
+    "t.descendants": 5701
+  },
+  {
+    "t.id": 5506,
+    "t.scientificName": "Fusarium",
+    "t.labelRu": "Фузариум",
+    "t.rank": "genus",
+    "t.depth": 15,
+    "t.descendants": 5694
+  },
+  {
+    "t.id": 105390,
+    "t.scientificName": "Errantia",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 5692
+  },
+  {
+    "t.id": 452342,
+    "t.scientificName": "Russulales",
+    "t.labelRu": "сыроежковые",
+    "t.rank": "order",
+    "t.depth": 10,
+    "t.descendants": 5688
+  },
+  {
+    "t.id": 6042,
+    "t.scientificName": "Demospongiae",
+    "t.labelRu": "обыкновенные губки",
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 5653
+  },
+  {
+    "t.id": 94015,
+    "t.scientificName": "Dionycha",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 17,
+    "t.descendants": 5638
+  },
+  {
+    "t.id": 2732416,
+    "t.scientificName": "Cressdnaviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 5634
+  },
+  {
+    "t.id": 27482,
+    "t.scientificName": "Aphididae",
+    "t.labelRu": "настоящие тли",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 5629
+  },
+  {
+    "t.id": 41937,
+    "t.scientificName": "Sapindales",
+    "t.labelRu": "сапиндоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 5623
+  },
+  {
+    "t.id": 37569,
+    "t.scientificName": "Bombycoidea",
+    "t.labelRu": "шелкопрядовые",
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 5593
+  },
+  {
+    "t.id": 102797,
+    "t.scientificName": "Influenza A virus with incomplete names",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 12,
+    "t.descendants": 5581
+  },
+  {
+    "t.id": 74974,
+    "t.scientificName": "Orbiculariae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 5570
+  },
+  {
+    "t.id": 9989,
+    "t.scientificName": "Rodentia",
+    "t.labelRu": "грызуны",
+    "t.rank": "order",
+    "t.depth": 24,
+    "t.descendants": 5565
+  },
+  {
+    "t.id": 6994,
+    "t.scientificName": "Ensifera",
+    "t.labelRu": "длинноусые прямокрылые",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 5528
+  },
+  {
+    "t.id": 5303,
+    "t.scientificName": "Polyporales",
+    "t.labelRu": "полипоровые",
+    "t.rank": "order",
+    "t.depth": 10,
+    "t.descendants": 5447
+  },
+  {
+    "t.id": 5178,
+    "t.scientificName": "Helotiales",
+    "t.labelRu": "Гелоциевые",
+    "t.rank": "order",
+    "t.depth": 12,
+    "t.descendants": 5416
+  },
+  {
+    "t.id": 561,
+    "t.scientificName": "Escherichia",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 5410
+  },
+  {
+    "t.id": 1783234,
+    "t.scientificName": "Bacteria candidate phyla",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 5391
+  },
+  {
+    "t.id": 3699,
+    "t.scientificName": "Brassicales",
+    "t.labelRu": "капустоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 5387
+  },
+  {
+    "t.id": 379,
+    "t.scientificName": "Rhizobium",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 5385
+  },
+  {
+    "t.id": 431838,
+    "t.scientificName": "Intramacronucleata",
+    "t.labelRu": "интрамакронуклеаты",
+    "t.rank": "subphylum",
+    "t.depth": 6,
+    "t.descendants": 5361
+  },
+  {
+    "t.id": 216294,
+    "t.scientificName": "Littorinimorpha",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 5331
+  },
+  {
+    "t.id": 4036,
+    "t.scientificName": "Apiales",
+    "t.labelRu": "зонтикоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 5328
+  },
+  {
+    "t.id": 4136,
+    "t.scientificName": "Lamiaceae",
+    "t.labelRu": "яснотковые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 5328
+  },
+  {
+    "t.id": 33882,
+    "t.scientificName": "Microbacterium",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 5316
+  },
+  {
+    "t.id": 105389,
+    "t.scientificName": "Sedentaria",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 5299
+  },
+  {
+    "t.id": 364270,
+    "t.scientificName": "Apiineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 18,
+    "t.descendants": 5287
+  },
+  {
+    "t.id": 1150,
+    "t.scientificName": "Oscillatoriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 8,
+    "t.descendants": 5272
+  },
+  {
+    "t.id": 74975,
+    "t.scientificName": "Araneoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 17,
+    "t.descendants": 5254
+  },
+  {
+    "t.id": 2836,
+    "t.scientificName": "Bacillariophyta",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 6,
+    "t.descendants": 5242
+  },
+  {
+    "t.id": 80864,
+    "t.scientificName": "Comamonadaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 5240
+  },
+  {
+    "t.id": 2608935,
+    "t.scientificName": "unclassified Enterobacter",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 5226
+  },
+  {
+    "t.id": 6102,
+    "t.scientificName": "Hexacorallia",
+    "t.labelRu": "шестилучевые кораллы",
+    "t.rank": "subclass",
+    "t.depth": 8,
+    "t.descendants": 5190
+  },
+  {
+    "t.id": 268499,
+    "t.scientificName": "Crambidae",
+    "t.labelRu": "Огнёвки-травянки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 5182
+  },
+  {
+    "t.id": 2613769,
+    "t.scientificName": "unclassified Rhizobium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 10,
+    "t.descendants": 5155
+  },
+  {
+    "t.id": 37989,
+    "t.scientificName": "Xylariales",
+    "t.labelRu": "ксиляриевые",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 5139
+  },
+  {
+    "t.id": 44249,
+    "t.scientificName": "Paenibacillus",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 5132
+  },
+  {
+    "t.id": 102796,
+    "t.scientificName": "H9N2 subtype",
+    "t.labelRu": null,
+    "t.rank": "serotype",
+    "t.depth": 12,
+    "t.descendants": 5124
+  },
+  {
+    "t.id": 41011,
+    "t.scientificName": "Tineoidea",
+    "t.labelRu": "молеподобные",
+    "t.rank": "superfamily",
+    "t.depth": 25,
+    "t.descendants": 5100
+  },
+  {
+    "t.id": 6599,
+    "t.scientificName": "Heteroconchia",
+    "t.labelRu": "разнозубые",
+    "t.rank": "clade",
+    "t.depth": 13,
+    "t.descendants": 5099
+  },
+  {
+    "t.id": 30073,
+    "t.scientificName": "Ephemeroptera",
+    "t.labelRu": "подёнки",
+    "t.rank": "order",
+    "t.depth": 18,
+    "t.descendants": 5087
+  },
+  {
+    "t.id": 2609290,
+    "t.scientificName": "unclassified Microbacterium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 5084
+  },
+  {
+    "t.id": 196816,
+    "t.scientificName": "unclassified Acinetobacter",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 5072
+  },
+  {
+    "t.id": 33357,
+    "t.scientificName": "Pentatomomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 25,
+    "t.descendants": 5070
+  },
+  {
+    "t.id": 34680,
+    "t.scientificName": "Syrphidae",
+    "t.labelRu": "Журчалки",
+    "t.rank": "family",
+    "t.depth": 26,
+    "t.descendants": 5068
+  },
+  {
+    "t.id": 5114,
+    "t.scientificName": "Diaporthales",
+    "t.labelRu": "Диапортовые",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 5045
+  },
+  {
+    "t.id": 29000,
+    "t.scientificName": "Pucciniomycotina",
+    "t.labelRu": null,
+    "t.rank": "subphylum",
+    "t.depth": 7,
+    "t.descendants": 5025
+  },
+  {
+    "t.id": 147370,
+    "t.scientificName": "PACMAD clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 17,
+    "t.descendants": 5007
+  },
+  {
+    "t.id": 65171,
+    "t.scientificName": "Cryptinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 23,
+    "t.descendants": 4947
+  },
+  {
+    "t.id": 6132,
+    "t.scientificName": "Octocorallia",
+    "t.labelRu": "восьмилучевые кораллы",
+    "t.rank": "subclass",
+    "t.depth": 8,
+    "t.descendants": 4939
+  },
+  {
+    "t.id": 2497570,
+    "t.scientificName": "Haploviricotina",
+    "t.labelRu": null,
+    "t.rank": "subphylum",
+    "t.depth": 5,
+    "t.descendants": 4939
+  },
+  {
+    "t.id": 85025,
+    "t.scientificName": "Nocardiaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4917
+  },
+  {
+    "t.id": 2614656,
+    "t.scientificName": "unclassified Salmonella",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 4907
+  },
+  {
+    "t.id": 34667,
+    "t.scientificName": "Cerambycidae",
+    "t.labelRu": "усачи",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 4899
+  },
+  {
+    "t.id": 33355,
+    "t.scientificName": "Cimicoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 4894
+  },
+  {
+    "t.id": 1300,
+    "t.scientificName": "Streptococcaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4869
+  },
+  {
+    "t.id": 37568,
+    "t.scientificName": "Tortricoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 4847
+  },
+  {
+    "t.id": 7139,
+    "t.scientificName": "Tortricidae",
+    "t.labelRu": "листовёртки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 4846
+  },
+  {
+    "t.id": 61985,
+    "t.scientificName": "Myriapoda",
+    "t.labelRu": "многоножки",
+    "t.rank": "subphylum",
+    "t.depth": 12,
+    "t.descendants": 4835
+  },
+  {
+    "t.id": 200643,
+    "t.scientificName": "Bacteroidia",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 4783
+  },
+  {
+    "t.id": 5073,
+    "t.scientificName": "Penicillium",
+    "t.labelRu": "пеницилл",
+    "t.rank": "genus",
+    "t.depth": 14,
+    "t.descendants": 4780
+  },
+  {
+    "t.id": 75966,
+    "t.scientificName": "Trebouxiophyceae",
+    "t.labelRu": "Требуксиофициевые",
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 4772
+  },
+  {
+    "t.id": 116706,
+    "t.scientificName": "Heterotremata",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 22,
+    "t.descendants": 4766
+  },
+  {
+    "t.id": 27532,
+    "t.scientificName": "Tenthredinidae",
+    "t.labelRu": "настоящие пилильщики",
+    "t.rank": "family",
+    "t.depth": 21,
+    "t.descendants": 4760
+  },
+  {
+    "t.id": 1913637,
+    "t.scientificName": "Mucoromycota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 6,
+    "t.descendants": 4746
+  },
+  {
+    "t.id": 2497574,
+    "t.scientificName": "Monjiviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 4745
+  },
+  {
+    "t.id": 6961,
+    "t.scientificName": "Odonata",
+    "t.labelRu": "Стрекозы",
+    "t.rank": "order",
+    "t.depth": 18,
+    "t.descendants": 4733
+  },
+  {
+    "t.id": 3166,
+    "t.scientificName": "Chlorophyceae",
+    "t.labelRu": "Хлорофициевые",
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 4730
+  },
+  {
+    "t.id": 34450,
+    "t.scientificName": "Cortinariaceae",
+    "t.labelRu": "Паутинниковые",
+    "t.rank": "family",
+    "t.depth": 12,
+    "t.descendants": 4727
+  },
+  {
+    "t.id": 3804,
+    "t.scientificName": "Caesalpinioideae",
+    "t.labelRu": "цезальпиниевые",
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 4705
+  },
+  {
+    "t.id": 1783257,
+    "t.scientificName": "PVC group",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 4649
+  },
+  {
+    "t.id": 1280,
+    "t.scientificName": "Staphylococcus aureus",
+    "t.labelRu": "стафилококк золотистый",
+    "t.rank": "species",
+    "t.depth": 9,
+    "t.descendants": 4637
+  },
+  {
+    "t.id": 43749,
+    "t.scientificName": "Opomyzoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 4629
+  },
+  {
+    "t.id": 6348,
+    "t.scientificName": "Phyllodocida",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 4604
+  },
+  {
+    "t.id": 41938,
+    "t.scientificName": "Malvales",
+    "t.labelRu": "мальвоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 4580
+  },
+  {
+    "t.id": 119088,
+    "t.scientificName": "Enoplea",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 10,
+    "t.descendants": 4580
+  },
+  {
+    "t.id": 185978,
+    "t.scientificName": "unclassified Paenibacillus",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 4575
+  },
+  {
+    "t.id": 85008,
+    "t.scientificName": "Micromonosporales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 4555
+  },
+  {
+    "t.id": 28056,
+    "t.scientificName": "Micromonosporaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4546
+  },
+  {
+    "t.id": 3745,
+    "t.scientificName": "Rosaceae",
+    "t.labelRu": "розовые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 4545
+  },
+  {
+    "t.id": 41827,
+    "t.scientificName": "Culicoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 4535
+  },
+  {
+    "t.id": 2233838,
+    "t.scientificName": "Hologalegina",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 4499
+  },
+  {
+    "t.id": 40092,
+    "t.scientificName": "Hesperioidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 4495
+  },
+  {
+    "t.id": 40093,
+    "t.scientificName": "Hesperiidae",
+    "t.labelRu": "толстоголовки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 4494
+  },
+  {
+    "t.id": 3700,
+    "t.scientificName": "Brassicaceae",
+    "t.labelRu": "капустные",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 4467
+  },
+  {
+    "t.id": 8570,
+    "t.scientificName": "Serpentes",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 26,
+    "t.descendants": 4462
+  },
+  {
+    "t.id": 68889,
+    "t.scientificName": "Boletales",
+    "t.labelRu": "Болетовые",
+    "t.rank": "order",
+    "t.depth": 10,
+    "t.descendants": 4460
+  },
+  {
+    "t.id": 5401,
+    "t.scientificName": "Russulaceae",
+    "t.labelRu": "сыроежковые",
+    "t.rank": "family",
+    "t.depth": 11,
+    "t.descendants": 4458
+  },
+  {
+    "t.id": 171549,
+    "t.scientificName": "Bacteroidales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 8,
+    "t.descendants": 4453
+  },
+  {
+    "t.id": 69277,
+    "t.scientificName": "Phyllobacteriaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4451
+  },
+  {
+    "t.id": 33283,
+    "t.scientificName": "Tylenchomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 13,
+    "t.descendants": 4450
+  },
+  {
+    "t.id": 942,
+    "t.scientificName": "Anaplasmataceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4448
+  },
+  {
+    "t.id": 147549,
+    "t.scientificName": "Pezizomycetes",
+    "t.labelRu": "пезизомицеты",
+    "t.rank": "class",
+    "t.depth": 9,
+    "t.descendants": 4447
+  },
+  {
+    "t.id": 79705,
+    "t.scientificName": "Symphypleona",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 4437
+  },
+  {
+    "t.id": 543769,
+    "t.scientificName": "Rhizaria",
+    "t.labelRu": "ризарии",
+    "t.rank": "clade",
+    "t.depth": 4,
+    "t.descendants": 4430
+  },
+  {
+    "t.id": 92068,
+    "t.scientificName": "Hydracarina",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 19,
+    "t.descendants": 4426
+  },
+  {
+    "t.id": 7458,
+    "t.scientificName": "Apidae",
+    "t.labelRu": "пчёлы настоящие",
+    "t.rank": "family",
+    "t.depth": 24,
+    "t.descendants": 4417
+  },
+  {
+    "t.id": 2854170,
+    "t.scientificName": "Roseobacteraceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4405
+  },
+  {
+    "t.id": 1301,
+    "t.scientificName": "Streptococcus",
+    "t.labelRu": "стрептококки",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 4405
+  },
+  {
+    "t.id": 11157,
+    "t.scientificName": "Mononegavirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 4394
+  },
+  {
+    "t.id": 267888,
+    "t.scientificName": "Pseudoalteromonadaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4369
+  },
+  {
+    "t.id": 43743,
+    "t.scientificName": "Carnoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 4367
+  },
+  {
+    "t.id": 28256,
+    "t.scientificName": "Halomonadaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4367
+  },
+  {
+    "t.id": 5197,
+    "t.scientificName": "Lecanorales",
+    "t.labelRu": "леканоровые",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 4360
+  },
+  {
+    "t.id": 30225,
+    "t.scientificName": "Arctiinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 4344
+  },
+  {
+    "t.id": 1252372,
+    "t.scientificName": "unclassified Platygastridae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 4335
+  },
+  {
+    "t.id": 237,
+    "t.scientificName": "Flavobacterium",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 10,
+    "t.descendants": 4324
+  },
+  {
+    "t.id": 91994,
+    "t.scientificName": "unclassified Staphylococcus",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 4293
+  },
+  {
+    "t.id": 1489910,
+    "t.scientificName": "Cichlomorphae",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 28,
+    "t.descendants": 4287
+  },
+  {
+    "t.id": 1489911,
+    "t.scientificName": "Cichliformes",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 29,
+    "t.descendants": 4286
+  },
+  {
+    "t.id": 3977,
+    "t.scientificName": "Euphorbiaceae",
+    "t.labelRu": "молочайные",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 4280
+  },
+  {
+    "t.id": 8113,
+    "t.scientificName": "Cichlidae",
+    "t.labelRu": "цихловые",
+    "t.rank": "family",
+    "t.depth": 30,
+    "t.descendants": 4279
+  },
+  {
+    "t.id": 157822,
+    "t.scientificName": "Lecanorineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 14,
+    "t.descendants": 4277
+  },
+  {
+    "t.id": 92557,
+    "t.scientificName": "Empididae",
+    "t.labelRu": "Толкунчики",
+    "t.rank": "family",
+    "t.depth": 24,
+    "t.descendants": 4274
+  },
+  {
+    "t.id": 53246,
+    "t.scientificName": "Pseudoalteromonas",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 4274
+  },
+  {
+    "t.id": 2732397,
+    "t.scientificName": "Pararnavirae",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 4272
+  },
+  {
+    "t.id": 2732409,
+    "t.scientificName": "Artverviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 4271
+  },
+  {
+    "t.id": 2732514,
+    "t.scientificName": "Revtraviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 4270
+  },
+  {
+    "t.id": 5185,
+    "t.scientificName": "Pezizales",
+    "t.labelRu": "пецицевые",
+    "t.rank": "order",
+    "t.depth": 10,
+    "t.descendants": 4260
+  },
+  {
+    "t.id": 7587,
+    "t.scientificName": "Asterozoa",
+    "t.labelRu": "Астерозои",
+    "t.rank": "superclass",
+    "t.depth": 10,
+    "t.descendants": 4232
+  },
+  {
+    "t.id": 33371,
+    "t.scientificName": "Typhlocybinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 4215
+  },
+  {
+    "t.id": 544448,
+    "t.scientificName": "Mycoplasmatota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 4211
+  },
+  {
+    "t.id": 6694,
+    "t.scientificName": "Caridea",
+    "t.labelRu": "настоящие креветки",
+    "t.rank": "infraorder",
+    "t.depth": 20,
+    "t.descendants": 4200
+  },
+  {
+    "t.id": 183963,
+    "t.scientificName": "Halobacteria",
+    "t.labelRu": "Галобактерии",
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 4200
+  },
+  {
+    "t.id": 4609,
+    "t.scientificName": "Cyperaceae",
+    "t.labelRu": "осоковые",
+    "t.rank": "family",
+    "t.depth": 16,
+    "t.descendants": 4192
+  },
+  {
+    "t.id": 2235,
+    "t.scientificName": "Halobacteriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 4186
+  },
+  {
+    "t.id": 4069,
+    "t.scientificName": "Solanales",
+    "t.labelRu": "паслёноцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 4184
+  },
+  {
+    "t.id": 1446258,
+    "t.scientificName": "Hybotidae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 24,
+    "t.descendants": 4165
+  },
+  {
+    "t.id": 1890424,
+    "t.scientificName": "Synechococcales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 4162
+  },
+  {
+    "t.id": 28556,
+    "t.scientificName": "Pleosporaceae",
+    "t.labelRu": "плеоспоровые",
+    "t.rank": "family",
+    "t.depth": 15,
+    "t.descendants": 4158
+  },
+  {
+    "t.id": 2982303,
+    "t.scientificName": "Tricholomatineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 11,
+    "t.descendants": 4158
+  },
+  {
+    "t.id": 13687,
+    "t.scientificName": "Sphingomonas",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 4150
+  },
+  {
+    "t.id": 30083,
+    "t.scientificName": "Miridae",
+    "t.labelRu": "Слепняки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 4147
+  },
+  {
+    "t.id": 2812636,
+    "t.scientificName": "CS clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 4142
+  },
+  {
+    "t.id": 41768,
+    "t.scientificName": "Ranunculales",
+    "t.labelRu": "лютикоцветные",
+    "t.rank": "order",
+    "t.depth": 12,
+    "t.descendants": 4134
+  },
+  {
+    "t.id": 3195,
+    "t.scientificName": "Marchantiophyta",
+    "t.labelRu": "печёночные мхи",
+    "t.rank": "clade",
+    "t.depth": 7,
+    "t.descendants": 4120
+  },
+  {
+    "t.id": 194690,
+    "t.scientificName": "unclassified Pseudoalteromonas",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 4116
+  },
+  {
+    "t.id": 2939015,
+    "t.scientificName": "Coccinelloidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 4113
+  },
+  {
+    "t.id": 986140,
+    "t.scientificName": "Cyperoideae",
+    "t.labelRu": "сытевые",
+    "t.rank": "subfamily",
+    "t.depth": 17,
+    "t.descendants": 4102
+  },
+  {
+    "t.id": 7157,
+    "t.scientificName": "Culicidae",
+    "t.labelRu": "кровососущие комары",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 4096
+  },
+  {
+    "t.id": 41831,
+    "t.scientificName": "Psychodoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 4089
+  },
+  {
+    "t.id": 7197,
+    "t.scientificName": "Psychodidae",
+    "t.labelRu": "Бабочницы",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 4088
+  },
+  {
+    "t.id": 32434,
+    "t.scientificName": "Gelechiidae",
+    "t.labelRu": "моли выемчатокрылые",
+    "t.rank": "family",
+    "t.depth": 26,
+    "t.descendants": 4087
+  },
+  {
+    "t.id": 30352,
+    "t.scientificName": "Ranoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 4086
+  },
+  {
+    "t.id": 1489875,
+    "t.scientificName": "Gobiaria",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 27,
+    "t.descendants": 4073
+  },
+  {
+    "t.id": 159987,
+    "t.scientificName": "Dothideomycetes incertae sedis",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 12,
+    "t.descendants": 4072
+  },
+  {
+    "t.id": 72532,
+    "t.scientificName": "Tanytarsini",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 25,
+    "t.descendants": 4048
+  },
+  {
+    "t.id": 554915,
+    "t.scientificName": "Amoebozoa",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 3,
+    "t.descendants": 4043
+  },
+  {
+    "t.id": 2169561,
+    "t.scientificName": "Ortervirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 4043
+  },
+  {
+    "t.id": 33372,
+    "t.scientificName": "Deltocephalinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 4041
+  },
+  {
+    "t.id": 43752,
+    "t.scientificName": "Tephritoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 4039
+  },
+  {
+    "t.id": 40307,
+    "t.scientificName": "Cynipoidea",
+    "t.labelRu": "Орехотворки",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 4035
+  },
+  {
+    "t.id": 33958,
+    "t.scientificName": "Lactobacillaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 4020
+  },
+  {
+    "t.id": 1779146,
+    "t.scientificName": "Heteroscleromorpha",
+    "t.labelRu": "гетеросклероморфы",
+    "t.rank": "subclass",
+    "t.depth": 7,
+    "t.descendants": 4010
+  },
+  {
+    "t.id": 4056,
+    "t.scientificName": "Apocynaceae",
+    "t.labelRu": "кутровые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 4005
+  },
+  {
+    "t.id": 7991,
+    "t.scientificName": "Characiformes",
+    "t.labelRu": "харацинообразные",
+    "t.rank": "order",
+    "t.depth": 24,
+    "t.descendants": 4004
+  },
+  {
+    "t.id": 4037,
+    "t.scientificName": "Apiaceae",
+    "t.labelRu": "зонтичные",
+    "t.rank": "family",
+    "t.depth": 19,
+    "t.descendants": 3998
+  },
+  {
+    "t.id": 27544,
+    "t.scientificName": "Lycaenidae",
+    "t.labelRu": "голубянки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 3987
+  },
+  {
+    "t.id": 2233839,
+    "t.scientificName": "IRL clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 23,
+    "t.descendants": 3981
+  },
+  {
+    "t.id": 1049657,
+    "t.scientificName": "Blattoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 3976
+  },
+  {
+    "t.id": 114728,
+    "t.scientificName": "H1N2 subtype",
+    "t.labelRu": null,
+    "t.rank": "serotype",
+    "t.depth": 12,
+    "t.descendants": 3966
+  },
+  {
+    "t.id": 147368,
+    "t.scientificName": "Pooideae",
+    "t.labelRu": "мятликовые",
+    "t.rank": "subfamily",
+    "t.depth": 18,
+    "t.descendants": 3962
+  },
+  {
+    "t.id": 2732405,
+    "t.scientificName": "Duplornaviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 3933
+  },
+  {
+    "t.id": 105391,
+    "t.scientificName": "Canalipalpata",
+    "t.labelRu": null,
+    "t.rank": "infraclass",
+    "t.depth": 13,
+    "t.descendants": 3928
+  },
+  {
+    "t.id": 65216,
+    "t.scientificName": "Alysiinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 23,
+    "t.descendants": 3923
+  },
+  {
+    "t.id": 12429,
+    "t.scientificName": "unclassified viruses",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 2,
+    "t.descendants": 3896
+  },
+  {
+    "t.id": 7001,
+    "t.scientificName": "Caelifera",
+    "t.labelRu": "короткоусые прямокрылые",
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 3886
+  },
+  {
+    "t.id": 27871,
+    "t.scientificName": "Plagiorchiida",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 3884
+  },
+  {
+    "t.id": 29547,
+    "t.scientificName": "Campylobacterota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 3879
+  },
+  {
+    "t.id": 2593313,
+    "t.scientificName": "unclassified Penicillium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 15,
+    "t.descendants": 3878
+  },
+  {
+    "t.id": 952,
+    "t.scientificName": "Wolbachieae",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 8,
+    "t.descendants": 3876
+  },
+  {
+    "t.id": 196869,
+    "t.scientificName": "unclassified Flavobacterium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 11,
+    "t.descendants": 3875
+  },
+  {
+    "t.id": 196159,
+    "t.scientificName": "unclassified Sphingomonas",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3864
+  },
+  {
+    "t.id": 953,
+    "t.scientificName": "Wolbachia",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 3862
+  },
+  {
+    "t.id": 29032,
+    "t.scientificName": "Chloropidae",
+    "t.labelRu": "Злаковые мушки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 3858
+  },
+  {
+    "t.id": 169617,
+    "t.scientificName": "Rubioideae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 3858
+  },
+  {
+    "t.id": 2640676,
+    "t.scientificName": "unclassified Wolbachia",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 10,
+    "t.descendants": 3847
+  },
+  {
+    "t.id": 2842243,
+    "t.scientificName": "Leviviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 3841
+  },
+  {
+    "t.id": 1955150,
+    "t.scientificName": "Acrididea",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 3831
+  },
+  {
+    "t.id": 116571,
+    "t.scientificName": "Podoplea",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 18,
+    "t.descendants": 3827
+  },
+  {
+    "t.id": 31969,
+    "t.scientificName": "Mollicutes",
+    "t.labelRu": "микоплазмы",
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 3809
+  },
+  {
+    "t.id": 85817,
+    "t.scientificName": "Neuropterida",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 19,
+    "t.descendants": 3791
+  },
+  {
+    "t.id": 85012,
+    "t.scientificName": "Streptosporangiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 3789
+  },
+  {
+    "t.id": 203691,
+    "t.scientificName": "Spirochaetota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 3789
+  },
+  {
+    "t.id": 127399,
+    "t.scientificName": "Agromyzidae",
+    "t.labelRu": "минирующие мушки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 3781
+  },
+  {
+    "t.id": 81852,
+    "t.scientificName": "Enterococcaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3770
+  },
+  {
+    "t.id": 2726947,
+    "t.scientificName": "Mycosphaerellales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 3768
+  },
+  {
+    "t.id": 4762,
+    "t.scientificName": "Oomycota",
+    "t.labelRu": "Оомицеты",
+    "t.rank": "phylum",
+    "t.depth": 5,
+    "t.descendants": 3763
+  },
+  {
+    "t.id": 34989,
+    "t.scientificName": "Colubroidea",
+    "t.labelRu": "высшие змеи",
+    "t.rank": "superfamily",
+    "t.depth": 27,
+    "t.descendants": 3760
+  },
+  {
+    "t.id": 2018325,
+    "t.scientificName": "Tettigoniidea",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 3754
+  },
+  {
+    "t.id": 186771,
+    "t.scientificName": "Jungermanniopsida",
+    "t.labelRu": "юнгерманиевые печёночники",
+    "t.rank": "class",
+    "t.depth": 8,
+    "t.descendants": 3752
+  },
+  {
+    "t.id": 562,
+    "t.scientificName": "Escherichia coli",
+    "t.labelRu": "кишечная палочка",
+    "t.rank": "species",
+    "t.depth": 9,
+    "t.descendants": 3750
+  },
+  {
+    "t.id": 28901,
+    "t.scientificName": "Salmonella enterica",
+    "t.labelRu": null,
+    "t.rank": "species",
+    "t.depth": 9,
+    "t.descendants": 3749
+  },
+  {
+    "t.id": 93873,
+    "t.scientificName": "Annulipalpia",
+    "t.labelRu": "кольчатощупиковые",
+    "t.rank": "suborder",
+    "t.depth": 21,
+    "t.descendants": 3748
+  },
+  {
+    "t.id": 735337,
+    "t.scientificName": "Euheterodonta",
+    "t.labelRu": null,
+    "t.rank": "infraclass",
+    "t.depth": 14,
+    "t.descendants": 3722
+  },
+  {
+    "t.id": 34451,
+    "t.scientificName": "Cortinarius",
+    "t.labelRu": "паутинник",
+    "t.rank": "genus",
+    "t.depth": 13,
+    "t.descendants": 3722
+  },
+  {
+    "t.id": 2593666,
+    "t.scientificName": "unclassified Fusarium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 16,
+    "t.descendants": 3720
+  },
+  {
+    "t.id": 2803884,
+    "t.scientificName": "Crassiclitellata",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 3709
+  },
+  {
+    "t.id": 1489739,
+    "t.scientificName": "Characoidei",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 25,
+    "t.descendants": 3708
+  },
+  {
+    "t.id": 114658,
+    "t.scientificName": "Bryidae",
+    "t.labelRu": "бриевые",
+    "t.rank": "subclass",
+    "t.depth": 10,
+    "t.descendants": 3704
+  },
+  {
+    "t.id": 203692,
+    "t.scientificName": "Spirochaetia",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 3703
+  },
+  {
+    "t.id": 6894,
+    "t.scientificName": "Mygalomorphae",
+    "t.labelRu": "мигаломорфные пауки",
+    "t.rank": "suborder",
+    "t.depth": 14,
+    "t.descendants": 3693
+  },
+  {
+    "t.id": 33103,
+    "t.scientificName": "Ulvophyceae",
+    "t.labelRu": "ульвофициевые",
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 3693
+  },
+  {
+    "t.id": 92117,
+    "t.scientificName": "Anystae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 18,
+    "t.descendants": 3687
+  },
+  {
+    "t.id": 190098,
+    "t.scientificName": "Limnophyes",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 25,
+    "t.descendants": 3687
+  },
+  {
+    "t.id": 39998,
+    "t.scientificName": "Melastomataceae",
+    "t.labelRu": "Меластомовые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 3684
+  },
+  {
+    "t.id": 104450,
+    "t.scientificName": "Larentiinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 3680
+  },
+  {
+    "t.id": 43271,
+    "t.scientificName": "Opiliones",
+    "t.labelRu": "сенокосцы",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 3680
+  },
+  {
+    "t.id": 2890311,
+    "t.scientificName": "Klebsiella/Raoultella group",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 8,
+    "t.descendants": 3667
+  },
+  {
+    "t.id": 2640025,
+    "t.scientificName": "unclassified Limnophyes",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 26,
+    "t.descendants": 3654
+  },
+  {
+    "t.id": 92247,
+    "t.scientificName": "Anystoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 19,
+    "t.descendants": 3651
+  },
+  {
+    "t.id": 1903411,
+    "t.scientificName": "Yersiniaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3630
+  },
+  {
+    "t.id": 68287,
+    "t.scientificName": "Mesorhizobium",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3618
+  },
+  {
+    "t.id": 43789,
+    "t.scientificName": "Tipulomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 3605
+  },
+  {
+    "t.id": 41829,
+    "t.scientificName": "Tipuloidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 3604
+  },
+  {
+    "t.id": 6199,
+    "t.scientificName": "Cestoda",
+    "t.labelRu": "ленточные черви",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 3603
+  },
+  {
+    "t.id": 33361,
+    "t.scientificName": "Fulgoromorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 21,
+    "t.descendants": 3597
+  },
+  {
+    "t.id": 92248,
+    "t.scientificName": "Anystidae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 20,
+    "t.descendants": 3594
+  },
+  {
+    "t.id": 36151,
+    "t.scientificName": "Fulgoroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 3594
+  },
+  {
+    "t.id": 173037,
+    "t.scientificName": "unclassified Ichneumonidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 23,
+    "t.descendants": 3590
+  },
+  {
+    "t.id": 237403,
+    "t.scientificName": "Telenominae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 3588
+  },
+  {
+    "t.id": 3031852,
+    "t.scientificName": "Epsilonproteobacteria",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 3577
+  },
+  {
+    "t.id": 3435278,
+    "t.scientificName": "Avicularoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 15,
+    "t.descendants": 3575
+  },
+  {
+    "t.id": 11632,
+    "t.scientificName": "Retroviridae",
+    "t.labelRu": "Ретровирусы",
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3573
+  },
+  {
+    "t.id": 4345,
+    "t.scientificName": "Ericaceae",
+    "t.labelRu": "вересковые",
+    "t.rank": "family",
+    "t.depth": 17,
+    "t.descendants": 3573
+  },
+  {
+    "t.id": 1963758,
+    "t.scientificName": "Myomorpha",
+    "t.labelRu": "мышеобразные",
+    "t.rank": "suborder",
+    "t.depth": 25,
+    "t.descendants": 3570
+  },
+  {
+    "t.id": 85819,
+    "t.scientificName": "Phthiraptera",
+    "t.labelRu": "пухоеды и вши",
+    "t.rank": "order",
+    "t.depth": 20,
+    "t.descendants": 3570
+  },
+  {
+    "t.id": 70910,
+    "t.scientificName": "Acridomorpha",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 22,
+    "t.descendants": 3568
+  },
+  {
+    "t.id": 626562,
+    "t.scientificName": "unclassified Dolichopodidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 25,
+    "t.descendants": 3565
+  },
+  {
+    "t.id": 6200,
+    "t.scientificName": "Eucestoda",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 3564
+  },
+  {
+    "t.id": 2642494,
+    "t.scientificName": "unclassified Mycobacterium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3554
+  },
+  {
+    "t.id": 1993396,
+    "t.scientificName": "Anthomyiinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 3554
+  },
+  {
+    "t.id": 30262,
+    "t.scientificName": "Thysanoptera",
+    "t.labelRu": "Трипсы",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 3548
+  },
+  {
+    "t.id": 135624,
+    "t.scientificName": "Aeromonadales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 3547
+  },
+  {
+    "t.id": 1203512,
+    "t.scientificName": "Polypodiineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 12,
+    "t.descendants": 3545
+  },
+  {
+    "t.id": 7214,
+    "t.scientificName": "Drosophilidae",
+    "t.labelRu": "плодовые мушки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 3541
+  },
+  {
+    "t.id": 1251154,
+    "t.scientificName": "unclassified Anystidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 21,
+    "t.descendants": 3539
+  },
+  {
+    "t.id": 42282,
+    "t.scientificName": "Satyrinae",
+    "t.labelRu": "бархатницы",
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 3530
+  },
+  {
+    "t.id": 274104,
+    "t.scientificName": "unclassified Cryptinae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 3523
+  },
+  {
+    "t.id": 535378,
+    "t.scientificName": "Dytiscoidea",
+    "t.labelRu": "Дитискоидные",
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 3522
+  },
+  {
+    "t.id": 2785015,
+    "t.scientificName": "Imparidentia",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 15,
+    "t.descendants": 3503
+  },
+  {
+    "t.id": 325217,
+    "t.scientificName": "unclassified Mesorhizobium",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3501
+  },
+  {
+    "t.id": 213849,
+    "t.scientificName": "Campylobacterales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 3500
+  },
+  {
+    "t.id": 2233855,
+    "t.scientificName": "indigoferoid/millettioid clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 22,
+    "t.descendants": 3499
+  },
+  {
+    "t.id": 994121,
+    "t.scientificName": "unclassified Chironominae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 25,
+    "t.descendants": 3497
+  },
+  {
+    "t.id": 911341,
+    "t.scientificName": "Heliantheae alliance",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 20,
+    "t.descendants": 3489
+  },
+  {
+    "t.id": 2732004,
+    "t.scientificName": "Varidnaviria",
+    "t.labelRu": null,
+    "t.rank": "realm",
+    "t.depth": 2,
+    "t.descendants": 3488
+  },
+  {
+    "t.id": 31979,
+    "t.scientificName": "Clostridiaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3481
+  },
+  {
+    "t.id": 6274,
+    "t.scientificName": "Spirurina",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 12,
+    "t.descendants": 3475
+  },
+  {
+    "t.id": 1912919,
+    "t.scientificName": "Termitoidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 22,
+    "t.descendants": 3468
+  },
+  {
+    "t.id": 241778,
+    "t.scientificName": "Apioideae",
+    "t.labelRu": "сельдерейные",
+    "t.rank": "subfamily",
+    "t.depth": 20,
+    "t.descendants": 3465
+  },
+  {
+    "t.id": 3807,
+    "t.scientificName": "mimosoid clade",
+    "t.labelRu": "Мимозовые",
+    "t.rank": "clade",
+    "t.depth": 20,
+    "t.descendants": 3463
+  },
+  {
+    "t.id": 198337,
+    "t.scientificName": "Telenomus",
+    "t.labelRu": "Теленомусы",
+    "t.rank": "genus",
+    "t.depth": 25,
+    "t.descendants": 3458
+  },
+  {
+    "t.id": 40323,
+    "t.scientificName": "Stenotrophomonas",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3456
+  },
+  {
+    "t.id": 33807,
+    "t.scientificName": "unclassified Alphaproteobacteria",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 6,
+    "t.descendants": 3454
+  },
+  {
+    "t.id": 84642,
+    "t.scientificName": "Aeromonadaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3450
+  },
+  {
+    "t.id": 33811,
+    "t.scientificName": "unclassified Gammaproteobacteria",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 6,
+    "t.descendants": 3449
+  },
+  {
+    "t.id": 1350,
+    "t.scientificName": "Enterococcus",
+    "t.labelRu": "Энтерококки",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3446
+  },
+  {
+    "t.id": 150080,
+    "t.scientificName": "Norovirus isolates",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 11,
+    "t.descendants": 3437
+  },
+  {
+    "t.id": 3123326,
+    "t.scientificName": "Nostoc cyanobionts",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 11,
+    "t.descendants": 3434
+  },
+  {
+    "t.id": 2745,
+    "t.scientificName": "Halomonas",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3421
+  },
+  {
+    "t.id": 2647933,
+    "t.scientificName": "unclassified Telenomus",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 26,
+    "t.descendants": 3419
+  },
+  {
+    "t.id": 1489878,
+    "t.scientificName": "Gobiiformes",
+    "t.labelRu": "бычкообразные",
+    "t.rank": "order",
+    "t.depth": 28,
+    "t.descendants": 3406
+  },
+  {
+    "t.id": 337687,
+    "t.scientificName": "Muroidea",
+    "t.labelRu": "мышиные",
+    "t.rank": "clade",
+    "t.depth": 26,
+    "t.descendants": 3402
+  },
+  {
+    "t.id": 2732415,
+    "t.scientificName": "Cossaviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 3380
+  },
+  {
+    "t.id": 2732424,
+    "t.scientificName": "Repensiviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 3379
+  },
+  {
+    "t.id": 2732539,
+    "t.scientificName": "Geplafuvirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 3378
+  },
+  {
+    "t.id": 3931,
+    "t.scientificName": "Myrtaceae",
+    "t.labelRu": "Миртовые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 3375
+  },
+  {
+    "t.id": 155616,
+    "t.scientificName": "Tremellomycetes",
+    "t.labelRu": "Тремелломицеты",
+    "t.rank": "class",
+    "t.depth": 8,
+    "t.descendants": 3371
+  },
+  {
+    "t.id": 2732005,
+    "t.scientificName": "Bamfordvirae",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 3368
+  },
+  {
+    "t.id": 2585030,
+    "t.scientificName": "unclassified Riboviria",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 3,
+    "t.descendants": 3365
+  },
+  {
+    "t.id": 1118,
+    "t.scientificName": "Chroococcales",
+    "t.labelRu": "Хроококковые",
+    "t.rank": "order",
+    "t.depth": 8,
+    "t.descendants": 3360
+  },
+  {
+    "t.id": 147100,
+    "t.scientificName": "Rhabditophora",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 3358
+  },
+  {
+    "t.id": 6074,
+    "t.scientificName": "Hydrozoa",
+    "t.labelRu": "гидроидные",
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 3357
+  },
+  {
+    "t.id": 37945,
+    "t.scientificName": "Monogenea",
+    "t.labelRu": "Моногенеи",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 3354
+  },
+  {
+    "t.id": 59201,
+    "t.scientificName": "Salmonella enterica subsp. enterica",
+    "t.labelRu": null,
+    "t.rank": "subspecies",
+    "t.depth": 10,
+    "t.descendants": 3354
+  },
+  {
+    "t.id": 7065,
+    "t.scientificName": "Tenebrionidae",
+    "t.labelRu": "чернотелки",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 3350
+  },
+  {
+    "t.id": 50515,
+    "t.scientificName": "Dytiscidae",
+    "t.labelRu": "плавунцы",
+    "t.rank": "family",
+    "t.depth": 22,
+    "t.descendants": 3342
+  },
+  {
+    "t.id": 186782,
+    "t.scientificName": "Jungermanniidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 9,
+    "t.descendants": 3337
+  },
+  {
+    "t.id": 327045,
+    "t.scientificName": "Orthoretrovirinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 8,
+    "t.descendants": 3337
+  },
+  {
+    "t.id": 31989,
+    "t.scientificName": "Paracoccaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3335
+  },
+  {
+    "t.id": 158331,
+    "t.scientificName": "Orchidoideae",
+    "t.labelRu": "орхидные",
+    "t.rank": "subfamily",
+    "t.depth": 16,
+    "t.descendants": 3330
+  },
+  {
+    "t.id": 914285,
+    "t.scientificName": "unclassified Eulophidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 3328
+  },
+  {
+    "t.id": 72771,
+    "t.scientificName": "Formicini",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 25,
+    "t.descendants": 3324
+  },
+  {
+    "t.id": 2653904,
+    "t.scientificName": "Melastomatoideae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 3317
+  },
+  {
+    "t.id": 1699513,
+    "t.scientificName": "Myrtoideae",
+    "t.labelRu": "Миртовые (подсемейство)",
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 3312
+  },
+  {
+    "t.id": 1903409,
+    "t.scientificName": "Erwiniaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3311
+  },
+  {
+    "t.id": 570,
+    "t.scientificName": "Klebsiella",
+    "t.labelRu": "Клебсиеллы",
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 3297
+  },
+  {
+    "t.id": 77643,
+    "t.scientificName": "Mycobacterium tuberculosis complex",
+    "t.labelRu": null,
+    "t.rank": "species group",
+    "t.depth": 9,
+    "t.descendants": 3296
+  },
+  {
+    "t.id": 2982316,
+    "t.scientificName": "Marasmiineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 11,
+    "t.descendants": 3296
+  },
+  {
+    "t.id": 2497576,
+    "t.scientificName": "Ellioviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 6,
+    "t.descendants": 3295
+  },
+  {
+    "t.id": 1980410,
+    "t.scientificName": "Bunyavirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 7,
+    "t.descendants": 3294
+  },
+  {
+    "t.id": 2609666,
+    "t.scientificName": "unclassified Halomonas",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3290
+  },
+  {
+    "t.id": 1732204,
+    "t.scientificName": "Gammarida",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 20,
+    "t.descendants": 3282
+  },
+  {
+    "t.id": 196198,
+    "t.scientificName": "unclassified Stenotrophomonas",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3279
+  },
+  {
+    "t.id": 7516,
+    "t.scientificName": "Neuroptera",
+    "t.labelRu": "Сетчатокрылые",
+    "t.rank": "order",
+    "t.depth": 20,
+    "t.descendants": 3279
+  },
+  {
+    "t.id": 50671,
+    "t.scientificName": "Asiloidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 3273
+  },
+  {
+    "t.id": 1489791,
+    "t.scientificName": "Loricarioidei",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 25,
+    "t.descendants": 3265
+  },
+  {
+    "t.id": 229851,
+    "t.scientificName": "Oripodoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 18,
+    "t.descendants": 3259
+  },
+  {
+    "t.id": 1892252,
+    "t.scientificName": "Microcoleaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 9,
+    "t.descendants": 3249
+  },
+  {
+    "t.id": 1873,
+    "t.scientificName": "Micromonospora",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3247
+  },
+  {
+    "t.id": 642,
+    "t.scientificName": "Aeromonas",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3242
+  },
+  {
+    "t.id": 82169,
+    "t.scientificName": "unclassified Phoridae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 27,
+    "t.descendants": 3227
+  },
+  {
+    "t.id": 1783273,
+    "t.scientificName": "Patescibacteria group",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 3226
+  },
+  {
+    "t.id": 41946,
+    "t.scientificName": "Saxifragales",
+    "t.labelRu": "камнеломкоцветные",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 3220
+  },
+  {
+    "t.id": 6738,
+    "t.scientificName": "Anomura",
+    "t.labelRu": "неполнохвостые",
+    "t.rank": "infraorder",
+    "t.depth": 20,
+    "t.descendants": 3213
+  },
+  {
+    "t.id": 74970,
+    "t.scientificName": "Haplogynae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 15,
+    "t.descendants": 3211
+  },
+  {
+    "t.id": 1489793,
+    "t.scientificName": "Siluroidei",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 25,
+    "t.descendants": 3188
+  },
+  {
+    "t.id": 2732461,
+    "t.scientificName": "Alsuviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 3176
+  },
+  {
+    "t.id": 1489913,
+    "t.scientificName": "Atherinomorphae",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 28,
+    "t.descendants": 3168
+  },
+  {
+    "t.id": 65177,
+    "t.scientificName": "Orthocentrinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 23,
+    "t.descendants": 3168
+  },
+  {
+    "t.id": 880183,
+    "t.scientificName": "unclassified Ceratopogonidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 3165
+  },
+  {
+    "t.id": 200940,
+    "t.scientificName": "Thermodesulfobacteriota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 3159
+  },
+  {
+    "t.id": 7553,
+    "t.scientificName": "Diplopoda",
+    "t.labelRu": "двупарноногие",
+    "t.rank": "class",
+    "t.depth": 13,
+    "t.descendants": 3147
+  },
+  {
+    "t.id": 30259,
+    "t.scientificName": "Psocoptera",
+    "t.labelRu": "сеноеды",
+    "t.rank": "order",
+    "t.depth": 20,
+    "t.descendants": 3133
+  },
+  {
+    "t.id": 43810,
+    "t.scientificName": "Tanypodinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 3118
+  },
+  {
+    "t.id": 257493,
+    "t.scientificName": "unclassified Aeromonas",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3110
+  },
+  {
+    "t.id": 1827,
+    "t.scientificName": "Rhodococcus",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 3100
+  },
+  {
+    "t.id": 101165,
+    "t.scientificName": "Phalangida",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 14,
+    "t.descendants": 3094
+  },
+  {
+    "t.id": 569578,
+    "t.scientificName": "PX clade",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 6,
+    "t.descendants": 3087
+  },
+  {
+    "t.id": 2731643,
+    "t.scientificName": "Autographiviridae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 6,
+    "t.descendants": 3082
+  },
+  {
+    "t.id": 5339,
+    "t.scientificName": "Agaricaceae",
+    "t.labelRu": "шампиньоновые",
+    "t.rank": "family",
+    "t.depth": 12,
+    "t.descendants": 3080
+  },
+  {
+    "t.id": 75682,
+    "t.scientificName": "Oxalobacteraceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 3079
+  },
+  {
+    "t.id": 2611352,
+    "t.scientificName": "Discoba",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 3,
+    "t.descendants": 3073
+  },
+  {
+    "t.id": 72766,
+    "t.scientificName": "Formica",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 26,
+    "t.descendants": 3063
+  },
+  {
+    "t.id": 4891,
+    "t.scientificName": "Saccharomycetes",
+    "t.labelRu": "сахаромицеты",
+    "t.rank": "class",
+    "t.depth": 9,
+    "t.descendants": 3060
+  },
+  {
+    "t.id": 2617518,
+    "t.scientificName": "unclassified Micromonospora",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 3051
+  },
+  {
+    "t.id": 2301116,
+    "t.scientificName": "Rhabditina",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 12,
+    "t.descendants": 3047
+  },
+  {
+    "t.id": 6125,
+    "t.scientificName": "Scleractinia",
+    "t.labelRu": "мадрепоровые кораллы",
+    "t.rank": "order",
+    "t.depth": 9,
+    "t.descendants": 3047
+  },
+  {
+    "t.id": 8219,
+    "t.scientificName": "Gobioidei",
+    "t.labelRu": "бычковидные",
+    "t.rank": "suborder",
+    "t.depth": 29,
+    "t.descendants": 3046
+  },
+  {
+    "t.id": 319095,
+    "t.scientificName": "African cichlids",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 31,
+    "t.descendants": 3042
+  },
+  {
+    "t.id": 318546,
+    "t.scientificName": "Pseudocrenilabrinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 32,
+    "t.descendants": 3034
+  },
+  {
+    "t.id": 3629,
+    "t.scientificName": "Malvaceae",
+    "t.labelRu": "мальвовые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 3030
+  },
+  {
+    "t.id": 43838,
+    "t.scientificName": "Syrphinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 27,
+    "t.descendants": 3027
+  },
+  {
+    "t.id": 730331,
+    "t.scientificName": "Poduromorpha",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 3018
+  },
+  {
+    "t.id": 5129,
+    "t.scientificName": "Hypocreaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 14,
+    "t.descendants": 3005
+  },
+  {
+    "t.id": 39814,
+    "t.scientificName": "Entiminae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 3002
+  },
+  {
+    "t.id": 12058,
+    "t.scientificName": "Picornaviridae",
+    "t.labelRu": "пикорнавирусы",
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2997
+  },
+  {
+    "t.id": 16360,
+    "t.scientificName": "Alismatales",
+    "t.labelRu": "частухоцветные",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 2988
+  },
+  {
+    "t.id": 767018,
+    "t.scientificName": "Diaporthaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 14,
+    "t.descendants": 2981
+  },
+  {
+    "t.id": 94819,
+    "t.scientificName": "Eupodoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 18,
+    "t.descendants": 2977
+  },
+  {
+    "t.id": 54968,
+    "t.scientificName": "Polypedilum",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 26,
+    "t.descendants": 2973
+  },
+  {
+    "t.id": 63710,
+    "t.scientificName": "Galerucinae",
+    "t.labelRu": "Козявки",
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 2970
+  },
+  {
+    "t.id": 7211,
+    "t.scientificName": "Tephritidae",
+    "t.labelRu": "пестрокрылки",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 2970
+  },
+  {
+    "t.id": 866800,
+    "t.scientificName": "Cactineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 16,
+    "t.descendants": 2970
+  },
+  {
+    "t.id": 43799,
+    "t.scientificName": "Mycetophilinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 2970
+  },
+  {
+    "t.id": 2732091,
+    "t.scientificName": "Sangervirae",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 2969
+  },
+  {
+    "t.id": 2732412,
+    "t.scientificName": "Phixviricota",
+    "t.labelRu": null,
+    "t.rank": "phylum",
+    "t.depth": 4,
+    "t.descendants": 2968
+  },
+  {
+    "t.id": 2732413,
+    "t.scientificName": "Malgrandaviricetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 5,
+    "t.descendants": 2967
+  },
+  {
+    "t.id": 92621,
+    "t.scientificName": "Acridoidea",
+    "t.labelRu": "саранчовые",
+    "t.rank": "superfamily",
+    "t.depth": 23,
+    "t.descendants": 2966
+  },
+  {
+    "t.id": 2732414,
+    "t.scientificName": "Petitvirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2966
+  },
+  {
+    "t.id": 10841,
+    "t.scientificName": "Microviridae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2963
+  },
+  {
+    "t.id": 89954,
+    "t.scientificName": "Suessiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2953
+  },
+  {
+    "t.id": 8220,
+    "t.scientificName": "Gobiidae",
+    "t.labelRu": "бычковые",
+    "t.rank": "family",
+    "t.depth": 30,
+    "t.descendants": 2950
+  },
+  {
+    "t.id": 1485,
+    "t.scientificName": "Clostridium",
+    "t.labelRu": "клостридии",
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 2948
+  },
+  {
+    "t.id": 192944,
+    "t.scientificName": "unclassified Rhodococcus (in: high G+C Gram-positive bacteria)",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 9,
+    "t.descendants": 2948
+  },
+  {
+    "t.id": 3402561,
+    "t.scientificName": "Amphisphaeriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 2946
+  },
+  {
+    "t.id": 1583079,
+    "t.scientificName": "Erebinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 2946
+  },
+  {
+    "t.id": 227330,
+    "t.scientificName": "Boletineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 11,
+    "t.descendants": 2945
+  },
+  {
+    "t.id": 11646,
+    "t.scientificName": "Lentivirus",
+    "t.labelRu": "лентивирусы",
+    "t.rank": "genus",
+    "t.depth": 9,
+    "t.descendants": 2938
+  },
+  {
+    "t.id": 43917,
+    "t.scientificName": "Exoristinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 2930
+  },
+  {
+    "t.id": 3400,
+    "t.scientificName": "Magnoliales",
+    "t.labelRu": "магнолиецветные",
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 2929
+  },
+  {
+    "t.id": 93133,
+    "t.scientificName": "Mycosphaerellaceae",
+    "t.labelRu": "микосфереллевые",
+    "t.rank": "family",
+    "t.depth": 14,
+    "t.descendants": 2923
+  },
+  {
+    "t.id": 1773,
+    "t.scientificName": "Mycobacterium tuberculosis",
+    "t.labelRu": null,
+    "t.rank": "species",
+    "t.depth": 10,
+    "t.descendants": 2914
+  },
+  {
+    "t.id": 45778,
+    "t.scientificName": "eukaryotic vectors",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 5,
+    "t.descendants": 2906
+  },
+  {
+    "t.id": 33381,
+    "t.scientificName": "Coccoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 21,
+    "t.descendants": 2901
+  },
+  {
+    "t.id": 5368,
+    "t.scientificName": "Boletaceae",
+    "t.labelRu": "Болетовые",
+    "t.rank": "family",
+    "t.depth": 12,
+    "t.descendants": 2900
+  },
+  {
+    "t.id": 1783275,
+    "t.scientificName": "Thermoproteati",
+    "t.labelRu": null,
+    "t.rank": "kingdom",
+    "t.depth": 3,
+    "t.descendants": 2892
+  },
+  {
+    "t.id": 50622,
+    "t.scientificName": "Plecoptera",
+    "t.labelRu": "Веснянки",
+    "t.rank": "order",
+    "t.depth": 19,
+    "t.descendants": 2880
+  },
+  {
+    "t.id": 6545,
+    "t.scientificName": "Pteriomorphia",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 13,
+    "t.descendants": 2876
+  },
+  {
+    "t.id": 252141,
+    "t.scientificName": "Symbiodiniaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2868
+  },
+  {
+    "t.id": 36064,
+    "t.scientificName": "Cantharellales",
+    "t.labelRu": "лисичковые",
+    "t.rank": "order",
+    "t.depth": 10,
+    "t.descendants": 2867
+  },
+  {
+    "t.id": 2635955,
+    "t.scientificName": "unclassified Formica",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 27,
+    "t.descendants": 2867
+  },
+  {
+    "t.id": 506,
+    "t.scientificName": "Alcaligenaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2864
+  },
+  {
+    "t.id": 219103,
+    "t.scientificName": "Carduoideae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 2852
+  },
+  {
+    "t.id": 37516,
+    "t.scientificName": "Hydroidolina",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 8,
+    "t.descendants": 2851
+  },
+  {
+    "t.id": 102818,
+    "t.scientificName": "Cardueae",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 20,
+    "t.descendants": 2849
+  },
+  {
+    "t.id": 76804,
+    "t.scientificName": "Nidovirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2843
+  },
+  {
+    "t.id": 388283,
+    "t.scientificName": "Ostropomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 12,
+    "t.descendants": 2841
+  },
+  {
+    "t.id": 768503,
+    "t.scientificName": "Cytophagia",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 2840
+  },
+  {
+    "t.id": 8560,
+    "t.scientificName": "Gekkota",
+    "t.labelRu": "гекконообразные",
+    "t.rank": "infraorder",
+    "t.depth": 23,
+    "t.descendants": 2830
+  },
+  {
+    "t.id": 7150,
+    "t.scientificName": "Chironomus",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 26,
+    "t.descendants": 2830
+  },
+  {
+    "t.id": 768507,
+    "t.scientificName": "Cytophagales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 8,
+    "t.descendants": 2829
+  },
+  {
+    "t.id": 891959,
+    "t.scientificName": "unclassified Polypedilum",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 27,
+    "t.descendants": 2828
+  },
+  {
+    "t.id": 118561,
+    "t.scientificName": "Helminthomorpha",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 14,
+    "t.descendants": 2828
+  },
+  {
+    "t.id": 40551,
+    "t.scientificName": "Arecales",
+    "t.labelRu": "пальмоцветные",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 2828
+  },
+  {
+    "t.id": 117574,
+    "t.scientificName": "unclassified Microviridae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 8,
+    "t.descendants": 2827
+  },
+  {
+    "t.id": 57992,
+    "t.scientificName": "Oecophoridae",
+    "t.labelRu": "Ширококрылые моли",
+    "t.rank": "family",
+    "t.depth": 26,
+    "t.descendants": 2821
+  },
+  {
+    "t.id": 85010,
+    "t.scientificName": "Pseudonocardiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2814
+  },
+  {
+    "t.id": 4710,
+    "t.scientificName": "Arecaceae",
+    "t.labelRu": "пальмовые",
+    "t.rank": "family",
+    "t.depth": 16,
+    "t.descendants": 2812
+  },
+  {
+    "t.id": 6217,
+    "t.scientificName": "Nemertea",
+    "t.labelRu": "немертины",
+    "t.rank": "phylum",
+    "t.depth": 10,
+    "t.descendants": 2810
+  },
+  {
+    "t.id": 2070,
+    "t.scientificName": "Pseudonocardiaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2806
+  },
+  {
+    "t.id": 9397,
+    "t.scientificName": "Chiroptera",
+    "t.labelRu": "рукокрылые",
+    "t.rank": "order",
+    "t.depth": 23,
+    "t.descendants": 2802
+  },
+  {
+    "t.id": 3418650,
+    "t.scientificName": "Lentivirus humimdef1",
+    "t.labelRu": null,
+    "t.rank": "species",
+    "t.depth": 10,
+    "t.descendants": 2793
+  },
+  {
+    "t.id": 11676,
+    "t.scientificName": "Human immunodeficiency virus 1",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 11,
+    "t.descendants": 2792
+  },
+  {
+    "t.id": 6658,
+    "t.scientificName": "Branchiopoda",
+    "t.labelRu": "жаброногие",
+    "t.rank": "class",
+    "t.depth": 14,
+    "t.descendants": 2776
+  },
+  {
+    "t.id": 26122,
+    "t.scientificName": "Gesneriaceae",
+    "t.labelRu": "Геснериевые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 2775
+  },
+  {
+    "t.id": 33849,
+    "t.scientificName": "Bacillariophyceae",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 2767
+  },
+  {
+    "t.id": 3028843,
+    "t.scientificName": "Malacalcyonacea",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 9,
+    "t.descendants": 2766
+  },
+  {
+    "t.id": 3085636,
+    "t.scientificName": "Lachnospirales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2764
+  },
+  {
+    "t.id": 162484,
+    "t.scientificName": "Pucciniomycetes",
+    "t.labelRu": null,
+    "t.rank": "class",
+    "t.depth": 8,
+    "t.descendants": 2759
+  },
+  {
+    "t.id": 216706,
+    "t.scientificName": "Nepetoideae",
+    "t.labelRu": "котовниковые",
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 2758
+  },
+  {
+    "t.id": 116123,
+    "t.scientificName": "Oecophorinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 27,
+    "t.descendants": 2747
+  },
+  {
+    "t.id": 102809,
+    "t.scientificName": "Astereae",
+    "t.labelRu": "астровые",
+    "t.rank": "tribe",
+    "t.depth": 20,
+    "t.descendants": 2747
+  },
+  {
+    "t.id": 98966,
+    "t.scientificName": "Gracillariidae",
+    "t.labelRu": "моли-пестрянки",
+    "t.rank": "family",
+    "t.depth": 26,
+    "t.descendants": 2746
+  },
+  {
+    "t.id": 147369,
+    "t.scientificName": "Panicoideae",
+    "t.labelRu": "Просовые",
+    "t.rank": "subfamily",
+    "t.depth": 18,
+    "t.descendants": 2742
+  },
+  {
+    "t.id": 127320,
+    "t.scientificName": "Satyrini",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 29,
+    "t.descendants": 2740
+  },
+  {
+    "t.id": 4070,
+    "t.scientificName": "Solanaceae",
+    "t.labelRu": "паслёновые",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 2738
+  },
+  {
+    "t.id": 1028384,
+    "t.scientificName": "Glomerellales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 13,
+    "t.descendants": 2726
+  },
+  {
+    "t.id": 2870,
+    "t.scientificName": "Phaeophyceae",
+    "t.labelRu": "бурые водоросли",
+    "t.rank": "class",
+    "t.depth": 7,
+    "t.descendants": 2726
+  },
+  {
+    "t.id": 1260849,
+    "t.scientificName": "Corynoptera",
+    "t.labelRu": "кориноптеры",
+    "t.rank": "genus",
+    "t.depth": 24,
+    "t.descendants": 2717
+  },
+  {
+    "t.id": 119211,
+    "t.scientificName": "H3N8 subtype",
+    "t.labelRu": null,
+    "t.rank": "serotype",
+    "t.depth": 12,
+    "t.descendants": 2716
+  },
+  {
+    "t.id": 404315,
+    "t.scientificName": "Hypnanae",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 11,
+    "t.descendants": 2716
+  },
+  {
+    "t.id": 473556,
+    "t.scientificName": "unclassified Trichoptera",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 21,
+    "t.descendants": 2715
+  },
+  {
+    "t.id": 7953,
+    "t.scientificName": "Cyprinidae",
+    "t.labelRu": "карповые",
+    "t.rank": "family",
+    "t.depth": 26,
+    "t.descendants": 2710
+  },
+  {
+    "t.id": 2662056,
+    "t.scientificName": "Retaria",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 5,
+    "t.descendants": 2699
+  },
+  {
+    "t.id": 119045,
+    "t.scientificName": "Methylobacteriaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2697
+  },
+  {
+    "t.id": 680346,
+    "t.scientificName": "Nudipleura",
+    "t.labelRu": null,
+    "t.rank": "superorder",
+    "t.depth": 14,
+    "t.descendants": 2696
+  },
+  {
+    "t.id": 665596,
+    "t.scientificName": "Inocybaceae",
+    "t.labelRu": "Волоконницевые",
+    "t.rank": "family",
+    "t.depth": 12,
+    "t.descendants": 2685
+  },
+  {
+    "t.id": 63226,
+    "t.scientificName": "Asellota",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 19,
+    "t.descendants": 2681
+  },
+  {
+    "t.id": 37990,
+    "t.scientificName": "Xylariaceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 14,
+    "t.descendants": 2681
+  },
+  {
+    "t.id": 186803,
+    "t.scientificName": "Lachnospiraceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2680
+  },
+  {
+    "t.id": 1457286,
+    "t.scientificName": "Dorylaimia",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 11,
+    "t.descendants": 2679
+  },
+  {
+    "t.id": 451870,
+    "t.scientificName": "Chaetothyriomycetidae",
+    "t.labelRu": null,
+    "t.rank": "subclass",
+    "t.depth": 11,
+    "t.descendants": 2678
+  },
+  {
+    "t.id": 5402,
+    "t.scientificName": "Russula",
+    "t.labelRu": "сыроежка",
+    "t.rank": "genus",
+    "t.depth": 12,
+    "t.descendants": 2677
+  },
+  {
+    "t.id": 4618,
+    "t.scientificName": "Zingiberales",
+    "t.labelRu": "Имбирецветные",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 2675
+  },
+  {
+    "t.id": 33850,
+    "t.scientificName": "Bacillariophycidae",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 8,
+    "t.descendants": 2672
+  },
+  {
+    "t.id": 43793,
+    "t.scientificName": "Cecidomyiinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 2672
+  },
+  {
+    "t.id": 2614034,
+    "t.scientificName": "unclassified Corynoptera",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 25,
+    "t.descendants": 2671
+  },
+  {
+    "t.id": 7135,
+    "t.scientificName": "Pyralidae",
+    "t.labelRu": "Огнёвки настоящие",
+    "t.rank": "family",
+    "t.depth": 27,
+    "t.descendants": 2670
+  },
+  {
+    "t.id": 2608929,
+    "t.scientificName": "unclassified Klebsiella",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 10,
+    "t.descendants": 2667
+  },
+  {
+    "t.id": 72538,
+    "t.scientificName": "unclassified Chironomus",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 27,
+    "t.descendants": 2664
+  },
+  {
+    "t.id": 45426,
+    "t.scientificName": "unclassified Ascomycota",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 7,
+    "t.descendants": 2659
+  },
+  {
+    "t.id": 5052,
+    "t.scientificName": "Aspergillus",
+    "t.labelRu": "Аспергилл",
+    "t.rank": "genus",
+    "t.depth": 14,
+    "t.descendants": 2656
+  },
+  {
+    "t.id": 94017,
+    "t.scientificName": "Salticidae",
+    "t.labelRu": "пауки-скакуны",
+    "t.rank": "family",
+    "t.depth": 18,
+    "t.descendants": 2654
+  },
+  {
+    "t.id": 70987,
+    "t.scientificName": "Apinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 25,
+    "t.descendants": 2651
+  },
+  {
+    "t.id": 85009,
+    "t.scientificName": "Propionibacteriales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2648
+  },
+  {
+    "t.id": 65170,
+    "t.scientificName": "Ichneumoninae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 23,
+    "t.descendants": 2648
+  },
+  {
+    "t.id": 3403061,
+    "t.scientificName": "Viruses incertae sedis",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 2,
+    "t.descendants": 2647
+  },
+  {
+    "t.id": 2802,
+    "t.scientificName": "Ceramiales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2646
+  },
+  {
+    "t.id": 7618,
+    "t.scientificName": "Ophiuroidea",
+    "t.labelRu": "Офиуры",
+    "t.rank": "class",
+    "t.depth": 11,
+    "t.descendants": 2641
+  },
+  {
+    "t.id": 7002,
+    "t.scientificName": "Acrididae",
+    "t.labelRu": "настоящие саранчовые",
+    "t.rank": "family",
+    "t.depth": 24,
+    "t.descendants": 2640
+  },
+  {
+    "t.id": 70849,
+    "t.scientificName": "Nudibranchia",
+    "t.labelRu": "голожаберные",
+    "t.rank": "order",
+    "t.depth": 15,
+    "t.descendants": 2608
+  },
+  {
+    "t.id": 186329,
+    "t.scientificName": "Acholeplasmatales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2607
+  },
+  {
+    "t.id": 2908833,
+    "t.scientificName": "Neoheterodontei",
+    "t.labelRu": null,
+    "t.rank": "clade",
+    "t.depth": 16,
+    "t.descendants": 2605
+  },
+  {
+    "t.id": 66568,
+    "t.scientificName": "Ceratozetoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 18,
+    "t.descendants": 2605
+  },
+  {
+    "t.id": 2982306,
+    "t.scientificName": "Pluteineae",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 11,
+    "t.descendants": 2602
+  },
+  {
+    "t.id": 108385,
+    "t.scientificName": "Aphelinidae",
+    "t.labelRu": "Афелиниды",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 2597
+  },
+  {
+    "t.id": 1345656,
+    "t.scientificName": "Truncatelloidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 14,
+    "t.descendants": 2595
+  },
+  {
+    "t.id": 2146,
+    "t.scientificName": "Acholeplasmataceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2594
+  },
+  {
+    "t.id": 79706,
+    "t.scientificName": "Poduroidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 16,
+    "t.descendants": 2588
+  },
+  {
+    "t.id": 5258,
+    "t.scientificName": "Pucciniales",
+    "t.labelRu": "Пукциниевые",
+    "t.rank": "order",
+    "t.depth": 9,
+    "t.descendants": 2586
+  },
+  {
+    "t.id": 43823,
+    "t.scientificName": "Limoniidae",
+    "t.labelRu": "болотницы",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 2584
+  },
+  {
+    "t.id": 204458,
+    "t.scientificName": "Caulobacterales",
+    "t.labelRu": null,
+    "t.rank": "order",
+    "t.depth": 6,
+    "t.descendants": 2573
+  },
+  {
+    "t.id": 3568,
+    "t.scientificName": "Caryophyllaceae",
+    "t.labelRu": "гвоздичные",
+    "t.rank": "family",
+    "t.depth": 16,
+    "t.descendants": 2572
+  },
+  {
+    "t.id": 167484,
+    "t.scientificName": "Asclepiadoideae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 2570
+  },
+  {
+    "t.id": 7489,
+    "t.scientificName": "Trichogrammatidae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 2570
+  },
+  {
+    "t.id": 8511,
+    "t.scientificName": "Iguania",
+    "t.labelRu": "игуанообразные",
+    "t.rank": "suborder",
+    "t.depth": 26,
+    "t.descendants": 2570
+  },
+  {
+    "t.id": 388795,
+    "t.scientificName": "HIV-1 group M",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 12,
+    "t.descendants": 2568
+  },
+  {
+    "t.id": 171638,
+    "t.scientificName": "Rosoideae",
+    "t.labelRu": "розановые",
+    "t.rank": "subfamily",
+    "t.depth": 19,
+    "t.descendants": 2566
+  },
+  {
+    "t.id": 65219,
+    "t.scientificName": "Rogadinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 23,
+    "t.descendants": 2561
+  },
+  {
+    "t.id": 10811,
+    "t.scientificName": "Geminiviridae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2559
+  },
+  {
+    "t.id": 158389,
+    "t.scientificName": "Epidendreae",
+    "t.labelRu": "эпидендровые",
+    "t.rank": "tribe",
+    "t.depth": 17,
+    "t.descendants": 2547
+  },
+  {
+    "t.id": 76892,
+    "t.scientificName": "Caulobacteraceae",
+    "t.labelRu": null,
+    "t.rank": "family",
+    "t.depth": 7,
+    "t.descendants": 2546
+  },
+  {
+    "t.id": 351509,
+    "t.scientificName": "Tachyporinae group",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 2535
+  },
+  {
+    "t.id": 1119524,
+    "t.scientificName": "unclassified Pteromalidae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 24,
+    "t.descendants": 2535
+  },
+  {
+    "t.id": 38130,
+    "t.scientificName": "Terebrantia",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 20,
+    "t.descendants": 2525
+  },
+  {
+    "t.id": 71526,
+    "t.scientificName": "Cucujoidea",
+    "t.labelRu": "Кукуйоидные",
+    "t.rank": "superfamily",
+    "t.depth": 22,
+    "t.descendants": 2522
+  },
+  {
+    "t.id": 7080,
+    "t.scientificName": "Coccinellidae",
+    "t.labelRu": "божьи коровки",
+    "t.rank": "family",
+    "t.depth": 23,
+    "t.descendants": 2518
+  },
+  {
+    "t.id": 5598,
+    "t.scientificName": "Alternaria",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 16,
+    "t.descendants": 2510
+  },
+  {
+    "t.id": 1538097,
+    "t.scientificName": "Boraginales",
+    "t.labelRu": "Бурачникоцветные",
+    "t.rank": "order",
+    "t.depth": 17,
+    "t.descendants": 2506
+  },
+  {
+    "t.id": 33926,
+    "t.scientificName": "Candidatus Phytoplasma",
+    "t.labelRu": null,
+    "t.rank": "genus",
+    "t.depth": 8,
+    "t.descendants": 2494
+  },
+  {
+    "t.id": 5234,
+    "t.scientificName": "Tremellales",
+    "t.labelRu": "Дрожалковые",
+    "t.rank": "order",
+    "t.depth": 9,
+    "t.descendants": 2491
+  },
+  {
+    "t.id": 158391,
+    "t.scientificName": "Cymbidieae",
+    "t.labelRu": null,
+    "t.rank": "tribe",
+    "t.depth": 17,
+    "t.descendants": 2489
+  },
+  {
+    "t.id": 35634,
+    "t.scientificName": "Ischnocera",
+    "t.labelRu": null,
+    "t.rank": "suborder",
+    "t.depth": 21,
+    "t.descendants": 2488
+  },
+  {
+    "t.id": 81687,
+    "t.scientificName": "Olethreutinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 28,
+    "t.descendants": 2487
+  },
+  {
+    "t.id": 33356,
+    "t.scientificName": "Reduvioidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 26,
+    "t.descendants": 2482
+  },
+  {
+    "t.id": 43817,
+    "t.scientificName": "Culicinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 2476
+  },
+  {
+    "t.id": 2301119,
+    "t.scientificName": "Rhabditomorpha",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 13,
+    "t.descendants": 2473
+  },
+  {
+    "t.id": 83145,
+    "t.scientificName": "Eleutherengona",
+    "t.labelRu": null,
+    "t.rank": "infraorder",
+    "t.depth": 17,
+    "t.descendants": 2466
+  },
+  {
+    "t.id": 163160,
+    "t.scientificName": "unclassified Araneae",
+    "t.labelRu": null,
+    "t.rank": null,
+    "t.depth": 14,
+    "t.descendants": 2463
+  },
+  {
+    "t.id": 133076,
+    "t.scientificName": "Aphidinae",
+    "t.labelRu": null,
+    "t.rank": "subfamily",
+    "t.depth": 24,
+    "t.descendants": 2462
+  },
+  {
+    "t.id": 730333,
+    "t.scientificName": "Isotomoidea",
+    "t.labelRu": null,
+    "t.rank": "superfamily",
+    "t.depth": 16,
+    "t.descendants": 2459
+  },
+  {
+    "t.id": 7624,
+    "t.scientificName": "Echinozoa",
+    "t.labelRu": "Эхинозои",
+    "t.rank": "superclass",
+    "t.depth": 10,
+    "t.descendants": 2459
+  },
+  {
+    "t.id": 36141,
+    "t.scientificName": "Isotomidae",
+    "t.labelRu": "Изотомиды",
+    "t.rank": "family",
+    "t.depth": 17,
+    "t.descendants": 2458
+  }
+]
+//JSON_ARRAY_END
+;
+data = replaceWithMiddleDot(data);
+// Track currently active tag filters
+var activeTagFilters = {};
+
+function replaceWithMiddleDot(arr) {
+  return arr.map(obj => 
+    Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        key.replace(/\./g, '·'), // Unicode middle dot
+        value
+      ])
+    )
+  );
+}
+
+function matchAny(data, filterParams) {
+    const regex = RegExp(filterParams.value, 'i');
+    for (var key in data) {
+        if (regex.test(data[key])) return true;
+    }
+    return false;
+}
+
+function combinedFilter(data) {
+    // Apply search filter
+    const searchValue = document.getElementById("fSearch").value;
+    const searchMatch = searchValue ? matchAny(data, { value: searchValue }) : true;
+    
+    if (!searchMatch) return false;
+    
+    // Check tag filters - different groups use AND logic
+    for (const [column, selectedTags] of Object.entries(activeTagFilters)) {
+        if (selectedTags.size === 0) continue;
+        
+        const cellValue = data[column];
+        if (cellValue === undefined || cellValue === null) return false;
+        
+        const values = Array.isArray(cellValue) ? cellValue : [cellValue];
+        
+        // Within same group, use AND logic - all selected tags must be present
+        let allTagsMatch = true;
+        for (const tag of selectedTags) {
+            if (!values.some(v => String(v) === tag)) {
+                allTagsMatch = false;
+                break;
+            }
+        }
+        
+        if (!allTagsMatch) return false;
+    }
+    return true;
+}
+
+function updateRowCount() {
+    const visibleRows = table.getData(true).length;
+    const totalRows = table.getData().length;
+    document.getElementById("rowCount").textContent = `${visibleRows} of ${totalRows} rows`;
+}
+
+const input = document.getElementById("fSearch");
+input.addEventListener("keyup", function() {
+    table.setFilter(combinedFilter);
+});
+
+function urlFormatter(cell, formatterParams, onRendered){
+    if (cell.getValue()) {
+        return "<a href='" + cell.getValue() + "' target='_blank'>" + cell.getValue() + "</a>";
+    } else {return }
+}
+
+function htmlFormatter(cell, formatterParams, onRendered) {
+    return cell.getValue();
+}
+
+var table = new Tabulator("#example-table", {
+    height:"90vh",
+    layout:"fitColumns",
+    data: data, // Start with empty data
+    autoColumns: true,
+});
+
+function applyColumnFormatters() {
+    let columns = table.getColumnDefinitions();
+    let dataTmp = table.getData();
+    for (let i = 0; i < columns.length; i++) {
+        let columnName = columns[i].field;
+        if (columnName === "url") {
+            columns[i].formatter = urlFormatter;
+            continue;
+        }
+        let sampleVal = dataTmp.map(x => x[columnName]).find(val => val !== null && val !== undefined && val !== '');
+        if (typeof sampleVal === "string" && sampleVal.startsWith("http")) {
+            columns[i].formatter = urlFormatter;
+        }
+        if (typeof sampleVal === "string" && sampleVal.startsWith("<a href")) {
+            columns[i].formatter = htmlFormatter;
+        }
+    }
+    table.setColumns(columns);
+}
+
+function createTagFilter(column) {
+    // Remove existing filter for this column if it exists
+    const existingFilter = document.getElementById(`tag-filter-${column}`);
+    if (existingFilter) {
+        existingFilter.remove();
+        delete activeTagFilters[column];
+        table.setFilter(combinedFilter);
+        return;
+    }
+    
+    // Get all unique values in the column
+    const uniqueValues = new Set();
+    const allData = table.getData();
+    
+    allData.forEach(row => {
+        const value = row[column];
+        if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+                value.forEach(v => uniqueValues.add(String(v)));
+            } else {
+                uniqueValues.add(String(value));
+            }
+        }
+    });
+    
+    // Create filter UI
+    const filterSection = document.createElement('div');
+    filterSection.className = 'tag-filter-section';
+    filterSection.id = `tag-filter-${column}`;
+    
+    const header = document.createElement('div');
+    header.className = 'tag-filter-header';
+    header.textContent = `Filter by ${column}:`;
+    filterSection.appendChild(header);
+    
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'tag-filter-options';
+    
+    const sortedValues = Array.from(uniqueValues).sort((a, b) => a.localeCompare(b));
+    
+    sortedValues.forEach(value => {
+        const option = document.createElement('div');
+        option.className = 'tag-filter-option';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = value;
+        checkbox.id = `tag-${column}-${value.replace(/\s+/g, '-')}`;
+        checkbox.addEventListener('change', () => {
+            if (!activeTagFilters[column]) {
+                activeTagFilters[column] = new Set();
+            }
+            
+            if (checkbox.checked) {
+                activeTagFilters[column].add(value);
+            } else {
+                activeTagFilters[column].delete(value);
+                if (activeTagFilters[column].size === 0) {
+                    delete activeTagFilters[column];
+                }
+            }
+            
+            table.setFilter(combinedFilter);
+        });
+        
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        
+        const labelText = document.createElement('span');
+        labelText.textContent = value;
+        
+        const count = document.createElement('span');
+        count.className = 'tag-filter-count';
+        // Static count - doesn't update with filtering
+        count.textContent = `(${allData.filter(row => {
+            const cellValue = row[column];
+            if (cellValue === undefined || cellValue === null) return false;
+            const values = Array.isArray(cellValue) ? cellValue : [cellValue];
+            return values.some(v => String(v) === value);
+        }).length})`;
+        
+        label.appendChild(labelText);
+        label.appendChild(count);
+        option.appendChild(checkbox);
+        option.appendChild(label);
+        optionsContainer.appendChild(option);
+    });
+    
+    filterSection.appendChild(optionsContainer);
+    document.getElementById('tagFiltersContainer').appendChild(filterSection);
+    
+    // Initialize empty filter for this column
+    activeTagFilters[column] = new Set();
+}
+
+// Initialize tag filter select
+function initTagFilterSelect() {
+    const select = document.getElementById('tagFilterSelect');
+    select.innerHTML = '<option value="">Tag & Filter</option>';
+    
+    const columns = table.getColumnDefinitions();
+    columns.forEach(col => {
+        if (col.field) {
+            const option = document.createElement('option');
+            option.value = col.field;
+            option.textContent = col.field;
+            select.appendChild(option);
+        }
+    });
+    
+    select.addEventListener('change', () => {
+        if (select.value) {
+            createTagFilter(select.value);
+            select.value = ""; // Reset the select
+        }
+    });
+}
+
+// Initialize table
+table.on("tableBuilt", function() {
+    applyColumnFormatters();
+    initTagFilterSelect();
+    initialTagColumns.forEach(column => {
+        if (table.getColumn(column)) {
+            createTagFilter(column);
+        }
+    });
+});
+
+// Update row count when data changes
+table.on("dataFiltered", function(filters, rows){
+    document.getElementById("rowCount").textContent = `${rows.length} of ${table.getData().length} rows`;
+});
+
+</script>
+</body>
+</html>
