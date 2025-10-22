@@ -220,3 +220,13 @@
 ./gbif-full-tree-of-life-meta.html	biology
 ./ncbi-table-top-by-descendants.html	ncbi
 ./ncbi-table-top-by-descendants.html	biology
+./itis-table-top-by-descendants-1k.html	itis
+./itis-table-top-by-descendants-1k.html	biology
+./itis-table-top-by-descendants-1k.html	table
+./wmc-table-ppl-top-depicted-1629.html	table
+./itis-table-depth-counts.html	itis
+./itis-table-depth-counts.html	table
+./itis-table-ranks-counts.html	itis
+./itis-table-ranks-counts.html	table
+./itis-tree-noImg-TB-topByDescendants-400.html	itis
+./itis-tree-noImg-TB-topByLinks-400.html	itis
