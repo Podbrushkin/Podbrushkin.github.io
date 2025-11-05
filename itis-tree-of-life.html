@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Tree of Life</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.6.1/ol.css">
+    <style>
+        html {
+          font-size: 100%; /* Respects user's browser/OS preference */
+        }
+
+        body {
+          font-size: 1rem; /* Default = browser's preferred size (e.g., 16px) */
+        }
+      .map {
+        width: 100%;
+        height: 95vh;
+        //height: 400px;
+        background: #171717;
+      }
+      .hover-label {
+          position: relative;
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid #ccc;
+          border-radius: 3px;
+          padding: 4px 8px;
+      //  font-size: 12px;
+          white-space: nowrap;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          pointer-events: none;
+          font-family: Arial;
+      //    font-weight: bold;
+        }
+        .gbif-context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 10px;
+            min-width: 250px;
+            max-width: 350px;
+            z-index: 1000;
+            display: none;
+            font-family: Arial, sans-serif;
+            //font-size: 0.75rem;
+        }
+        
+        .ol-rotate {
+          left: 3em;
+          top: 0.5em;
+          right: auto;
+        }
+        
+        .zoom-indicator {
+            left: 4.5em;
+            top: 0.5em;
+            right: auto;
+            //background: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            border-radius: 4px;
+            //box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .zoom-indicator.hidden {
+            opacity: 0;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/proj4@2.8.0/dist/proj4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.6.1/dist/ol.js"></script>
+    <!-- This is for thumbnail url patterenn -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+    <script>
+      var lang = 'scientific' //scientific en ru
+      const isMobile = 'ontouchstart' in window;
+      //const ranks = '-,kingdomFk,phylumFk,classFk,orderFk,familyFk,genusFk'.split(',')
+      var onlyZoomSpecific = false;
+      var displayGroupLabels = true;
+      var displayNonGroupLabels = true;
+      var displayPoints = true;
+      var shiftLabels = true;
+      var declutterGlobal = false;
+      var labelPolygons = true;
+	  var polygonStrokeNever = false;
+	  var polygonLabelNever = false;
+	  var hoverPolygonHighlightNever = false;
+	  var polygonOnlyMatching = true;
+      
+      var displayNonGroupLabelsToggle = null;
+      var displayPointsToggle = null;
+      
+      let zoomHistory = [];
+      
+      // --- Taxonomic Hierarchy ---
+    var rankData =
+       `1 kingdom царство ki
+        2 phylum тип ph
+        3 class класс cl
+        4 order отряд or
+        5 family семейство fa
+        6 genus род ge
+        7 species вид sp
+        8 subspecies подвид su
+        9 undefined - un`
+	var rankDataArr = rankData.split('\n').map(line => line.trim().split(' '));
+    var rankNameIndex = lang == 'ru' ? 2 : 1;
+	
+	const zoomToRank = new Map();
+
+	rankData
+	  .trim()
+	  .split('\n')
+	  .map(line => line.trim().split(/\s+/)) // Split on any whitespace
+	  .forEach(([zoom, rank, rankRu, rankShort]) => {
+		zoomToRank.set(zoom, { zoom, rank, rankRu, rankShort });
+	  });
+  
+	const ranksObjs = rankData
+	  .trim()
+	  .split('\n')
+	  .map(line => {
+		const [zoom, rank, rankRu, rankShort] = line.trim().split(/\s+/);
+		return {
+		  zoom: parseInt(zoom),
+		  rank,
+		  rankRu,
+		  rankShort
+		};
+	  });
+      
+      //var pbfLayer = null;
+      //var map = null;
+      
+      //if (navigator.language.startsWith('ru')) {
+      //console.log(navigator.languages)
+      if (navigator.languages.some(lang => lang.startsWith('ru'))) {
+        lang = 'ru';
+       }
+       if (isMobile) { displayPoints = false;}
+      function getLocalizedName(input) {
+        // Check if input is a feature (has get method) or a plain object with properties_
+        const getValue = (key) => {
+			var val = null;
+            if (input.get && typeof input.get === 'function') {
+                // It's a feature with get method
+                val = input.get(key);
+            } else if (input.properties_) {
+                // It's an object with properties_ field
+                val = input.properties_[key];
+            } else if (input[key]) {
+                // It's a plain object
+                val = input[key];
+            }
+            return val ? val : undefined;
+        };
+        
+        if (lang == 'ru') return getValue('labelRu') ?? getValue('scientificName');
+        if (lang == 'en') return getValue('labelEn') ?? getValue('scientificName');
+        if (lang == 'scientific') return getValue('scientificName');
+        if (lang == 'none') return null;
+    }
+        var forceLabelsFromZoomLevel = null;
+  const labelOnlyStyle = function(feature) {
+        //console.log(feature)
+      // These zoom checks work only with map.getView().on('change:resolution'
+      const olZoom = map.getView().getZoom();
+      //console.log('olZoom='+olZoom)
+      // Optional: Show features only on specified zoom
+      const feaZoom = feature.get('zoom');
+      
+      //if (feaZoom != null && olZoom-1 != feaZoom && forceLabelsFromZoomLevel != feaZoom) 
+      //  return null;
+        
+  
+      var name = getLocalizedName(feature);
+      
+      //if (!name) return null; // Skip features without names
+      //const color = feature.get('color') ?? '#FFFFFF';
+      const rankMatchZoom = rankMatchZoomF(feature);
+          
+      
+      var color;
+      if (rankMatchZoom) {
+        color = getColorRgb(feature.get('id'), 0.7)
+      }
+      //else if (onlyZoomSpecific && !rankMatchZoom) {
+      //  return //pointOnlyStyle(feature)
+      //}
+      else if (feature.get('colorById')) {
+        color = getColorRgb(feature.get('id'), 0.7)
+        //console.log('colorById'+feature.get('id')+'='+color);
+      } else {
+        color = feature.get('color') ?? '#FFFFFF';
+      }
+      
+      var fontSize = 0.75;
+      if (rankMatchZoom) {fontSize *= 2}
+      //if (feature.get('fontsize')) {
+      //  fontSize = Math.min(feature.get('fontsize')/64, 3);
+      //  fontSize = Math.max(fontSize,0.5);
+      //}
+      if (feature.get('groupWidth') && false) {
+        var gWidth = feature.get('groupWidth')
+        var baseGWidth = 200
+        //var avgCharWidth = 2500
+        //fontSize = fontSize / name.length * (gWidth /Math.pow(1024,olZoom));
+        //fontSize = (gWidth / name.length) * (fontSize / avgCharWidth);
+        //fontSize = gWidth / olZoom / name.length * 0.0003;
+        //fontSize = gWidth / Math.pow(olZoom,2) / name.length * 0.0003;
+        //fontSize = gWidth / name.length / Math.pow(0.9, olZoom) * 0.0003;
+        //fontSize = gWidth  / (olZoom ) * 0.00003;
+        //fontSize = gWidth  * 0.00003;    // too small when olZoom grows
+        //fontSize = gWidth / (name.length*0.15)  * 0.00003*olZoom;    // 
+        //fontSize = gWidth / (name.length*0.15)  * 0.00003*Math.pow(olZoom,1.3);    // 
+        fontSize = gWidth / (name.length*0.15)  * 0.00003*Math.pow(olZoom,1.1);    // 
+        
+        
+      }
+      //fontSize = Math.min(fontSize, 6);
+      fontSize = Math.max(fontSize,0.62);
+      
+      const groupX = feature.get('groupX');
+      const groupY = feature.get('groupY');
+      
+      
+      // Use custom center coordinates if available, otherwise use feature geometry
+      //var labelPosition = groupX && groupY ? 
+      //    [Number(groupX), Number(groupY)] : 
+      //    feature.flatCoordinates_;
+      
+      
+      
+      //var offsetXY = [0,0]; //groupX && groupY ? 
+      const resolution = map.getView().getResolution();
+      //console.log('Resolution (map units per pixel):', resolution);
+      //  console.log('100 pixels =', 100 * resolution, 'map units');
+        const originalPosition = feature.flatCoordinates_;
+
+        // Calculate pixel offsets
+        let offsetX = 0;
+        let offsetY = 0;
+        
+
+        //console.log('map.getView().getRotation()='+map.getView().getRotation())
+      if (rankMatchZoom && groupX && groupY && olZoom == 2 && map.getView().getRotation() == 0) {
+        
+        offsetX = (Number(groupX) - originalPosition[0]) / resolution;
+        offsetY = (Number(groupY) - originalPosition[1]) / -resolution;
+        //console.log('offsetX,offsetY',offsetX,offsetY)
+      }
+      
+      //if (name.includes('Arachnida')) {
+      //      // Nudge it slightly to the right to avoid edge issues
+      //      labelPosition = [labelPosition[0]*0.0001, labelPosition[1]*0.9];
+      //      //labelPosition = [-11678457.52323294, -11561585.61137392]
+      //  }
+      
+      //if (name.match('Arachn') || name.match('Bivalvia') || name.match('Araneae')) {
+      //
+      //  // arane labelPosition= -11678457.52323294, -11561585.61137392
+      //  console.log('labelOnlyStyle:'+name+': '+rankMatchZoom);
+      //  console.log('groupX,groupY,labelPosition,feature.flatCoordinates_',groupX,groupY,labelPosition,feature.flatCoordinates_);
+      //  const proj = ol.proj.transform(labelPosition, 'EPSG:3857', 'EPSG:4326');
+      //  console.log('Lat/Lon:', proj);
+      //  //fontSize=10
+      //}
+      
+      
+      return new ol.style.Style({
+        //geometry: new ol.geom.Point(labelPosition), // will vanish if coord shifts from original tile
+        text: new ol.style.Text({
+          text: name,
+          font: `bold ${fontSize}rem Arial`,
+          fill: new ol.style.Fill({
+            color: color
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'black',
+            width: 2
+          }),
+          offsetX: offsetX,
+          offsetY: offsetY,
+          placement: 'point',
+          //textBaseline: 'middle',
+		  
+        })
+      });
+    };
+	const getCurrentPngZoom = function() {
+		const olZoom = map.getView().getZoom();
+		const pngDesiredZoom = olZoom - 1;
+		
+		var tmp = Math.floor(pngDesiredZoom);
+		tmp = Math.max(pngDirZooms[0], tmp);
+		tmp = Math.min(pngDirZooms[pngDirZooms.length-1], tmp);
+		return tmp;
+	}
+	const getCurrentPngRank = function() {
+		const currentPngZoom = getCurrentPngZoom(); // This is actual png being visible
+		const currentPngRank = ranksObjs.find(obj => obj.zoom == currentPngZoom).rank; // Rank of visible png
+		return currentPngRank;
+	}
+	const rankMatchZoomF = function(feature) {
+		
+		
+		
+		//console.log(pngDisplayedZoom);
+		//const featureRank = ;
+		return getCurrentPngRank() == feature.get('rank');
+		//console.log(pngZoom)
+		//for (const rankInfo of ranksObjs) {
+		//	if (rankInfo.zoom == currentPngZoom && rankInfo.rank == featureRank) return true
+			//if (rankInfo.zoom >= pngDisplayedZoom) {
+			//	if (rankInfo.rank == featureRank) return true
+			//	else return false
+			//}
+				
+		//}
+		//return false
+	}
+	//const rankMatchZoomF = function (feature) {
+	//	const olZoom = map.getView().getZoom();
+	//	const featureRank = feature.get('rank');
+	//	return zoomToRank.get(olZoom) && zoomToRank.get(olZoom).rank == featureRank;
+	//	//return olZoom > 0 && 
+    //    //      ranks.length >= olZoom && 
+    //    //      ranks[olZoom - 1] && 
+    //    //      ranks[olZoom - 1].startsWith(feature.get('rank'));
+	//}
+	let hoveredFeatureId = null;
+	
+    const autoStyle = function(feature) {
+		const isFromGeojson = feature.constructor.name === 'Lt';
+		const featureRank = feature.get('rank');
+        const rankMatchZoom = rankMatchZoomF(feature);
+		const currentPngZoom = getCurrentPngZoom();
+		const currentPngRank = ranksObjs.find(obj => obj.zoom == currentPngZoom).rank;
+		const nextPngRank = ranksObjs.find(obj => obj.zoom == currentPngZoom+1).rank;
+		
+		//let showPolygonsFromNextZoom = false;
+		//let polygonRanksToFill = ['phylum']; //'kingdom'
+		
+		
+		
+		  
+        //if (rankMatchZoom && feature.type_ == 'Polygon' && !isMobile) {
+        //    var styles = [simplePolygonStyle(feature)];
+            // Add label if global labelPolygons is true
+            //if (labelPolygons === true) {
+            //    var labelStyle = polygonLabelStyle(feature);
+            //    if (labelStyle) styles.push(labelStyle);
+            //}
+          //  return styles;
+        //}
+		//console.log(feature.getGeometry().getType(), feature.constructor.name)
+        if (feature.type_ == 'Polygon') { // || feature.getGeometry().getType()
+			
+			let polygonRanksToFill = [];
+			let polygonRanksToHover = [currentPngRank]; //'phylum'
+			const polygonFill = polygonRanksToFill.includes(featureRank);
+			const polygonHover = polygonRanksToHover.includes(featureRank);
+			//let polygonHover = 
+			//	(!showPolygonsFromNextZoom && rankMatchZoom) || // allow hover for polys from current zoom
+			//	(showPolygonsFromNextZoom && (featureRank == nextPngRank))			// allow hover for polys from next zoom
+			//	;
+			if (polygonFill) {polygonHover = false}
+			//var styles = [simplePolygonStyle(feature)];
+			var styles = [];
+			
+			
+			if (rankMatchZoom && false) {
+				var coord = [feature.get('x'), feature.get('y')];
+				var contains = ol.extent.containsCoordinate(
+				  feature.getExtent(), 
+				  coord
+				);
+				if (contains) {
+					//console.log(feature)
+					
+					var fontSize = 0.75;
+					if (rankMatchZoom) {fontSize *= 2}
+					var color = getColorRgb(feature.get('id'), 0.7)
+					//styles.push(labelOnlyStyle(feature));
+					styles.push(new ol.style.Style({
+						text: new ol.style.Text({
+						  text: getLocalizedName(feature),
+						  font: `bold ${fontSize}rem Arial`,
+						  fill: new ol.style.Fill({
+							color: color
+						  }),
+						  stroke: new ol.style.Stroke({
+							color: 'black',
+							width: 2
+						  }),
+						  //offsetX: offsetX,
+						  //offsetY: offsetY,
+						  placement: 'point',
+						  textBaseline: 'middle'
+						})
+						//text: new ol.style.Text({
+						//	text: getLocalizedName(feature),
+						//	//font: '12px Arial'
+						//})
+					}));
+				}
+				
+			}
+			
+			//console.log(hoveredFeatureId,rankMatchZoom,feature.get('rank'))
+			
+			let fillColor = null; // default no fill
+			if (polygonFill) fillColor = getColorRgb(feature.get('id'), 1, 0.6);
+			if (polygonHover) fillColor = getColorRgb(feature.get('id'), 1, 0.0);
+			let text = null
+			if (isFromGeojson) {
+				text = getText(feature);
+			}
+			
+			let stroke = new ol.style.Stroke({
+				color: 'black',
+				width: 2
+			  })
+			
+			if (fillColor) {
+				styles.push(new ol.style.Style({
+					fill: new ol.style.Fill({
+						color: fillColor
+					}),
+					text
+				}));
+			}
+			
+			if (hoveredFeatureId == feature.get('id') && polygonHover) {
+				var color = getColorRgb(feature.get('id'), 1, 0);
+				styles.push(new ol.style.Style({
+					fill: new ol.style.Fill({
+						color: color //'rgba(100, 150, 255, 0.2)' // Light blue, semi-transparent
+					}),
+					//stroke: stroke,
+					//text: getText(feature)
+				}));
+				//if ((polygonOnlyMatching && rankMatchZoom) || !polygonOnlyMatching) {
+					//styles.push(hoverPolygonStyle(feature))
+				//}
+			}
+			else if (polygonHover) {
+				styles.push(new ol.style.Style({
+					fill: new ol.style.Fill({
+						color: 'rgba(100, 150, 255, 0)' // transparent for hover detection
+					}),
+				}));
+			}
+			return styles;
+		}
+        else if (rankMatchZoom && displayGroupLabels) return labelOnlyStyle(feature);
+        else if (!rankMatchZoom && displayNonGroupLabels) return labelOnlyStyle(feature);
+        else if (displayPoints) return pointOnlyStyle(feature);
+        
+        //console.log('Geometry:', feature.getGeometry());
+    }
+	function getText(feature) {
+		const rankMatchZoom = rankMatchZoomF(feature);
+		if (!rankMatchZoom) {return}
+		var fontSize = 0.75;
+		if (rankMatchZoom) {fontSize *= 2}
+		var color = getColorRgb(feature.get('id'), 0.7);
+		
+		return new ol.style.Text({
+		  text: getLocalizedName(feature),
+		  font: `bold ${fontSize}rem Arial`,
+		  repeat: 600,
+		  //textAlign: 'left',
+		  //declutterMode: 'declutter',
+		  //textBaseline: 'ideographic',
+		  fill: new ol.style.Fill({
+			color: color
+		  }),
+		  stroke: new ol.style.Stroke({
+			color: 'black',
+			width: 2
+		  }),
+		  overflow: false,
+		  //placement: 'line',
+		  //offsetX: offsetX,
+		  //offsetY: offsetY,
+		  placement: 'line',
+		  //textBaseline: 'bottom'
+		})
+	}
+	
+    function simplePolygonStyle(feature) {
+		//return
+        //console.log('poly='+feature.get('scientificName')+' '+feature.flatCoordinates_)
+        //console.log(feature.get('id'))
+		
+		var stroke = null;
+		var rankMatchZoom = rankMatchZoomF(feature);
+		if (!rankMatchZoom) {
+			var color = getColorRgb(feature.get('id'), 0.5);
+			if (!polygonStrokeNever)
+				stroke = new ol.style.Stroke({
+					//color: 'rgba(50, 50, 150, 1)', // Darker blue border
+					//color: color,
+					color: 'black',
+					width: 0.8
+				})
+		}
+		
+        
+        return new ol.style.Style({
+            fill: new ol.style.Fill({
+                color: 'rgba(100, 150, 255, 0)' // Light blue, semi-transparent
+                //color: color
+            }),
+            stroke: stroke,
+			//text: getText(feature)
+        });
+    }
+	
+	function hoverPolygonStyle(feature) {
+		var color = getColorRgb(feature.get('id'), 1, 0.5);
+		return new ol.style.Style({
+            fill: new ol.style.Fill({
+                color: color
+            }),
+            //stroke: stroke,
+			//text: getText(feature)
+        });
+	}
+    
+    var rankToColor = null;
+    const rootFontSize = parseFloat(
+      getComputedStyle(document.documentElement).fontSize
+    );
+    var pointToLabelChance = 0.4*16/rootFontSize;
+    var pointToLabelChance = 1;
+    var pointToLabelEnabled = true;
+    
+    console.log('rootFontSize='+rootFontSize);
+    const pointOnlyStyle = function(feature) {
+        //const geometry = feature.getGeometry();
+       //const geomType = geometry.getType();
+       //console.log('Geometry:', feature.getGeometry());
+
+      const olZoom = map.getView().getZoom();
+      //const feaZoom = feature.get('zoom');
+      
+      //if (pointToLabelEnabled && olZoom <= 8 && Math.random() <= pointToLabelChance) {
+      //  return labelOnlyStyle(feature)
+      //}
+      //const effectiveZoom = Math.min(olZoom,pngDirZooms[pngDirZooms.length-1]+1);
+      //console.log('effectiveZoom='+effectiveZoom);
+      
+      //if (feaZoom != null && olZoom-1 < feaZoom) return null;
+      //var radius = olZoom - 2.5 // +5
+      //const radius = 0.5 * olZoom * olZoom - 3;
+      //var radius = Math.pow(olZoom,3)/32 //*0.8 // +5
+      //var radius = Math.pow(1.1,olZoom)
+      //var radius = 0.03 * Math.pow(2, olZoom); // this for plants poorly scaled
+      //radius = Math.min(radius,25)
+      var radius = 0.015 * Math.pow(2, olZoom); // this for all kingdoms
+      radius = Math.min(radius,20);
+      radius = Math.max(radius,3);
+      //console.log(`Zoom: ${olZoom}, Radius: ${radius}`);
+      
+      //var color = feature.get('color') || '#3388ff';
+      //if (feature.get('rank') && rankToColor) {
+      //  color = rankToColor[feature.get('rank')] || '#3388ff';
+      //}
+      var color = getColorRgb(feature.get('rank'), 1.0);
+      
+      return new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: radius,
+          fill: new ol.style.Fill({color: color})
+        })
+      });
+    };
+   
+    
+    // it's min/max x/y of EPSG:3857
+    const extent = [-20037508, -20037508, 20037508, 20037508]; // Change last 20037508->0 to strip off bottom half
+    //const extent = [-20037508, -20037508, 20037508, 0];
+    //const extent3 = [0, 0, 2048, 1024];
+	
+	
+
+    //const projection = new ol.proj.Projection({
+    //  code: 'xkcd-image',
+    //  units: 'pixels',
+    //  extent: extent
+    //});
+    const projection = new ol.proj.Projection({
+      code: 'image-png',
+      units: 'pixels',
+      extent: extent
+    });
+	
+	//const projection3 = new ol.proj.Projection({
+	//  code: 'pixel-map',
+	//  units: 'pixels',
+	//  extent: extent3
+	//});
+    
+        // at olZoom=8 OpenLayers shows tiles from /tiles/7/x/y both for vector and png
+        // Therefore if biggest dir is /5/ then maxZoom = 6. olZoom = dirZoom+1
+      //var nativeZooms = [0, 1, 2];
+      //const [minZoom,maxZoom] = [Math.min(...nativeZooms),Math.max(...nativeZooms)];
+      var pngDirZooms = [1, 2, 3, 4, 5, 6];
+      var pbfDirZooms = [1, 2, 3, 4, 5, 6, 7];
+      console.log("pbfDirZooms: " + pbfDirZooms);
+      var pngLayer = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            tileSize: 512,
+            url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/itis1105-tiles/{z}/{x}/{y}.png',
+            //url: './tiles/{z}/{x}/{y}.png',
+            projection: projection,
+			//extent: extent,
+			//origin: [-20037508, -20037508],
+            minZoom: pngDirZooms[0],
+            maxZoom: pngDirZooms[pngDirZooms.length-1]
+          }),
+		  //extent: extent2,
+		  
+        });
+        
+        // This func prevents stale features from displaying when there's no new tile at new zoom level
+        var tileLoadFunction = function(tile, url) {
+            tile.setLoader(function(extent, resolution, projection) {
+                fetch(url).then(function(response) {
+                    if (response.status === 200) {
+                        const contentLength = response.headers.get('content-length');
+                        if (contentLength === '0') {
+                            // Handle 0-byte files
+                            return Promise.resolve(new ArrayBuffer(0));
+                        }
+                        return response.arrayBuffer();
+                    } else {
+                        // Handle missing files
+                        return Promise.resolve(new ArrayBuffer(0));
+                    }
+                }).then(function(data) {
+                    if (data && data.byteLength > 0) {
+                        try {
+                            const format = new ol.format.MVT(); // Use MVT format directly
+                            const features = format.readFeatures(data, {
+                                extent: extent,
+                                featureProjection: projection
+                            });
+                            tile.setFeatures(features);
+                        } catch (parseError) {
+                            console.log('Parse error for tile:', url, parseError);
+                            tile.setFeatures([]);
+                        }
+                    } else {
+                        // Empty data - set empty features
+                        tile.setFeatures([]);
+                    }
+                }).catch(function(error) {
+                    console.log('Tile load error:', url, error);
+                    tile.setFeatures([]);
+                });
+            });
+        };
+        
+        function createPbfLayer() {
+            // https://openlayers.org/en/latest/apidoc/module-ol_layer_Tile-TileLayer.html
+            // https://openlayers.org/en/latest/apidoc/module-ol_source_VectorTile.html
+          return new ol.layer.VectorTile({
+            zIndex: 1,
+            declutter: declutterGlobal,
+            source: new ol.source.VectorTile({
+              format: new ol.format.MVT({idProperty: 'id'}),
+              url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/itis1105-tilesMeta/{z}/{x}/{y}.pbf',
+			  //url: './tilesMeta/{z}/{x}/{y}.pbf',
+              tileLoadFunction: tileLoadFunction,
+              projection: projection,
+			  //extent: extent3,
+              declutter: declutterGlobal,
+              //tileSize: 512,
+              minZoom: pbfDirZooms[0],
+              maxZoom: pbfDirZooms[pbfDirZooms.length - 1],
+              //cacheSize: 0,
+              //overlaps: false,
+              transition: 0,    //A duration for tile opacity transitions in milliseconds
+            }),
+            useInterimTilesOnError: false, // no effect
+            //cacheSize: 0,
+            style: autoStyle
+          });
+        }
+        
+    
+      const map = new ol.Map({
+        layers: [
+          pngLayer,
+          //vectorLayer,
+          //pbfLayer,
+        ],
+        target: 'map',
+        view: new ol.View({
+          //declutter: true,
+          projection: projection,
+		  //extent: extent2,
+          center: ol.extent.getCenter(extent),
+          //enableRotation: false,
+          tileSize: 512,
+          constrainResolution: true,    // zoom snap only through native
+          multiWorld: true,
+          zoom: 0,
+          //minZoom: minZoom,
+          //maxZoom: maxZoom
+        }),
+      });
+      
+      pbfLayer = createPbfLayer(); // Your layer creation function
+        map.getLayers().insertAt(1,pbfLayer);
+	if (false) {
+			  map.getLayers().insertAt(2,new ol.layer.Tile({
+				//projection: projection,
+				source: new ol.source.TileDebug({
+				projection: projection,
+				tileGrid: pngLayer.getSource().getTileGrid() // Use same grid as your base layer
+				})
+			  }))}
+      
+	  // this boi adds a layer of geojson
+	  if (false) {
+		const pointsArray = [];
+		//	[
+		//	[-5768275, 8996263],
+		//	[9309371, 1.231414E+07],
+		//	[2321956, 1.493701E+07],
+		//	[9062687, 4676518],
+		//	[-1.590835E+07, 1.056006E+07],
+		//	[1.645296E+07, 9342652],
+		//	[1.550802E+07, 1.50428E+07],
+		//	[-1.930365E+07, 9906415],
+		//	[1.490324E+07, 4841400],
+		//	[1.715701E+07, 1.350634E+07],
+		//	[1.786053E+07, 1.387436E+07],
+		//	[1.625646E+07, 4489937],
+		//	[-1.917504E+07, 1.212154E+07],
+		//	[5488300, 8134030],
+		//	[1.684852E+07, 4629486],
+		//	[5498180, 1095576],
+		//	[-1.889776E+07, 7037686],
+		//	[-1.882568E+07, 7608172],
+		//	[1.335223E+07, 1.293881E+07],
+		//	[1.733367E+07, 1.380489E+07],
+		//	[1.379943E+07, 4982922],
+		//	[1.720336E+07, 4783883],		];
+		
+		const vectorSource = new ol.source.Vector();
+		
+		pointsArray.forEach((pointCoords, index) => {
+			
+			const pointGeometry = new ol.geom.Point(pointCoords); 
+			
+			const pointFeature = new ol.Feature({
+				geometry: pointGeometry,
+				id: `point_${index}`
+			});
+			vectorSource.addFeature(pointFeature);
+		});
+		
+		fetch('tilesMeta/geom.geojson')
+		  .then(response => response.json())
+		  .then(geojsonData => {
+			// Parse GeoJSON features
+			//console.log(geojsonData)
+			const features = new ol.format.GeoJSON().readFeatures(geojsonData);
+			
+			// Add all features at once
+			vectorSource.addFeatures(features);
+			
+			// Or add features one by one
+			// features.forEach(feature => vectorSource.addFeature(feature));
+		  });
+		  var styleFunc = function (feature) { 
+			return new ol.style.Style({
+			  text: getText(feature)
+			  });
+		  }
+		
+		const vectorLayer = new ol.layer.Vector({
+			source: vectorSource,
+			style: autoStyle,
+			//style: new ol.style.Style({
+			//	image: new ol.style.Circle({
+			//		radius: 5, 
+			//		fill: new ol.style.Fill({
+			//			color: 'red' 
+			//		}),
+			//		stroke: new ol.style.Stroke({
+			//			color: 'black', 
+			//			width: 1        
+			//		})
+			//	})
+			//})
+		});
+		
+		map.addLayer(vectorLayer);
+	}
+	  
+      // Open gbif at single LMB
+      //map.on('click', function(evt) {
+      //    const olZoom = map.getView().getZoom();
+      //    console.log('olZoom='+olZoom)
+      //    const feature = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+      //      return f;
+      //    });
+      //    
+      //    if (feature && feature.get('id')) {
+      //      const url = 'https://www.gbif.org/species/'+feature.get('id');
+      //      window.open(url, '_blank'); // Open external links in new tab
+      //        //console.log('Clicked:', feature.get('name'), 'url:', url);
+      //      
+      //    }
+      //  });
+        
+        // This is to avoid features not disappearing on zoom out for vector tiles (not needed for vector from json)
+        //map.getView().on('change:resolution', function() {
+        //  //console.log('Zoom changed - clearing and refreshing');
+        //  
+        //  const source = pbfLayer.getSource();
+        //  source.clear(); // Clear tile cache
+        //  
+        //  // Force style refresh
+        //  pbfLayer.setStyle(pointOnlyStyle);
+        //  pbfLayer.changed();
+        //});
+		if (false) {
+        var nonGroupLabelsAlreadyAutoEnabled = false;
+        map.getView().on('change:resolution', function() {
+            const olZoom = map.getView().getZoom();
+            if (olZoom % 1 === 0) {
+                //console.log(map.getView().getZoom());
+                
+                zoomHistory.push(olZoom);
+                // Keep only last 2 entries
+                if (zoomHistory.length > 2) {
+                    zoomHistory.shift();
+                }
+                //console.log(zoomHistory);
+                
+                if (olZoom == 9 && zoomHistory[0] < 9) { // zoomed in to last level
+                    displayNonGroupLabelsToggle.checked = displayNonGroupLabels = false;
+                    displayPointsToggle.checked = displayPoints = true;
+                }
+                if (!nonGroupLabelsAlreadyAutoEnabled && olZoom == 2 && zoomHistory[0] < 2) { // zoomed in to phylum
+                    // nonGroupLabels are disabled initially to keep low zooms uncluttered
+                    displayNonGroupLabelsToggle.checked = displayNonGroupLabels = true;
+                    nonGroupLabelsAlreadyAutoEnabled = true;    // enably only once just to make good first impression
+                }
+            }
+            //if (map.getView().getAnimating()) return;
+            
+        })
+		}
+        
+        //var displayPointsUserState = null;
+        //var displayNonGroupLabelsUserState = null;
+        //var wasAboveThreshold = false;
+        //var nonGroupLabelsAutoEnabled = false;
+        //
+        //map.on('moveend', function() {
+		//	return
+        //    // Remove pbf layer if all disabled (for performance)
+        //    //if (!displayPoints && !displayGroupLabels && !displayNonGroupLabels && isMobile) {
+        //    //    map.removeLayer(pbfLayer);
+        //    //}
+        //    
+        //    const currentZoom = Math.floor(map.getView().getZoom());
+        //    const thresholdZoom = pbfDirZooms[pbfDirZooms.length - 1] + 1;
+        //    const isAboveThreshold = currentZoom >= thresholdZoom;
+        //    
+        //    return
+        //    
+        //    // auto-enable once at zoom=2
+        //    if (!displayNonGroupLabels && !nonGroupLabelsAutoEnabled && currentZoom==2) {
+        //        displayNonGroupLabelsToggle.checked = displayNonGroupLabels = true;
+        //    }
+        //    
+        //    
+        //    
+        //    if (isAboveThreshold && !wasAboveThreshold) {
+        //        // Entering threshold zoom - save states and apply automatic changes
+        //        displayPointsUserState = displayPoints;
+        //        displayNonGroupLabelsUserState = displayNonGroupLabels;
+        //        
+        //        displayNonGroupLabels = false;
+        //        displayPoints = true;
+        //        displayNonGroupLabelsToggle.checked = false;
+        //        displayPointsToggle.checked = true;
+        //        pbfLayer.setStyle(autoStyle);
+        //    } 
+        //    else if (!isAboveThreshold && wasAboveThreshold && 
+        //             displayPointsUserState !== null && displayNonGroupLabelsUserState !== null) {
+        //        // Exiting threshold zoom - restore previous states
+        //        displayPoints = displayPointsUserState;
+        //        displayNonGroupLabels = displayNonGroupLabelsUserState;
+        //        displayPointsToggle.checked = displayPoints;
+        //        displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
+        //        
+        //        displayPointsUserState = null;
+        //        displayNonGroupLabelsUserState = null;
+        //        pbfLayer.setStyle(autoStyle);
+        //    }
+        //    
+        //    wasAboveThreshold = isAboveThreshold;
+        //});
+        
+        // Add a vector layer for temporary lines
+        const tempLineSource = new ol.source.Vector();
+        const tempLineLayer = new ol.layer.Vector({
+          zIndex: 0,
+          source: tempLineSource,
+          style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'rgba(255, 255, 255, 0.8)',
+              width: 2
+            })
+          })
+        });
+        map.addLayer(tempLineLayer);
+        
+        
+        let currentLineFeature = null;
+        let currentPolygonFeature = null;
+        
+        // Create hover overlay for desktop
+        if (!isMobile) {
+        
+            const hoverElement = document.createElement('div');
+            hoverElement.className = 'hover-label';
+            
+            const hoverOverlay = new ol.Overlay({
+              element: hoverElement,
+              offset: [15, 0],
+              positioning: 'bottom-left'
+            });
+            map.addOverlay(hoverOverlay);
+
+            
+
+            map.on('pointermove', function(evt) {
+              if (map.getView().getAnimating()) return;
+              
+              
+              
+              const feature = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                return f;
+              });
+              
+              if (feature) {
+				if (!hoverPolygonHighlightNever) {
+					//console.log(feature)
+					if (hoveredFeatureId != feature.get('id')) {
+						hoveredFeatureId = feature.get('id');
+						pbfLayer.changed();
+					}
+					
+				}
+                //console.log('fea:', feature);
+                //console.log('Geometry:', feature.getGeometry());
+                // Get localized name
+                const name = getLocalizedName(feature);
+                var hier = null;
+                try {
+                  hier = feature.properties_.hier;
+                  if (lang == 'ru' && feature.properties_.hierRu) {
+				    hier = feature.properties_.hierRu
+				  }
+				  
+                  var hierParts = hier.split('>');
+                  hierParts.pop(); // Remove the last element
+                  hier = hierParts.join('<br>');
+                } catch {}
+                //hier = hier.replaceAll('\|','</br>')
+                if (name == null) {
+                    if (currentLineFeature) {
+                        tempLineSource.removeFeature(currentLineFeature);
+                        currentLineFeature = null;
+                      }
+                      return;
+                }
+                const olZoom = map.getView().getZoom();
+                const rankMatchZoom = rankMatchZoomF(feature);
+                
+                var nameHtml = '<b>' + name + '</b>';
+                if (rankMatchZoom) {
+                    var color = getColorRgb(feature.get('id'));
+                    nameHtml = '<b style="background: '+color+'; padding: 2px 4px; border-radius: 3px;">' + name + '</b>'
+                }
+                
+                // Position the label
+                hoverOverlay.setPosition(evt.coordinate);
+                hoverElement.innerHTML = (hier ? '<i>'+hier + '</i><br>' : '')+nameHtml;
+                hoverElement.style.display = 'block';
+                map.getTargetElement().style.cursor = 'pointer';
+                
+                // Create line to parent if parent coordinates exist
+                if (feature.type_ != 'Polygon') {
+                    drawLineToParent(feature);
+                    
+                }
+                drawPolygon(feature);
+                
+              } else {
+                hoverElement.style.display = 'none';
+                map.getTargetElement().style.cursor = '';
+				if (hoveredFeatureId != null) {
+					hoveredFeatureId = null;
+					pbfLayer.changed();
+				}
+              }
+            });
+        }   
+
+function drawLineToParent(feature) {
+    // Clear previous line
+      if (currentLineFeature) {
+        tempLineSource.removeFeature(currentLineFeature);
+        currentLineFeature = null;
+      }
+    const properties = feature.properties_;
+    
+    if (properties && properties.px && properties.py) {
+      // Get the feature's coordinates from flatCoordinates_
+      const featureCoords = feature.flatCoordinates_; // Direct access to coordinates
+      const parentCoords = [properties.px, properties.py]
+        const lineGeometry = new ol.geom.LineString([parentCoords, featureCoords]);
+        currentLineFeature = new ol.Feature({
+          geometry: lineGeometry
+        });
+        tempLineSource.addFeature(currentLineFeature);
+    }
+}
+function drawPolygon(feature) {
+    if (currentPolygonFeature) {
+        tempLineSource.removeFeature(currentPolygonFeature);
+        currentPolygonFeature = null;
+    }
+    
+    const properties = feature.properties_;
+    
+    if (properties && properties.polygon) {
+        try {
+            const polygonString = properties.polygon;
+            const coordsString = polygonString.replace('POLYGON ((', '').replace('))', '');
+            const coordPairs = coordsString.split(', ');
+            const coordinates = coordPairs.map(pair => {
+                const [x, y] = pair.split(' ').map(Number);
+                return [x, y];
+            });
+            
+            const polygonGeometry = new ol.geom.Polygon([coordinates]);
+            currentPolygonFeature = new ol.Feature({
+                geometry: polygonGeometry
+            });
+            
+            tempLineSource.addFeature(currentPolygonFeature);
+        } catch (error) {
+            console.error('Error parsing polygon:', error);
+        }
+    }
+}
+
+        // Make sure hover works even when map moves
+        //map.on('movestart', function() {
+        //  hoverElement.style.display = 'none';
+        //});
+
+
+        // We add pbf layer only on high zoom levels (to avoid requests at low zoom)
+        //map.getView().on('change:resolution', function() {
+        //  const currentZoom = Math.floor(this.getZoom());
+        //  const minPbfZoom = pbfDirZooms[0] + 1;
+        //  
+        //  if (currentZoom >= minPbfZoom) {
+        //    if (!pbfLayer) {
+        //      pbfLayer = createPbfLayer(); // Your layer creation function
+        //      //map.addLayer(pbfLayer);
+        //      map.getLayers().insertAt(1,pbfLayer);
+        //    }
+        //  } else {
+        //    if (pbfLayer) {
+        //      map.removeLayer(pbfLayer);
+        //      pbfLayer = null;
+        //    }
+        //  }
+        //});
+        
+        const zoomIndicator = document.createElement('div');
+        zoomIndicator.className = 'ol-unselectable ol-control zoom-indicator';
+
+        let hideTimeout = null;
+
+        // Function to show the zoom indicator
+        function showZoomIndicator() {
+            // Clear any existing timeout
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+            
+            // Update the text with current zoom level
+			const currentPngZoom = getCurrentPngZoom();
+			const currentPngRank = ranksObjs.find(obj => obj.zoom == currentPngZoom).rank;
+			
+            zoomIndicator.textContent = `${currentPngZoom}: ${currentPngRank}`;
+            
+            // Make indicator visible
+            zoomIndicator.classList.remove('hidden');
+            
+            // Set timeout to hide the indicator after 2 seconds
+            hideTimeout = setTimeout(() => {
+                zoomIndicator.classList.add('hidden');
+            }, 2000);
+        }
+
+        // Listen for zoom changes
+        map.getView().on('change:resolution', showZoomIndicator);
+        setTimeout(showZoomIndicator, 100);
+        
+        
+        
+        
+        const zoomIndicatorControl = new ol.control.Control({
+          element: zoomIndicator
+        });
+
+        // Add control to map (will appear in top-left by default)
+        map.addControl(zoomIndicatorControl);
+        
+
+        const languageSwitcherElement = document.createElement('div');
+        languageSwitcherElement.className = 'ol-unselectable ol-control';
+        languageSwitcherElement.style = 'background: rgba(255,255,255,0.8); padding: 5px; border-radius: 4px;';
+
+        languageSwitcherElement.innerHTML = `
+          <!-- <label for="ol-language-select" style="font-weight: bold; margin-right: 5px;">Language:</label> -->
+          <select id="ol-language-select" style="font-size: 100%;" > 
+            <option value="scientific">Scientific</option>
+            <option value="ru">Russian</option>
+            <option value="en">English</option>
+            <!-- <option value="none">No labels</option> -->
+          </select>
+          <label style="display: none;">
+            <input type="checkbox" id="declutter-toggle" > Declutter
+          </label>
+          <label style="display: block;">
+            <input type="checkbox" id="displayNonGroupLabels-toggle" > Taxa names
+          </label>
+          <label style="display: block;">
+            <input type="checkbox" id="groupLabels-toggle" > Group names
+          </label>
+          <label style="display: block;">
+            <input type="checkbox" id="points-toggle" > Points
+          </label>
+        `;
+        
+        // Create OpenLayers Control
+        const languageControl = new ol.control.Control({
+          element: languageSwitcherElement
+        });
+
+        // Add control to map (will appear in top-left by default)
+        map.addControl(languageControl);
+        
+        // Position it to top-right using CSS class or inline style
+        languageSwitcherElement.style.right = '0.5em';
+        languageSwitcherElement.style.top = '0.5em';
+        languageSwitcherElement.style.left = 'auto';
+        languageSwitcherElement.style.position = 'absolute';
+        
+        // Get reference to the select inside the control
+        const olLangSelect = document.getElementById('ol-language-select');
+        const declutterToggle = document.getElementById('declutter-toggle');
+        displayNonGroupLabelsToggle = document.getElementById('displayNonGroupLabels-toggle');
+        const groupLabelsToggle = document.getElementById('groupLabels-toggle');
+        displayPointsToggle = document.getElementById('points-toggle');
+        
+        // Function to update language and refresh styles
+        function updateLanguage() {
+          lang = olLangSelect.value;
+          // This triggers re-render with new labels
+          
+            if (pbfLayer != null) pbfLayer.setStyle(autoStyle);
+        }
+
+        // Listen for changes
+        olLangSelect.addEventListener('change', updateLanguage);
+        olLangSelect.value = lang;
+        
+        declutterToggle.addEventListener('change', function() {
+          if (pbfLayer != null) {
+            //pbfLayer.declutter = this.checked;
+            pbfLayer.setDeclutter(this.checked);
+            pbfLayer.setStyle(autoStyle);
+          }
+          
+          
+        });
+        declutterToggle.checked = declutterGlobal;
+        
+        displayNonGroupLabelsToggle.checked = displayNonGroupLabels;
+        displayNonGroupLabelsToggle.addEventListener('change', function() {
+          if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
+          displayNonGroupLabels = this.checked;
+          pbfLayer.setStyle(autoStyle); // re-render
+        });
+        groupLabelsToggle.checked = displayGroupLabels;
+        groupLabelsToggle.addEventListener('change', function() {
+           if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
+           displayGroupLabels = this.checked;
+           pbfLayer.setStyle(autoStyle);
+        });
+        displayPointsToggle.checked = displayPoints;
+        displayPointsToggle.addEventListener('change', function() {
+          if (!map.getLayers().getArray().includes(pbfLayer)) {map.getLayers().insertAt(1,pbfLayer);}
+          displayPoints = this.checked
+          pbfLayer.setStyle(autoStyle);
+        });
+        
+    
+
+// Create context menu element once
+const contextMenu = document.createElement('div');
+contextMenu.className = 'gbif-context-menu';
+contextMenu.style.display = 'none'; // Start hidden
+var contextMenuVisible = false;
+document.body.appendChild(contextMenu);
+
+// Handle LMB on map
+
+map.on('singleclick', function(evt) {
+    if (isMobile && contextMenuVisible) {hideContextMenu(); return;} // On mobile we close menu on any click outside menu
+    if (!isMobile && contextMenuVisible) hideContextMenu(); // On desktop allow immediate open of new menu
+    //if (!isMobile && !contextMenu.contains(evt.target))
+    
+    const pixel = map.getEventPixel(evt.originalEvent || evt);
+    const hitTolerance = isMobile ? 10 : 0;
+    const feature = map.forEachFeatureAtPixel(
+        pixel,
+        (f) => f,
+        { hitTolerance }
+    );
+
+    if (feature) {
+        
+        const properties = feature.properties_ || {}; // Safer default
+        let taxonId = null;
+        try {
+            taxonId = properties.id || feature.get('id');
+        } catch (e) {
+            taxonId = feature.get('id');
+        }
+
+        if (taxonId) {
+            if (feature.type_ != 'Polygon') {
+                drawLineToParent(feature);
+            }
+            
+            console.log('taxonId=' + taxonId);
+
+            
+            // Show initial content with feature properties only
+            displayCombinedData(properties, { image: null, externalResources: [] }); // Pass empty WD data initially
+            positionContextMenu(evt); // Ensure menu is positioned correctly
+            contextMenu.style.display = 'block'; // Make it visible
+            contextMenuVisible = true;
+            
+            // Do NOT await this call. Let it run in the background.
+            fetchAndApplyWikidata(taxonId, properties);
+            
+        }
+    }
+});
+
+function hideContextMenu() {
+    contextMenu.style.display = 'none';
+    contextMenuVisible = false;
+}
+
+function positionContextMenu() {
+    const mapElement = document.getElementById('map');
+    const mapRect = mapElement.getBoundingClientRect();
+    
+    // Position at center top
+    const left = mapRect.left + (mapRect.width / 2);
+    const top = mapRect.top + 20;
+    
+    contextMenu.style.left = left + 'px';
+    contextMenu.style.top = top + 'px';
+    contextMenu.style.transform = 'translateX(-50%)'; // Move left by 50% of own width
+    contextMenu.style.display = 'block';
+}
+
+// Close when clicking elsewhere
+//document.addEventListener('click', function(evt) {
+//    if (!contextMenu.contains(evt.target) && contextMenu.style.display === 'block') {
+//        console.log('closing menu')
+//        hideContextMenu();
+//        evt.stopPropagation();
+//    }
+//	
+//});
+
+// Prevent closing when clicking inside menu
+contextMenu.addEventListener('click', function(evt) {
+    evt.stopPropagation();
+});
+
+// Fetches Wikidata and updates the existing context menu if successful
+async function fetchAndApplyWikidata(taxonId, featureProps) {
+    const placeholder = document.getElementById('wd-status-placeholder');
+    try {
+        console.log("Fetching Wikidata for ID:", taxonId);
+        
+        placeholder.textContent = 'Loading Wikidata...'
+        
+        const wikidataData = await fetchWikidataResources(taxonId);
+
+        if (wikidataData && (wikidataData.image || (wikidataData.externalResources && wikidataData.externalResources.length > 0))) {
+            console.log("Wikidata fetched successfully, updating menu:", wikidataData);
+            // Update the *existing* menu content with WD data
+            displayCombinedData(featureProps, wikidataData); // This will re-render the content, now including WD parts
+            placeholder.textContent = ''
+        } else {
+             console.log("Wikidata fetched, but no relevant data (image/resources) found.");
+             placeholder.textContent = 'No wikidata for this taxon.'
+        }
+    } catch (error) {
+        console.error("Error fetching or applying Wikidata:", error);
+        // Silently fail - the initial feature data is already displayed.
+        
+    }
+}
+
+
+// Display combined data in context menu
+function displayCombinedData(taxonData, wikidataData) {
+    // Ensure inputs are valid objects
+    taxonData = taxonData || {};
+    wikidataData = wikidataData || { image: null, externalResources: [] };
+
+    let html = `<div style="max-width: 350px;">`;
+    
+    // Conditional color hint
+    var underlineCss = '';
+    const olZoom = map.getView().getZoom();
+	console.log(taxonData.rank);
+    const rankMatchZoom = getCurrentPngRank() == taxonData.rank;
+    if (rankMatchZoom) {
+        var color = getColorRgb(taxonData.id);
+        //underlineCss = "border-top: 8px solid "+ color;
+        html += `<div style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 10px; height: 80px; background-color: ${color}; margin-right: -10px;"></div>`;
+    }
+
+    // --- Scientific Name ---
+    const scientificName = taxonData.scientificName || 'N/A';
+    var name = getLocalizedName(taxonData)
+    var nameStr = name != scientificName ? ` (${name})` : "";
+    html += `<h3 style="margin: 0 0 0.5rem 0; color: #2c5aa0; ${underlineCss}">${scientificName+nameStr}</h3>`;
+    
+    
+
+    // --- Authorship ---
+    if (taxonData.authorship) {
+        html += `<div style="margin-bottom: 0.25rem;"><strong>Author:</strong> ${taxonData.authorship}</div>`;
+    }
+
+    // --- Rank & Descendants ---
+    html += `<div style="margin-bottom: 0.5rem;"><strong>Rank:</strong> ${taxonData.rank || 'N/A'}<br/>`;
+    html += `<strong>Descendants:</strong> ${taxonData.descendants || 'N/A'}</div>`;
+
+    // --- Image (from Wikidata) ---
+    if (wikidataData.image) {
+        const thumbnailUrl = getThumbnailUrl(wikidataData.image, 160);
+        console.log("Thumbnail URL:", thumbnailUrl);
+        // Fix potential URL encoding issue in Commons link construction
+        try {
+            const url = new URL(wikidataData.image);
+            const pathParts = url.pathname.split('/');
+            const fileName = pathParts[pathParts.length - 1];
+            // Properly encode the filename for the URL
+            const commonsPage = 'https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(fileName);
+
+            html += `
+                <div style="text-align: center; margin: 0.5rem 0;">
+                    <a href="${commonsPage}" target="_blank" title="View full image">
+                        <img src="${thumbnailUrl}"
+                             style="border: 1px solid #ddd; border-radius: 3px; max-width: 100%; height: auto;"
+                             alt="Species image"
+                             onerror="this.parentElement.style.display='none'"> <!-- Hide container on error -->
+                    </a>
+                </div>
+            `;
+        } catch (e) {
+            console.error("Error processing image URL:", wikidataData.image, e);
+        }
+    }
+
+    // --- Resources (GBIF + Wikidata External Links) ---
+    html += '<div style="margin: 0.5rem 0;">';
+    const links = [];
+
+    // GBIF Link (always present if gbifId exists)
+    if (taxonData.id) {
+        links.push(`<a href="https://itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=${taxonData.id}" target="_blank">ITIS</a>`);
+    }
+    var name = getLocalizedName(taxonData)
+    const ytQuery = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name);
+    links.push(`<a href="${ytQuery}" target="_blank">YT</a>`);
+    
+    //console.log('name='+name)
+    const priorityOrder = ["enWiki", "ruWiki", "LifeMap"];
+
+    // Wikidata External Resources
+    if (Array.isArray(wikidataData.externalResources) && wikidataData.externalResources.length > 0) {
+        // Sort resources
+        wikidataData.externalResources
+            .sort((a, b) =>
+                (priorityOrder.indexOf(b.name) - priorityOrder.indexOf(a.name)) ||
+                (a.name || "").localeCompare(b.name || "")
+            )
+            .forEach(resource => {
+                // Basic validation
+                if (resource.url && resource.name) {
+                    links.push(`<a href="${resource.url}" target="_blank">${resource.name}</a>`);
+                }
+            });
+    }
+
+    if (links.length > 0) {
+        html += `<strong>Resources:</strong> ${links.join(' , ')}`;
+    } else if (taxonData.id) {
+         // Show only GBIF if no other resources were added (including WD ones)
+         // This case is already handled by pushing GBIF link above, but ensures Resources header is shown if only GBIF exists.
+    }
+    html += '</div>';
+
+    var rankNameIndex = lang == 'ru' ? 1 : 0;
+
+    let hier = taxonData.hier; //lang == 'ru' ? taxonData.hierRu : taxonData.hier;
+	if (lang == 'ru' && taxonData.hierRu) hier = taxonData.hierRu;
+    const hierRanks = taxonData.hierRanks.split('>');
+	console.log(hier, hierRanks);
+    if (hier && hierRanks) {
+        const hierParts = hier.split('>');
+        const rankPairs = [];
+
+        
+		console.log(hierParts);
+        // Only display if we have parts to show
+        //if (hierParts.length > 0 && hierParts.length === rankPairs.length) {
+            html += '<div style="margin-top: 0.5rem;"><strong>Hierarchy:</strong>';
+            for (let i = 0; i < hierParts.length; i++) {
+                
+                html += `
+                    <div style="display: flex; margin-left: 0.5rem; margin-top: 0.125rem;">
+                        <div style="min-width: 100px;">${hierRanks[i]}:</div>
+                        <div>${hierParts[i]}</div>
+                    </div>
+                `;
+                
+            }
+            html += '</div>';
+        //}
+    }
+
+    html += ` <span id="wd-status-placeholder" style="color: #888; font-style: italic;"></span>`;
+    html += '</div>'; // Close main container div
+
+    // --- Update the Menu Content ---
+    const contentArea = contextMenu.querySelector('.context-menu-content');
+    if (contentArea) {
+        contentArea.innerHTML = html; // Update the content area
+    } else {
+        // Fallback if structure unexpectedly changed (e.g., called before initial show)
+        contextMenu.innerHTML = `
+            <div style="position: relative;">
+                <button class="context-menu-close" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 2em; cursor: pointer;">×</button>
+                <div class="context-menu-content">${html}</div>
+            </div>
+        `;
+        // Reattach listener if recreating
+        const newCloseBtn = contextMenu.querySelector('.context-menu-close');
+        if (newCloseBtn) {
+           newCloseBtn.addEventListener('click', hideContextMenu);
+        }
+    }
+}
+
+function getExternalResourcesHtml(externalResources) {
+    if (externalResources.length === 0) return '';
+    
+    const links = externalResources.map(resource => {
+        const formattedName = resource.name
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+        return `<a href="${resource.url}" target="_blank">${formattedName}</a>`;
+    });
+    
+    return `<div style="margin: 0.5rem 0;"><strong>Resources:</strong> ${links.join(' | ')}</div>`;
+}
+
+// Generate thumbnail URL from Wikimedia Commons image using proper MD5
+function getThumbnailUrl(imageUrl, thumbSize = 160) {
+    try {
+        // Extract filename from URL
+        const url = new URL(imageUrl);
+        const pathParts = url.pathname.split('/');
+        const filename = decodeURIComponent(pathParts[pathParts.length - 1]);
+        
+        // Get proper MD5 hash using the imported library
+        const title = filename.replace(/^File:/, '').replace(/ /g, '_');
+        const hash = md5(title); // Using the imported md5 function
+        
+        const hashPrefix1 = hash.substring(0, 1);
+        const hashPrefix2 = hash.substring(0, 2);
+        
+        return `https://upload.wikimedia.org/wikipedia/commons/thumb/${hashPrefix1}/${hashPrefix2}/${encodeURIComponent(title)}/${thumbSize}px-${encodeURIComponent(title)}`;
+        
+    } catch (error) {
+        console.error('Error generating thumbnail URL:', error);
+        return imageUrl; // Fallback to original image
+    }
+}
+// Fetch Wikidata resources using SPARQL
+async function fetchWikidataResources(taxonId) {
+    try {
+        const lang = typeof window.lang !== 'undefined' ? window.lang : 'en';
+        const wikiLang = (lang === 'en' || lang === 'ru') ? lang : 'en';
+        
+        const sparqlQuery = `
+            SELECT ?obj ?name ?url WHERE {
+			  # P846=GBIF, P685=NCBI, P815=ITIS
+              ?obj wdt:P815 '${taxonId}' .
+              {
+                ?obj wdt:P18 ?url.
+                BIND("img" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P10585 ?id.
+                wd:P10585 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("CoL" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P685 ?id.
+                wd:P685 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("NCBI" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P685 ?id.
+                BIND(IRI(CONCAT('https://lifemap.cnrs.fr/tree?efficiency-mode=true&tid=', ?id)) AS ?url)
+                BIND("LifeMap" AS ?name)
+              }
+              #UNION
+              #{
+              #  ?obj wdt:P815 ?id.
+              #  wd:P815 wdt:P1630 ?formatter.
+              #  BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+              #  BIND("ITIS" AS ?name)
+              #}
+              UNION
+              {
+                ?obj wdt:P3151 ?id.
+                wd:P3151 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("iNatur" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P9157 ?id.
+                wd:P9157 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("OTT" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P9157 ?id.
+                wd:P9157 wdt:P1630 ?formatter.
+                BIND (URI(CONCAT("https://www.onezoom.org/life/@=", ?id, "?vis=polytomy")) AS ?url)
+                BIND("OneZoom" AS ?name)
+              }
+              UNION
+              {
+                ?url schema:about ?obj;
+                  schema:isPartOf <https://${wikiLang}.wikipedia.org/>.
+                BIND("${wikiLang}Wiki" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P373 ?categLabel .
+                BIND (URI(CONCAT("https://commons.wikimedia.org/wiki/Category:", ?categLabel)) AS ?url)
+                BIND("wcCateg" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P373 ?categLabel .
+                BIND("wcImages" AS ?name)
+                BIND (ENCODE_FOR_URI(CONCAT("deepcategory:\\"", ?categLabel, "\\"")) AS ?query)
+                BIND (URI(CONCAT("https://commons.wikimedia.org/w/index.php?search=", ?query, "&title=Special:MediaSearch&type=image")) AS ?url)
+              }
+            }
+        `;
+        
+        const url = 'https://query.wikidata.org/sparql?query=' + encodeURIComponent(sparqlQuery) + '&format=json';
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/sparql-results+json'
+            }
+        });
+        
+        const data = await response.json();
+        return processWikidataResults(data);
+        
+    } catch (error) {
+        console.error('Error fetching Wikidata:', error);
+        return { image: null, wikipedia: null, col: null };
+    }
+}
+// Returns object with processed Wikidata SPARQL results
+function processWikidataResults(data) {
+    const result = { 
+        image: null,
+        externalResources: []
+    };
+    
+    if (data && data.results && data.results.bindings[0]) {
+        result.externalResources.push({
+                    name: 'WD',
+                    url: data.results.bindings[0].obj.value
+                });
+        data.results.bindings.forEach(binding => {
+            if (binding.name && binding.url) {
+                const name = binding.name.value;
+                const url = binding.url.value;
+                
+                if (name === 'img') {
+                    result.image = url;
+                } else {
+                    result.externalResources.push({
+                        name: name,
+                        url: url
+                    });
+                }
+            }
+        });
+    }
+    
+    return result;
+}
+
+
+// THis func should be equivalent to Java similar func
+function getColorRgb(input, pastelFactor = 1.0, alpha = 1.0) {
+    if (input == null) {return 'black'}
+    // Generate MD5 hash using blueimp-md5
+    const md5Hash = md5(input.toString());
+    
+    // Convert hex string to bytes
+    const hashBytes = [];
+    for (let i = 0; i < md5Hash.length; i += 2) {
+        hashBytes.push(parseInt(md5Hash.substr(i, 2), 16));
+    }
+
+    // Use bytes for RGB components (similar to Java version)
+    let r = hashBytes[0];
+    let g = hashBytes[4];  // Using spaced-out indices like in Java
+    let b = hashBytes[8];
+
+    if (pastelFactor < 1.0) {
+        // Convert to pastel by mixing with white
+        r = Math.floor(r * pastelFactor + 255 * (1 - pastelFactor));
+        g = Math.floor(g * pastelFactor + 255 * (1 - pastelFactor));
+        b = Math.floor(b * pastelFactor + 255 * (1 - pastelFactor));
+    }
+
+    // Return rgba string if alpha is not 1.0, otherwise return hex
+    if (alpha < 1.0) {
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    // Convert to hex string
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+      
+    
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
