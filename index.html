@@ -369,6 +369,9 @@
         </div>        <div class="item" data-tags="ncbi,biology">
             <a href="./ncbi-tree-noPictures-TB-manual-963.svg" target="_blank" >./ncbi-tree-noPictures-TB-manual-963.svg</a>
             <span class='item-tags'>(ncbi, biology)</span>
+        </div>        <div class="item" data-tags="ncbi,biology">
+            <a href="./ncbi-tree-of-life.html" target="_blank" >./ncbi-tree-of-life.html</a>
+            <span class='item-tags'>(ncbi, biology)</span>
         </div>        <div class="item" data-tags="db-schema,catalogue-of-life,biology">
             <a href="./schema-col.svg" target="_blank" >./schema-col.svg</a>
             <span class='item-tags'>(db-schema, catalogue-of-life, biology)</span>
@@ -415,30 +418,30 @@
         const checkboxes = document.querySelectorAll('.tag-checkbox');
         const items = document.querySelectorAll('.item');
         const noResults = document.getElementById('no-results');
-        
+
         function updateFilter() {
             const selectedTags = Array.from(checkboxes)
                 .filter(checkbox => checkbox.checked)
                 .map(checkbox => checkbox.value);
-            
+
             let visibleCount = 0;
-            
+
             items.forEach(item => {
                 const itemTags = item.dataset.tags.split(',');
-                const shouldShow = selectedTags.length === 0 || 
+                const shouldShow = selectedTags.length === 0 ||
                     selectedTags.every(tag => itemTags.includes(tag));
-                
+
                 item.style.display = shouldShow ? 'block' : 'none';
                 if (shouldShow) visibleCount++;
             });
-            
+
             noResults.style.display = visibleCount > 0 ? 'none' : 'block';
         }
-        
+
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', updateFilter);
         });
-        
+
         // Show all items initially
         items.forEach(item => item.style.display = 'block');
     </script>
