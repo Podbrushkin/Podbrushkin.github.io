@@ -1386,7 +1386,7 @@ function displayCombinedData(taxonData, wikidataData) {
 
     // --- Image (from Wikidata) ---
     if (wikidataData.image) {
-        const thumbnailUrl = getThumbnailUrl(wikidataData.image, 160);
+        const thumbnailUrl = getThumbnailUrl(wikidataData.image, 250);
         console.log("Thumbnail URL:", thumbnailUrl);
         // Fix potential URL encoding issue in Commons link construction
         try {
