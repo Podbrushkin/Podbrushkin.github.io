@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CoL Tree of Life</title>
+  <style>
+    html, body, #map {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #tilesize-control {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 6px 10px;
+      z-index: 1;
+      font-family: sans-serif;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    #tilesize-control select {
+      margin-left: 5px;
+    }
+    #rank-panel {
+      position: absolute;
+      top: 52px;
+      right: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 8px;
+      z-index: 1;
+      font-family: sans-serif;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    .rank-btn {
+      padding: 4px 8px;
+      margin: 3px 0;
+      cursor: pointer;
+      border-radius: 3px;
+      user-select: none;
+    }
+    .rank-btn:hover {
+      background: #ddd;
+    }
+    .rank-btn.active {
+      background: #a0c4ff;
+      font-weight: bold;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+<!--   <script src="wikidata.js"></script> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+</head>
+<body>
+  <div id="map"></div>
+  <div id="zoom-info" style="position: absolute; top: 10px; left: 50px; background: rgba(255,255,255,0.5); color: black; padding: 6px 12px; font-family: monospace; font-size: 14px; font-weight: bold; border-radius: 4px; z-index: 1000; pointer-events: none;">
+    0
+  </div>
+
+  <div id="tilesize-control">
+  <label>Tile size:
+    <select id="tileSizeSelect">
+      <option value="128">128</option>
+      <option value="256">256</option>
+      <option value="384" selected>384</option>
+      <option value="512">512</option>
+      <option value="768">768</option>
+    </select>
+  </label>
+  </div>
+
+  <select id="lang-switcher" style="position: absolute; top: 10px; right: 160px; z-index: 1000; padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; background: white; font-family: sans-serif; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <option value="scientific">Scientific Names</option>
+    <option value="en">English (EN)</option>
+    <option value="ru">Русский (RU)</option>
+</select>
+
+  <div id="rank-panel">
+    <div class="rank-btn" data-rank="auto">Auto</div>
+    <div class="rank-btn" data-rank="kingdom">Kingdom</div>
+    <div class="rank-btn" data-rank="phylum">Phylum</div>
+    <div class="rank-btn" data-rank="class">Class</div>
+    <div class="rank-btn" data-rank="order">Order</div>
+    <div class="rank-btn" data-rank="family">Family</div>
+    <div class="rank-btn" data-rank="genus">Genus</div>
+    <div class="rank-btn" data-rank="species">Species</div>
+
+    <label style="cursor:pointer; display:block; margin-top: 8px; border-top: 1px solid #ccc; padding-top: 8px; font-size: 10px;">
+      <input type="checkbox" id="toggle-performance"> Performance Mode
+    </label>
+
+
+  </div>
+
+
+  <script>
+  function pointStyle(feature, resolution) {
+    const name = getFeatureName(feature);
+    return new ol.style.Style({
+      text: new ol.style.Text({
+        text: name,
+        font: 'bold 13px sans-serif',
+        fill: new ol.style.Fill({ color: '#222' }),
+        stroke: new ol.style.Stroke({ color: 'rgba(255, 255, 255, 0.95)', width: 4 }),
+        overflow: true
+      })
+    });
+  }
+
+  function polygonStyle(feature, resolution) {
+    //const name = getFeatureName(feature);
+    // const geometry = feature.getGeometry();
+    // const extent = geometry.getExtent();
+    // const pixelWidth = ol.extent.getWidth(extent) / resolution;
+    // const charCount = name.length || 1;
+    // let fontSize = pixelWidth / (charCount * 0.6);
+    // fontSize = Math.max(10, Math.min(fontSize, 40)); //'rgba(255,255,255,0.75)' 'rgba(0,0,0,0.9)'
+    let polyRandomFill = true;
+    let color = polyRandomFill ? getColorRgb(feature.get('id'), 0.6,1) :'rgba(255,255,255,0.75)' ;
+
+    return [
+      new ol.style.Style({
+        fill: new ol.style.Fill({ color: color }),
+        stroke: new ol.style.Stroke({ color: 'rgba(0, 0, 0, 0.6)', width: 1.5 })
+      })
+    ];
+  }
+  function polygonStyleTransparent(feature, resolution) {
+    return new ol.style.Style({
+        fill: new ol.style.Fill({ color: 'rgba(255,255,255,0.0)' })
+    })
+  }
+
+  function vectorStyle(feature, resolution) {
+    const rank = feature.get('rank');
+    const currentPngRank = getAutoRank(resolution);
+    let activeRank = hoveredRank;
+    if (!activeRank) {
+      if (selectedRank) {
+        activeRank = selectedRank;
+      } else if (autoMode) {
+        activeRank = getAutoRank(resolution);
+      }
+    }
+    let currentZ = pbfLayer.getSource().tileGrid.getZForResolution(map.getView().getResolution(), 0);
+    if (currentZ >= 8) {return pointStyle(feature, resolution);}
+
+    // console.log(rank,currentPngRank)
+    // if (currentZ == 7 && (rank == currentPngRank)) {return pointStyle(feature, resolution);}
+    if (!autoMode && !selectedRank && !hoveredRank && rank === currentPngRank) {
+      return polygonStyleTransparent();
+    }
+
+
+
+    //activeRank != 'species' &&
+    if ( (!activeRank || rank !== activeRank)) {
+      return [];
+    }
+
+
+    const geomType = feature.getGeometry().getType();
+    if ((geomType === 'Point' || geomType === 'MultiPoint') && !showPoints) {
+      return [];
+    }
+    if ((geomType === 'Polygon' || geomType === 'MultiPolygon') && !showPolygons) {
+      return [];
+    }
+    if (geomType === 'Point' || geomType === 'MultiPoint') {
+      return pointStyle(feature, resolution);
+    }
+    if (geomType === 'Polygon' || geomType === 'MultiPolygon') {
+      return polygonStyle(feature, resolution);
+    }
+    return [];
+  }
+  function getFeatureName(feature) {
+    const sciName = feature.get('scientificName') || '';
+    const lang = window.lang || 'scientific';
+
+    // If scientific is chosen (or undefined), return scientific name
+    if (lang === 'scientific') return sciName;
+
+    // Otherwise, build the key (e.g., 'labelEn' or 'labelRu')
+    const langKey = 'label' + lang.charAt(0).toUpperCase() + lang.slice(1);
+    const localName = feature.get(langKey);
+
+    // Return local name if it exists, otherwise fallback to scientificName
+    return localName || sciName;
+}
+
+  // ────────── State & Auto Rank ──────────
+  let hoveredRank = null;
+  let selectedRank = null;
+  let autoMode = false;
+  let showPoints = true;
+  let showPolygons = true;
+  const autoRanks = ["kingdom","kingdom","phylum","class","order","family","genus","species"];
+
+
+
+  function getAutoRank(resolution) {
+    const res = resolution !== undefined ? resolution : map.getView().getResolution();
+
+    let tileZ = pngLayer.getSource().tileGrid.getZForResolution(map.getView().getResolution(), 0);
+
+    const index = Math.min(tileZ, autoRanks.length - 1);
+    let rank = autoRanks[Math.max(0, index)];
+    console.log(tileZ,rank)
+    return rank;
+  }
+
+  // ────────── Initialize Layers First ──────────
+  // We create dummy sources first so the layer objects exist
+  const pbfLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({ format: new ol.format.MVT() }),
+    style: vectorStyle,
+    zIndex: 10,
+    declutter: true,
+
+  });
+
+  // If max dir is 7, them maxZoom is 8
+  const pngLayer = new ol.layer.Tile({
+    source: new ol.source.XYZ(),
+
+  });
+
+  // ────────── Map Initialization ──────────
+  var map = new ol.Map({
+    target: 'map',
+    layers: [pngLayer, pbfLayer],
+    view: new ol.View({ center: [0, 0], zoom: 0, multiWorld: true })
+  });
+
+  // ────────── Dynamic Shared Grid Logic ──────────
+  let sharedGrid = ol.tilegrid.createXYZ({ tileSize: 256 });
+
+  function updateTileSize(newSize) {
+    console.log("Updating tile size to:", newSize);
+    // maxZoom prop of tilegrid expects real maxDirZoom, not maxDirZoom+1
+    const pngGrid = ol.tilegrid.createXYZ({
+      tileSize: newSize,
+      maxZoom: 7
+    });
+
+    const pbfGrid = ol.tilegrid.createXYZ({
+      tileSize: newSize,
+      maxZoom: 8
+    });
+
+    pngLayer.setSource(new ol.source.XYZ({
+      url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/col-tiles20260706/{z}/{x}/{y}.png',
+      //url: 'tiles/{z}/{x}/{y}.png',
+      tileGrid: pngGrid,
+      wrapX: false,
+      zDirection: 0
+    }));
+
+    pbfLayer.setSource(new ol.source.VectorTile({
+      format: new ol.format.MVT(),
+      url: 'https://s3.ru1.storage.beget.cloud/4526a8c108c2-tiles-maybe/col-tilesMeta20260706/{z}/{x}/{y}.pbf',
+      //url: './tilesMeta/{z}/{x}/{y}.pbf',
+      tileGrid: pbfGrid,
+      wrapX: false,
+      zDirection: 0
+    }));
+  }
+
+  // Initialize with default size
+  updateTileSize(384);
+
+  // ────────── Rank Buttons & Toggles ──────────
+  const rankButtons = document.querySelectorAll('.rank-btn');
+  rankButtons.forEach(btn => {
+    const rank = btn.dataset.rank;
+    btn.addEventListener('mouseenter', () => {
+      hoveredRank = (rank === 'auto') ? getAutoRank(map.getView().getResolution()) : rank;
+      pbfLayer.changed();
+    });
+    btn.addEventListener('mouseleave', () => {
+      hoveredRank = null;
+      pbfLayer.changed();
+    });
+    btn.addEventListener('click', () => {
+      if (rank === 'auto') {
+        autoMode = !autoMode;
+        if (autoMode) {
+          selectedRank = null;
+          document.querySelector('.rank-btn.active')?.classList.remove('active');
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      } else {
+        autoMode = false;
+        document.querySelector('.rank-btn[data-rank="auto"]')?.classList.remove('active');
+        if (selectedRank === rank) {
+          selectedRank = null;
+          btn.classList.remove('active');
+        } else {
+          document.querySelector('.rank-btn.active')?.classList.remove('active');
+          selectedRank = rank;
+          btn.classList.add('active');
+        }
+      }
+      pbfLayer.changed();
+    });
+  });
+
+  // ────────── Tile Size Switcher ──────────
+  const tileSizeSelect = document.getElementById('tileSizeSelect');
+  if (tileSizeSelect) {
+    tileSizeSelect.addEventListener('change', function(e) {
+      var newSize = parseInt(e.target.value, 10);
+      if (!isNaN(newSize)) {
+        updateTileSize(newSize);
+      }
+    });
+  } else {
+    console.error("Element with id 'tileSizeSelect' not found!");
+  }
+
+  const zoomInfo = document.getElementById('zoom-info');
+  // ────────── Debug Log ──────────
+  map.getView().on('change:resolution', () => {
+    if (autoMode) {
+      pbfLayer.changed();
+    }
+
+    // Set the initial value on load
+    let currentZ = pngLayer.getSource().tileGrid.getZForResolution(map.getView().getResolution(), 0);
+    zoomInfo.innerText = `${currentZ}`;
+
+  });
+
+  //document.querySelector('.rank-btn[data-rank="auto"]')?.classList.add('active');
+  let myFeature = null;
+  map.on('singleclick', function(evt) {
+    map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+      // Ensure we only process clicks on the PBF layer
+      if (layer === pbfLayer) {
+        const rank = feature.get('rank');
+        const name = feature.get('scientificName') || 'Unknown';
+        myFeature = feature;
+
+        console.log(`Clicked: ${name} (Rank: ${rank}) ${feature.get('id')}`);
+
+
+      }
+    }, {
+      hitTolerance: 5
+    });
+  });
+
+  function getColorRgb(input, pastelFactor = 1.0, alpha = 1.0) {
+    if (input == null) {return 'black'}
+    // Generate MD5 hash using blueimp-md5
+    const md5Hash = md5(input.toString());
+
+    // Convert hex string to bytes
+    const hashBytes = [];
+    for (let i = 0; i < md5Hash.length; i += 2) {
+        hashBytes.push(parseInt(md5Hash.substr(i, 2), 16));
+    }
+
+    // Use bytes for RGB components (similar to Java version)
+    let r = hashBytes[0];
+    let g = hashBytes[4];  // Using spaced-out indices like in Java
+    let b = hashBytes[8];
+
+    if (pastelFactor < 1.0) {
+        // Convert to pastel by mixing with white
+        r = Math.floor(r * pastelFactor + 255 * (1 - pastelFactor));
+        g = Math.floor(g * pastelFactor + 255 * (1 - pastelFactor));
+        b = Math.floor(b * pastelFactor + 255 * (1 - pastelFactor));
+    }
+
+    // Return rgba string if alpha is not 1.0, otherwise return hex
+    if (alpha < 1.0) {
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    // Convert to hex string
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+const langSwitcher = document.getElementById('lang-switcher');
+
+// Set initial value based on existing window.lang or default to 'en'
+window.lang = window.lang || 'en';
+langSwitcher.value = window.lang;
+
+langSwitcher.addEventListener('change', function() {
+    window.lang = this.value;
+
+    // 1. Dispatch a custom event so your polygon labels can listen and update themselves
+    window.dispatchEvent(new CustomEvent('langChange', {
+        detail: { lang: window.lang }
+    }));
+
+    // 2. Optional: Close the current info card so it refreshes with the new language on the next click
+    popupElement.style.display = 'none';
+    pbfLayer.changed();
+
+    console.log(`Language switched to: ${window.lang}`);
+});
+
+// Performance Mode Toggle Logic
+document.getElementById('toggle-performance').addEventListener('change', function() {
+    const isPerfMode = this.checked;
+
+    // 1. Add/Remove PBF layer visibility
+    // (Replace 'pbfLayer' with your actual PBF layer variable name)
+    if (typeof pbfLayer !== 'undefined') {
+        pbfLayer.setVisible(!isPerfMode);
+    }
+
+    // 2. Hide/Show Lang Switcher
+    const langSwitcher = document.getElementById('lang-switcher');
+    if (langSwitcher) {
+        langSwitcher.style.display = isPerfMode ? 'none' : '';
+    }
+
+    // 3. Hide/Show Rank Selectors
+    document.querySelectorAll('.rank-btn').forEach(btn => {
+        btn.style.display = isPerfMode ? 'none' : '';
+    });
+});
+
+// 1. Setup the fixed popup element
+const popupElement = document.createElement('div');
+popupElement.style.cssText = `
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    font-family: sans-serif;
+    border: 1px solid #ccc;
+    width: 320px;
+    max-height: 85vh;
+    z-index: 1000;
+    display: none;
+    user-select: text;
+    -webkit-user-select: text;
+`;
+
+// 1a. Stop propagation of clicks/pointer events so they don't reach the map
+['pointerdown', 'click', 'dblclick', 'wheel', 'touchstart', 'touchmove'].forEach(evtType => {
+    popupElement.addEventListener(evtType, e => e.stopPropagation());
+});
+
+// Close button
+const closeBtn = document.createElement('span');
+closeBtn.innerHTML = '&times;';
+closeBtn.style.cssText = 'position: absolute; top: 8px; right: 12px; cursor: pointer; font-size: 24px; font-weight: bold; color: #888; line-height: 1;';
+closeBtn.onmouseover = () => closeBtn.style.color = '#333';
+closeBtn.onmouseout = () => closeBtn.style.color = '#888';
+closeBtn.onclick = () => { popupElement.style.display = 'none'; };
+popupElement.appendChild(closeBtn);
+
+// Content container
+const contentContainer = document.createElement('div');
+contentContainer.style.cssText = 'padding: 20px; padding-top: 15px; overflow-y: auto; max-height: calc(85vh - 20px);';
+popupElement.appendChild(contentContainer);
+
+map.getViewport().appendChild(popupElement);
+
+// 2. Function to display the info card
+// Helper to render the links HTML
+function renderLinksHtml(linksArray) {
+    if (linksArray.length === 0) return '';
+    const linkElements = linksArray.map(l => `<a href="${l.url}" target="_blank" style="color: #0078a8; text-decoration: none; font-size: 12px;">${l.name}</a>`);
+    return `<div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; line-height: 1.8;">${linkElements.join(' <span style="color:#ccc;">|</span> ')}</div>`;
+}
+
+async function showInfoCard(evt) {
+    let clickedFeature = null;
+    map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        if (!clickedFeature) clickedFeature = feature;
+    });
+
+    if (!clickedFeature) {
+        popupElement.style.display = 'none';
+        return;
+    }
+
+    const props = clickedFeature.getProperties();
+    const taxonId = props.id;
+    if (!taxonId) return;
+
+    // Prevent race conditions if user clicks rapidly
+    if (popupElement.dataset.currentId === taxonId && popupElement.style.display === 'block') return;
+    popupElement.dataset.currentId = taxonId;
+
+    // --- 1. IMMEDIATE RENDER (Local Data) ---
+    const hierarchyKeys = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus'];
+    const hierarchyParts = hierarchyKeys.filter(key => props[key]).map(key => props[key]);
+    const hierarchyHtml = hierarchyParts.length > 0
+        ? `<div style="font-size: 12px; color: #555; margin-bottom: 10px; text-align: center; word-break: break-word;">${hierarchyParts.join(' › ')}</div>`
+        : '';
+
+    const rank = props.rank || 'Unknown';
+    const depth = props.depth !== undefined ? props.depth : '?';
+    const descendants = props.descendants !== undefined ? props.descendants : '?';
+    const metaHtml = `<div style="font-size: 11px; color: #888; margin-bottom: 10px;">Rank: ${rank} | Depth: ${depth} | Descendants: ${descendants}</div>`;
+
+    const sciName = props.scientificName || taxonId;
+    const lang = (typeof window.lang !== 'undefined' && (window.lang === 'en' || window.lang === 'ru')) ? window.lang : 'en';
+    const labelKey = 'label' + lang.charAt(0).toUpperCase() + lang.slice(1);
+    const label = props[labelKey] || '';
+
+    let mainTitle = sciName;
+    let subTitle = (label && label.toLowerCase() !== sciName.toLowerCase()) ? label : '';
+
+    let titleHtml = `<h4 style="margin: 0; font-size: 18px; color: #222; padding-right: 20px;">${mainTitle}</h4>`;
+    if (subTitle) titleHtml += `<div style="font-size: 13px; color: #666; font-style: italic; margin-bottom: 5px;">${subTitle}</div>`;
+
+    // Initial placeholders
+    const initImg = `<div style="width: 100%; height: 80px; background: #f8f9fa; border: 1px dashed #ddd; border-radius: 4px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">Loading image...</div>`;
+    const initDesc = `<div style="background: #f8f9fa; border: 1px dashed #ddd; color: #999; text-align: center; padding: 8px 15px; border-radius: 4px; margin: 10px 0; font-size: 12px;">Loading description...</div>`;
+
+    // FIX: Render static links immediately
+    const initialLinks = [
+        { name: 'CoL', url: `https://www.catalogueoflife.org/data/taxon/${taxonId}` },
+        { name: 'Images', url: `https://duckduckgo.com/?ia=images&iax=images&q=${encodeURIComponent(sciName)}` }
+    ];
+    const initialLinksHtml = renderLinksHtml(initialLinks);
+
+    // Render base layout immediately
+    contentContainer.innerHTML = `
+        <div style="text-align: center;">
+            <div id="card-title">${titleHtml}</div>
+            ${metaHtml}
+            ${hierarchyHtml}
+            <div id="card-img">${initImg}</div>
+            <div id="card-desc">${initDesc}</div>
+            <div id="card-links">${initialLinksHtml}</div>
+        </div>
+    `;
+    popupElement.style.display = 'block';
+
+    // --- 2. ASYNC UPDATE: WIKIDATA (Image & Links) ---
+    let imgUrl = null;
+    let wdUrl = null;
+    let wikiTitle = null;
+    let wikiUrl = null;
+
+    // Start with the initial links so we can append to them
+    let links = [...initialLinks];
+
+    try {
+        const data = await fetchWikidataResources(taxonId);
+        if (popupElement.dataset.currentId !== taxonId) return; // Aborted
+
+        if (data?.results?.bindings) {
+            data.results.bindings.forEach(b => {
+                if (b.obj?.value && !wdUrl) {
+                    wdUrl = b.obj.value;
+                }
+                const wikiLangName = `${lang}Wiki`;
+                if (b.name?.value === wikiLangName && b.url && !wikiUrl) {
+                    wikiUrl = b.url.value;
+                    wikiTitle = decodeURIComponent(wikiUrl.split('/wiki/')[1] || '');
+                }
+                const name = b.name?.value;
+                const url = b.url?.value;
+                if (name === 'img' && url && !url.toLowerCase().endsWith('.svg')) imgUrl = url;
+                else if (name && url) links.push({ name, url });
+            });
+        }
+
+        // Insert WD link right after CoL (index 1)
+        if (wdUrl) links.splice(1, 0, { name: 'WD', url: wdUrl });
+
+        // Update Image
+        const imgEl = document.getElementById('card-img');
+        if (imgUrl) {
+            const thumbUrl = getThumbnailUrl(imgUrl, 500);
+            imgEl.innerHTML = `<img src="${thumbUrl}" alt="Taxon" style="max-width: 100%; height: auto; border-radius: 4px; margin: 10px 0; border: 1px solid #ddd; display: block; margin-left: auto; margin-right: auto;" />`;
+        } else {
+            imgEl.innerHTML = '';
+        }
+
+        // Update Links (re-render with the newly added Wikidata links)
+        const linksEl = document.getElementById('card-links');
+        linksEl.innerHTML = renderLinksHtml(links);
+
+    } catch (e) { console.error("Wikidata fetch failed", e); }
+
+    // --- 3. ASYNC UPDATE: WIKIPEDIA (Description & Pretty Title) ---
+    if (!wikiTitle && wdUrl) {
+        try {
+            const wdId = wdUrl.split('/').pop();
+            const wdApiUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wdId}&props=sitelinks&sitefilters=${lang}wiki&format=json&origin=*`;
+            const wdRes = await fetch(wdApiUrl);
+            const wdData = await wdRes.json();
+            const sitelink = wdData.entities[wdId]?.sitelinks?.[`${lang}wiki`]?.title;
+            if (sitelink) {
+                wikiTitle = sitelink;
+                wikiUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(sitelink)}`;
+            }
+        } catch (e) {}
+    }
+
+    let descHtml = '';
+    if (wikiTitle) {
+        try {
+            const summaryUrl = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
+            const summaryRes = await fetch(summaryUrl);
+            if (popupElement.dataset.currentId !== taxonId) return; // Aborted
+
+            if (summaryRes.ok) {
+                const summaryData = await summaryRes.json();
+
+                const prettyTitle = summaryData.normalizedtitle || summaryData.title.replace(/_/g, ' ');
+                if (prettyTitle && prettyTitle.toLowerCase() !== mainTitle.toLowerCase()) {
+                    const titleEl = document.getElementById('card-title');
+                    let newTitleHtml = `<h4 style="margin: 0; font-size: 18px; color: #222; padding-right: 20px;">${prettyTitle}</h4>`;
+                    newTitleHtml += `<div style="font-size: 13px; color: #666; font-style: italic; margin-bottom: 5px;">${sciName}</div>`;
+                    titleEl.innerHTML = newTitleHtml;
+                }
+
+                if (summaryData.extract) {
+                    descHtml = `<p style="font-size: 13px; color: #444; text-align: left; margin: 10px 0; line-height: 1.5; border-left: 3px solid #0078a8; padding-left: 8px;">
+                        ${summaryData.extract}
+                        <a href="${wikiUrl}" target="_blank" style="color: #0078a8; text-decoration: none; font-size: 12px; display: inline-block; margin-top: 5px;">↗</a>
+                    </p>`;
+                }
+            }
+        } catch (e) {}
+    }
+
+    // Update Description (and handle the combined "No Data" placeholder)
+    const descEl = document.getElementById('card-desc');
+    const imgEl = document.getElementById('card-img');
+
+    if (descHtml) {
+        descEl.innerHTML = descHtml;
+    } else if (!imgUrl) {
+        imgEl.innerHTML = '';
+        descEl.innerHTML = `<div style="background: #f8f9fa; border: 1px dashed #ddd; color: #999; text-align: center; padding: 15px; border-radius: 4px; margin: 10px 0; font-size: 13px;">No extra data available</div>`;
+    } else {
+        descEl.innerHTML = '';
+    }
+}
+
+// 3. Bind the function to the map's single click event
+map.on('singleclick', showInfoCard);
+
+// Generate thumbnail URL from Wikimedia Commons image using proper MD5
+function getThumbnailUrl(imageUrl, thumbSize = 120) {
+    try {
+        // Extract filename from URL
+        const url = new URL(imageUrl);
+        const pathParts = url.pathname.split('/');
+        const filename = decodeURIComponent(pathParts[pathParts.length - 1]);
+
+        // Get proper MD5 hash using the imported library
+        const title = filename.replace(/^File:/, '').replace(/ /g, '_');
+        const hash = md5(title); // Using the imported md5 function
+
+        const hashPrefix1 = hash.substring(0, 1);
+        const hashPrefix2 = hash.substring(0, 2);
+
+        return `https://upload.wikimedia.org/wikipedia/commons/thumb/${hashPrefix1}/${hashPrefix2}/${encodeURIComponent(title)}/${thumbSize}px-${encodeURIComponent(title)}`;
+
+    } catch (error) {
+        console.error('Error generating thumbnail URL:', error);
+        return imageUrl; // Fallback to original image
+    }
+}
+// Fetch Wikidata resources using SPARQL
+async function fetchWikidataResources(taxonId) {
+    try {
+        const lang = typeof window.lang !== 'undefined' ? window.lang : 'en';
+        const wikiLang = (lang === 'en' || lang === 'ru') ? lang : 'en';
+
+        const sparqlQuery = `
+            SELECT ?obj ?name ?url WHERE {
+			  # P846=GBIF, P685=NCBI, P815=ITIS, P10585=CoL
+              ?obj wdt:P10585 '${taxonId}' .
+              {
+                ?obj wdt:P18 ?url.
+                BIND("img" AS ?name)
+              }
+              #UNION {
+              #  ?obj wdt:P10585 ?id.
+              #  wd:P10585 wdt:P1630 ?formatter.
+              #  BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+              #  BIND("CoL" AS ?name)
+              #}
+              UNION {
+                ?obj wdt:P685 ?id.
+                wd:P685 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("NCBI" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P685 ?id.
+                BIND(IRI(CONCAT('https://lifemap.cnrs.fr/tree?efficiency-mode=true&tid=', ?id)) AS ?url)
+                BIND("LifeMap" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P815 ?id.
+                wd:P815 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("ITIS" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P3151 ?id.
+                wd:P3151 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("iNatur" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P9157 ?id.
+                wd:P9157 wdt:P1630 ?formatter.
+                BIND(IRI(REPLACE(?id, "(^.*)", ?formatter)) AS ?url)
+                BIND("OTT" AS ?name)
+              }
+              UNION
+              {
+                ?obj wdt:P9157 ?id.
+                wd:P9157 wdt:P1630 ?formatter.
+                BIND (URI(CONCAT("https://www.onezoom.org/life/@=", ?id, "?vis=polytomy")) AS ?url)
+                BIND("OneZoom" AS ?name)
+              }
+              UNION
+              {
+                ?url schema:about ?obj;
+                  schema:isPartOf <https://${wikiLang}.wikipedia.org/>.
+                BIND("${wikiLang}Wiki" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P373 ?categLabel .
+                BIND (URI(CONCAT("https://commons.wikimedia.org/wiki/Category:", ?categLabel)) AS ?url)
+                BIND("wcCateg" AS ?name)
+              }
+              UNION {
+                ?obj wdt:P373 ?categLabel .
+                BIND("wcImages" AS ?name)
+                BIND (ENCODE_FOR_URI(CONCAT("deepcategory:\\"", ?categLabel, "\\"")) AS ?query)
+                BIND (URI(CONCAT("https://commons.wikimedia.org/w/index.php?search=", ?query, "&title=Special:MediaSearch&type=image")) AS ?url)
+              }
+            }
+        `;
+
+        const url = 'https://query.wikidata.org/sparql?query=' + encodeURIComponent(sparqlQuery) + '&format=json';
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/sparql-results+json'
+            }
+        });
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error('Error fetching Wikidata:', error);
+        return { image: null, wikipedia: null, col: null };
+    }
+}
+
+
+
+</script>
+</body>
+</html>
